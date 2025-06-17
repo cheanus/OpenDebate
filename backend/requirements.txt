@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+psycopg2-binary
+sqlalchemy
+neomodel>=4.0
+# black
+pytest

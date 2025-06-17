@@ -1,0 +1,51 @@
+services:
+  frontend:
+    image: node:23-slim
+    container_name: debate_frontend
+    working_dir: /app
+    ports:
+      - "3141:5173"
+    volumes:
+      - ../frontend:/app
+    command: npm run dev
+
+
+  backend:
+    build: ../backend
+    container_name: debate_backend
+    ports:
+      - "3142:8000"
+    volumes:
+      - ../backend:/app
+    env_file:
+      - ../.env
+    depends_on:
+      - db
+      - neo4j
+
+  db:
+    image: postgres:17
+    container_name: debate_db
+    environment:
+      POSTGRES_USER: debateuser
+      POSTGRES_PASSWORD: debatepass
+      POSTGRES_DB: debatedb
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "3143:5432"
+
+  neo4j:
+    image: neo4j:community
+    container_name: debate_neo4j
+    ports:
+      - "3144:7474"
+      - "3145:7687"
+    environment:
+      NEO4J_AUTH: neo4j/neo4jpass
+    volumes:
+      - neo4j_data:/data
+
+volumes:
+  postgres_data:
+  neo4j_data:
