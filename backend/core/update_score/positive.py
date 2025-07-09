@@ -115,15 +115,28 @@ def refresh_son_type_score(opinion_id: str, score_type: str) -> bool:
     Returns:
         bool: True if the score was updated, False otherwise.
     """
+    def logic_score_of_list(numbers: list[float | None], logic_type: str) -> float | None:
+        """Calculate the logic score of a list of numbers."""
+        numbers = [num for num in numbers if num is not None]
+        if not numbers:
+            return None
+        if logic_type == "or":
+            return max(numbers)  # type: ignore
+        elif logic_type == "and":
+            return min(numbers)  # type: ignore
+        else:
+            raise ValueError("logic_type must be 'or' or 'and'")
+
     opinion_neo4j = OpinionNeo4j.nodes.get(uid=opinion_id)
     is_updated = False
 
     if score_type == "positive":
-        con_positive_score = avg_of_list(
+        con_positive_score = logic_score_of_list(
             [
                 related_opinion.positive_score
                 for related_opinion in opinion_neo4j.supported_by
-            ]
+            ],
+            opinion_neo4j.logic_type,
         )
         if opinion_neo4j.son_positive_score is None and con_positive_score is None:
             return False
@@ -135,11 +148,12 @@ def refresh_son_type_score(opinion_id: str, score_type: str) -> bool:
             is_updated = True
             opinion_neo4j.son_positive_score = con_positive_score
     elif score_type == "negative":
-        con_negative_score = avg_of_list(
+        con_negative_score = logic_score_of_list(
             [
                 related_opinion.positive_score
                 for related_opinion in opinion_neo4j.opposed_by
-            ]
+            ],
+            "or",
         )
         if opinion_neo4j.son_negative_score is None and con_negative_score is None:
             return False

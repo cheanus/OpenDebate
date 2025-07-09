@@ -3,26 +3,25 @@ from core.debate import cited_in_debate
 from schemas.db.neo4j import Opinion as OpinionNeo4j
 from schemas.db.psql import Opinion as OpinionPsql, model2dict
 from schemas.opinion import LogicType
+from schemas.link import LinkType
 from core import update_score
 
 
-def create_opinion(
+def create_or_opinion(
     content: str,
     creator: str,
     host: str = "local",
     node_type: str = "solid",
-    logic_type: LogicType = LogicType.OR,
     positive_score: float | None = None,
     debate_id: str | None = None,
 ) -> str:
     """
-    Create a new opinion with the given parameters.
+    Create a new OR opinion with the given parameters.
 
     :param content: The content of the opinion.
     :param creator: The ID of the user creating the opinion.
     :param host: The ID of the host (local or external) associated with the opinion.
     :param node_type: The type of the node (solid or empty).
-    :param logic_type: The logic type for the opinion (default is "or").
     :param positive_score: Optional initial positive score for the opinion.
     :param debate_id: Optional ID of the debate this opinion belongs to.
     :return: The ID of the created opinion or a success message.
@@ -43,12 +42,85 @@ def create_opinion(
             content=content,
             host=host,
             node_type=node_type,
+            logic_type=LogicType.OR.value,
         )
-        if logic_type:
-            new_opinion_neo4j.logic_type = logic_type.value  # type: ignore
         if positive_score:
             new_opinion_neo4j.positive_score = positive_score  # type: ignore
         new_opinion_neo4j.save()
+    except Exception as e:
+        raise RuntimeError(f"Failed to create opinion in Neo4j: {str(e)}")
+
+    # Link the opinion to the debate if debate_id is provided
+    if debate_id:
+        try:
+            cited_in_debate(debate_id, str(new_opinion_psql.id))
+        except Exception as e:
+            raise RuntimeError(
+                f"Failed to link opinion to debate in PostgreSQL: {str(e)}"
+            )
+
+    return str(new_opinion_psql.id)
+
+
+def create_and_opinion(
+    parent_id: str,
+    son_ids: list[str],
+    link_type: LinkType,
+    creator: str,
+    host: str = "local",
+    debate_id: str | None = None,
+) -> str:
+    """
+    Create a new AND opinion with the given parameters.
+
+    :param parent_id: The ID of the parent opinion.
+    :param son_ids: List of IDs of the child opinions that this AND opinion will link to.
+    :param link_type: The type of link to create between the opinion and the parent opinion.
+    :param creator: The ID of the user creating the opinion.
+    :param host: The ID of the host (local or external) associated with the opinion.
+    :param debate_id: Optional ID of the debate this opinion belongs to.
+    :return: The ID of the created opinion or a success message.
+    """
+    with get_psql_session() as psql_session:
+        try:
+            new_opinion_psql = OpinionPsql(creator=creator)
+            psql_session.add(new_opinion_psql)
+            psql_session.commit()
+            psql_session.refresh(new_opinion_psql)
+        except Exception as e:
+            psql_session.rollback()
+            raise RuntimeError(f"Failed to create opinion in PostgreSQL: {str(e)}")
+
+    try:
+        parent_opinion_neo4j = OpinionNeo4j.nodes.get(uid=parent_id)
+        new_opinion_neo4j = OpinionNeo4j(
+            uid=new_opinion_psql.id,
+            content="与" if link_type == LinkType.SUPPORT else "与非",
+            host=host,
+            node_type="empty",
+            logic_type=LogicType.AND.value,
+        )
+        new_opinion_neo4j.save()
+        # Link the new AND opinion to the parent opinion
+        if link_type == LinkType.SUPPORT:
+            new_opinion_neo4j.supports.connect(parent_opinion_neo4j)  # type: ignore
+        elif link_type == LinkType.OPPOSE:
+            new_opinion_neo4j.opposes.connect(parent_opinion_neo4j)  # type: ignore
+        else:
+            raise ValueError(f"Unsupported link type: {link_type}")
+        # Link the new AND opinion to the child opinions
+        for son_id in son_ids:
+            son_opinion_neo4j = OpinionNeo4j.nodes.get(uid=son_id)
+            son_opinion_neo4j.supports.connect(new_opinion_neo4j)  # type: ignore
+        # Update score
+        update_score.refresh_son_type_score(
+            str(new_opinion_neo4j.uid), "positive"
+        )
+        new_opinion_neo4j = OpinionNeo4j.nodes.get(uid=new_opinion_neo4j.uid)
+        new_opinion_neo4j.positive_score = new_opinion_neo4j.son_positive_score
+        new_opinion_neo4j.save()
+        update_score.update_node_score_positively_from(str(new_opinion_psql.id))
+        # No need to update negative score for AND opinion
     except Exception as e:
         raise RuntimeError(f"Failed to create opinion in Neo4j: {str(e)}")
 
@@ -94,7 +166,9 @@ def delete_opinion(opinion_id: str, debate_id: str | None = None):
                 opinion_neo4j.delete()
                 # Update negative scores of father opinions
                 for father_opinion in father_opinions:
-                    update_score.update_node_score_negatively_recursively(father_opinion.uid, None)
+                    update_score.update_node_score_negatively_recursively(
+                        father_opinion.uid, None
+                    )
             except Exception as e:
                 raise RuntimeError(f"Failed to delete opinion in Neo4j: {str(e)}")
         else:

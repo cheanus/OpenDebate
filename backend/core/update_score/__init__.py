@@ -1,2 +1,2 @@
-from .positive import update_node_score_positively_recursively, update_node_score_positively_from
+from .positive import update_node_score_positively_recursively, update_node_score_positively_from, refresh_son_type_score
 from .negative import update_node_score_negatively, update_node_score_negatively_from, update_node_score_negatively_recursively

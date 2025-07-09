@@ -3,7 +3,8 @@ from typing import Annotated
 from schemas.opinion import *
 from schemas.msg import MsgResponse
 from core.opinion import (
-    create_opinion,
+    create_or_opinion,
+    create_and_opinion,
     delete_opinion,
     info_opinion,
     query_opinion,
@@ -13,20 +14,38 @@ from core.opinion import (
 router = APIRouter()
 
 
-@router.post("/create", response_model=MsgResponse)
-def create_opinion_http(request: CreateOpinionRequest):
+@router.post("/create_or", response_model=MsgResponse)
+def create_or_opinion_http(request: CreateOrOpinionRequest):
     if request.is_llm_score:
         try:
             pass
         except Exception as e:
             return {"is_success": False, "error": str(e)}
     try:
-        create_opinion(
+        create_or_opinion(
             content=request.content,
-            host="local",
             creator=request.creator,
+            host="local",
             node_type="solid",
-            logic_type=request.logic_type,
+            positive_score=request.positive_score,
+            debate_id=request.debate_id,
+        )
+        result = {"is_success": True}
+    except Exception as e:
+        result = {"is_success": False, "error": str(e)}
+
+    return result
+
+
+@router.post("/create_and", response_model=MsgResponse)
+def create_and_opinion_http(request: CreateAndOpinionRequest):
+    try:
+        create_and_opinion(
+            parent_id=request.parent_id,
+            son_ids=request.son_ids,
+            link_type=request.link_type,
+            creator=request.creator,
+            host="local",
             debate_id=request.debate_id,
         )
         result = {"is_success": True}
