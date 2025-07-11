@@ -1,7 +1,10 @@
 from schemas.db.neo4j import Opinion as OpinionNeo4j
 from schemas.opinion import ScoreType
 from core.utils.math import avg_of_list, revert_score
-from .negative import update_node_score_negatively
+from .negative import (
+    update_node_score_negatively,
+    update_node_score_negatively_recursively,
+)
 
 
 def update_node_score_positively_from(opinion_id: str, is_refresh: bool = False):
@@ -115,7 +118,10 @@ def refresh_son_type_score(opinion_id: str, score_type: str) -> bool:
     Returns:
         bool: True if the score was updated, False otherwise.
     """
-    def logic_score_of_list(numbers: list[float | None], logic_type: str) -> float | None:
+
+    def logic_score_of_list(
+        numbers: list[float | None], logic_type: str
+    ) -> float | None:
         """Calculate the logic score of a list of numbers."""
         numbers = [num for num in numbers if num is not None]
         if not numbers:
@@ -145,6 +151,21 @@ def refresh_son_type_score(opinion_id: str, score_type: str) -> bool:
             or not con_positive_score
             or abs(opinion_neo4j.son_positive_score - con_positive_score) > 1e-6
         ):
+            # AND点要考虑已受传播的反证分需被删除
+            if (
+                opinion_neo4j.logic_type == "and"
+                and con_positive_score
+                and opinion_neo4j.son_positive_score
+                and con_positive_score < opinion_neo4j.son_positive_score
+            ):
+                old_min_opinions = opinion_neo4j.supported_by.filter(
+                    positive_score__equals=opinion_neo4j.son_positive_score,
+                ).all()
+                for min_opinion in old_min_opinions:
+                    update_node_score_negatively_recursively(
+                        min_opinion.uid,
+                        None,
+                    )
             is_updated = True
             opinion_neo4j.son_positive_score = con_positive_score
     elif score_type == "negative":

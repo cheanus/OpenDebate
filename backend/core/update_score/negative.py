@@ -29,7 +29,18 @@ def update_node_score_negatively(opinion_id: str):
     if opinion_neo4j.logic_type == "or":
         for related_opinion in opinion_neo4j.supported_by:
             update_node_score_negatively_recursively(
-                related_opinion.uid, revert_score(opinion_neo4j.son_negative_score)
+                related_opinion.uid,
+                revert_score(opinion_neo4j.son_negative_score),
+            )
+    elif opinion_neo4j.logic_type == "and" and opinion_neo4j.son_positive_score:
+        min_opinions = opinion_neo4j.supported_by.filter(
+            positive_score=opinion_neo4j.son_positive_score
+        ).all()
+        # Update the minimum opinion's score negatively
+        for min_opinion in min_opinions:
+            update_node_score_negatively_recursively(
+                min_opinion.uid,
+                revert_score(opinion_neo4j.son_negative_score),
             )
     # Update the opposed_by nodes
     for related_opinion in opinion_neo4j.opposed_by:
@@ -55,7 +66,13 @@ def update_node_score_negatively_recursively(opinion_id: str, new_score: float |
         # Refresh the negative score from related nodes
         score_list = []
         for related_opinion in opinion_neo4j.supports:
-            if related_opinion.logic_type == "or":
+            if (
+                related_opinion.logic_type == "or"
+                or related_opinion.logic_type == "and"
+                and related_opinion.son_positive_score
+                and opinion_neo4j.positive_score
+                and opinion_neo4j.positive_score <= related_opinion.son_positive_score
+            ):
                 score_list.append(related_opinion.negative_score)
                 score_list.append(revert_score(related_opinion.son_negative_score))
         for related_opinion in opinion_neo4j.opposes:
@@ -74,9 +91,15 @@ def update_node_score_negatively_recursively(opinion_id: str, new_score: float |
         opinion_neo4j.negative_score = new_score
         opinion_neo4j.save()
         # Update related opinions
-        # Update the supported_by nodes but only if the logic type is "or"
-        if opinion_neo4j.logic_type == "or":
-            for related_opinion in opinion_neo4j.supported_by:
+        # Update the supported_by nodes
+        for related_opinion in opinion_neo4j.supported_by:
+            if (
+                opinion_neo4j.logic_type == "or"
+                or opinion_neo4j.logic_type == "and"
+                and opinion_neo4j.son_positive_score
+                and related_opinion.positive_score
+                and related_opinion.positive_score <= opinion_neo4j.son_positive_score
+            ):
                 update_node_score_negatively_recursively(
                     related_opinion.uid, opinion_neo4j.negative_score
                 )

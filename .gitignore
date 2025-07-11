@@ -1,2 +1,3 @@
 /frontend/node_modules/
+/frontend/pnpm-lock.yaml
 **/__pycache__/

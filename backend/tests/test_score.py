@@ -1,7 +1,7 @@
 from pytest import approx
 from core.debate import create_debate
 from core.opinion import create_or_opinion, create_and_opinion, info_opinion
-from core.link import create_link
+from core.link import create_link, attack_link
 from core.db_life import init_db, close_db
 from schemas.link import LinkType
 from tests.utils import clear_db
@@ -69,11 +69,12 @@ def positive_test(debate_id: str, op_root: str):
         positive_score=0.4,
         debate_id=debate_id,
     )
-    create_link(
+    rel_1pos2pos2 = create_link(
         from_id=op_1pos2pos2,
         to_id=op_1pos2,
         link_type=LinkType.SUPPORT,
     )
+    attack_link(rel_1pos2pos2, debate_id)
 
 
 def negative_test(debate_id: str, op_root: str):
@@ -121,6 +122,9 @@ def negative_test(debate_id: str, op_root: str):
         debate_id=debate_id,
     )
     assert info_opinion(op_1neg2)["score"]["negative"] == approx(
+        0.6
+    ), "Root opinion's negative score should be 0.6"
+    assert info_opinion(op_1neg2pos1)["score"]["negative"] == approx(
         0.6
     ), "Root opinion's negative score should be 0.6"
 

@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Query
 from typing import Annotated
+from schemas.db.neo4j import Opinion as OpinionNeo4j
 from schemas.debate import *
 from schemas.msg import MsgResponse
 from schemas.db.psql import model2dict
@@ -88,6 +89,9 @@ def cited_in_debate_http(request: CiteDebateRequest):
     opinion_id = request.opinion_id
 
     try:
+        node_type = OpinionNeo4j.nodes.get(uid=opinion_id).node_type
+        if node_type != "solid":
+            raise ValueError("Only solid opinions can be cited in debates.")
         cited_in_debate(debate_id, opinion_id)
         result = {"is_success": True}
     except Exception as e:

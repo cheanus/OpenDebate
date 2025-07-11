@@ -113,14 +113,19 @@ def create_and_opinion(
             son_opinion_neo4j = OpinionNeo4j.nodes.get(uid=son_id)
             son_opinion_neo4j.supports.connect(new_opinion_neo4j)  # type: ignore
         # Update score
-        update_score.refresh_son_type_score(
-            str(new_opinion_neo4j.uid), "positive"
-        )
+        update_score.refresh_son_type_score(str(new_opinion_neo4j.uid), "positive")
         new_opinion_neo4j = OpinionNeo4j.nodes.get(uid=new_opinion_neo4j.uid)
         new_opinion_neo4j.positive_score = new_opinion_neo4j.son_positive_score
         new_opinion_neo4j.save()
         update_score.update_node_score_positively_from(str(new_opinion_psql.id))
-        # No need to update negative score for AND opinion
+        # Update negative score for AND opinion
+        min_son_opinions = OpinionNeo4j.nodes.filter(
+            uid__in=son_ids, positive_score=new_opinion_neo4j.son_positive_score
+        ).all()
+        for min_son_opinion in min_son_opinions:
+            update_score.update_node_score_negatively_recursively(
+                min_son_opinion.uid, new_opinion_neo4j.negative_score
+            )
     except Exception as e:
         raise RuntimeError(f"Failed to create opinion in Neo4j: {str(e)}")
 
@@ -158,16 +163,16 @@ def delete_opinion(opinion_id: str, debate_id: str | None = None):
                 raise RuntimeError(f"Failed to delete opinion in PostgreSQL: {str(e)}")
             try:
                 opinion_neo4j = OpinionNeo4j.nodes.get(uid=opinion_id)
-                father_opinions = opinion_neo4j.supported_by + opinion_neo4j.opposed_by
+                son_opinions = opinion_neo4j.supported_by + opinion_neo4j.opposed_by
                 # Update positive score to None before deleting
                 opinion_neo4j.positive_score = None
                 update_score.update_node_score_positively_from(opinion_id)
                 # Delete the opinion in Neo4j
                 opinion_neo4j.delete()
-                # Update negative scores of father opinions
-                for father_opinion in father_opinions:
+                # Update negative scores of son opinions
+                for son_opinion in son_opinions:
                     update_score.update_node_score_negatively_recursively(
-                        father_opinion.uid, None
+                        son_opinion.uid, None
                     )
             except Exception as e:
                 raise RuntimeError(f"Failed to delete opinion in Neo4j: {str(e)}")

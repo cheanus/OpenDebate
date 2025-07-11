@@ -18,20 +18,26 @@ class CreateLinkResponse(MsgResponse):
     link_id: str | None = None
 
 
-class InfoLinkRequest(BaseModel):
+class LinkRequest(BaseModel):
     link_id: str
 
 
 class InfoLinkResponse(MsgResponse):
-    from_id: str
-    to_id: str
-    link_type: LinkType
-
-
-class DeleteLinkRequest(BaseModel):
-    id: str
+    from_id: str | None = None
+    to_id: str | None = None
+    link_type: LinkType | None = None
 
 
 class PatchLinkRequest(BaseModel):
-    id: str
+    link_id: str
     link_type: LinkType
+
+
+class AttackLinkRequest(BaseModel):
+    link_id: str
+    debate_id: str
+
+
+class AttackLinkResponse(MsgResponse):
+    or_id: str | None = None
+    and_id: str | None = None
