@@ -1,30 +1,51 @@
-<script setup>
-import HelloWorld from './components/HelloWorld.vue'
-</script>
-
 <template>
-  <div>
-    <a href="https://vite.dev" target="_blank">
-      <img src="/vite.svg" class="logo" alt="Vite logo" />
-    </a>
-    <a href="https://vuejs.org/" target="_blank">
-      <img src="./assets/vue.svg" class="logo vue" alt="Vue logo" />
-    </a>
+  <div id="app">
+    <nav class="main-nav">
+      <router-link to="/">辩论总览</router-link>
+      <router-link to="/settings">设置</router-link>
+    </nav>
+    <router-view @viewDebate="goToDebate" />
   </div>
-  <HelloWorld msg="Vite + Vue" />
 </template>
 
+<script setup>
+import { useRouter } from 'vue-router'
+const router = useRouter()
+function goToDebate(id) {
+  router.push(`/debate/${id}`)
+}
+</script>
+
 <style scoped>
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
+#app {
+  min-height: 100vh;
+  background: var(--background);
 }
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
+
+.main-nav {
+  display: flex;
+  gap: 32px;
+  padding: 0 48px;
+  height: 64px;
+  align-items: center;
+  background: var(--card-bg);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 32px;
+  box-shadow: 0 2px 8px rgba(30,41,59,0.03);
 }
-.logo.vue:hover {
-  filter: drop-shadow(0 0 2em #42b883aa);
+
+.main-nav a {
+  color: var(--text-light);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 20px;
+  letter-spacing: 0.02em;
+  padding: 4px 0;
+  transition: color 0.2s, border-bottom 0.2s;
+  border-bottom: 2px solid transparent;
+}
+.main-nav a.router-link-exact-active {
+  color: var(--primary);
+  border-bottom: 2px solid var(--primary);
 }
 </style>

@@ -1,5 +1,6 @@
+import datetime
 from core.db_life import get_psql_session
-from schemas.db.psql import Debate, Opinion
+from schemas.db.psql import Debate, Opinion, model2dict
 
 
 def create_debate(title: str, creator: str, description: str | None = None) -> str:
@@ -41,10 +42,10 @@ def query_debate(
     title: str | None = None,
     description: str | None = None,
     creator: str | None = None,
-    start_timestamp: float | None = None,
-    end_timestamp: float | None = None,
+    start_timestamp: int | None = None,
+    end_timestamp: int | None = None,
     debate_id: str | None = None,
-) -> list[Debate]:
+) -> list[dict]:
     """
     Query debates based on various parameters.
     """
@@ -61,12 +62,15 @@ def query_debate(
         if creator:
             query = query.filter(Debate.creator.ilike(f"%{creator}%"))
         if start_timestamp:
-            query = query.filter(Debate.created_at >= start_timestamp)
+            dt_start = datetime.datetime.fromtimestamp(start_timestamp / 1000)
+            query = query.filter(Debate.created_at >= dt_start)
         if end_timestamp:
-            query = query.filter(Debate.created_at <= end_timestamp)
+            dt_end = datetime.datetime.fromtimestamp(end_timestamp / 1000)
+            query = query.filter(Debate.created_at <= dt_end)
 
     results = query.all()
-    return [debate for debate in results]
+
+    return [model2dict(debate) for debate in results]
 
 
 def patch_debate(

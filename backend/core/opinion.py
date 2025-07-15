@@ -276,6 +276,8 @@ def query_opinion(
     debate_id: str | None = None,
     min_score: float | None = None,
     max_score: float | None = None,
+    is_time_accending: bool = True,
+    max_num: int = 1,
 ) -> list[dict]:
     """
     Query opinions based on content, debate ID, or opinion ID.
@@ -284,6 +286,8 @@ def query_opinion(
     :param debate_id: Optional related_opinionsID of the debate to filter opinions by.
     :param min_score: Optional minimum score to filter opinions by.
     :param max_score: Optional maximum score to filter opinions by.
+    :param is_time_accending: Whether to sort the results by time in ascending order.
+    :param max_num: The maximum number of opinions to return.
     :return: A list of dictionaries containing matching opinions.
     """
     # Get information from Neo4j
@@ -309,8 +313,8 @@ def query_opinion(
                 and (op.positive_score + op.negative_score) / 2 <= max_score
             ]
         opinion_ids = [opinion.uid for opinion in opinions_list]
-        if debate_id:
-            with get_psql_session() as psql_session:
+        with get_psql_session() as psql_session:
+            if debate_id:
                 opinion_ids = [
                     op_id
                     for op_id in opinion_ids
@@ -320,6 +324,21 @@ def query_opinion(
                     )
                     .first()
                 ]
+            # 查询所有opinion_id及其created_at
+            id_time = (
+                psql_session.query(OpinionPsql.id, OpinionPsql.created_at)
+                .filter(OpinionPsql.id.in_(opinion_ids))
+                .all()
+            )
+            # 排序
+            id_time_sorted = sorted(
+                id_time,
+                key=lambda x: x[1],
+                reverse=not is_time_accending,
+            )
+            # 只保留排序后的id
+            opinion_ids = [str(row[0]) for row in id_time_sorted]
+            opinion_ids = opinion_ids[:max_num]
 
         opinions = []
         for opinion_id in opinion_ids:

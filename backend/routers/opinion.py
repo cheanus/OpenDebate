@@ -95,6 +95,8 @@ def query_opinion_http(filter_query: Annotated[QueryOpinionRequest, Query()]):
             debate_id=filter_query.debate_id,
             min_score=filter_query.min_score,
             max_score=filter_query.max_score,
+            is_time_accending=filter_query.is_time_accending,
+            max_num=filter_query.max_num,
         )
         return {
             "is_success": True,

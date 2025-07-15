@@ -31,7 +31,8 @@ class CreateOrOpinionRequest(BaseModel):
 class CreateAndOpinionRequest(BaseModel):
     parent_id: str = Field(..., description="ID of the parent opinion", min_length=1)
     son_ids: list[str] = Field(
-        ..., description="List of IDs of the child opinions",
+        ...,
+        description="List of IDs of the child opinions",
     )
     link_type: LinkType = Field(
         ..., description="Type of link to create between the parent and child opinions"
@@ -63,6 +64,12 @@ class QueryOpinionRequest(BaseModel):
     debate_id: str | None = None
     min_score: float | None = None
     max_score: float | None = None
+    is_time_accending: bool = Field(
+        True, description="Whether to sort the results by time in ascending order"
+    )
+    max_num: int = Field(
+        20, description="Maximum number of opinions to return", le=100, ge=1
+    )
 
 
 class QueryOpinionResponse(MsgResponse):

@@ -65,7 +65,14 @@ class Opinion(DbBase):
 def model2dict(model) -> dict:
     """
     Convert a SQLAlchemy model instance to a dictionary.
+    For TIMESTAMP columns, convert to JS milliseconds (int).
     """
-    return {
-        column.name: getattr(model, column.name) for column in model.__table__.columns
-    }
+    result = {}
+    for column in model.__table__.columns:
+        value = getattr(model, column.name)
+        # 判断是否为TIMESTAMP类型
+        if str(column.type) == "TIMESTAMP" and value is not None:
+            # 转换为毫秒时间戳
+            value = int(value.timestamp() * 1000)
+        result[column.name] = value
+    return result

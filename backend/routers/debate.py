@@ -60,7 +60,7 @@ def query_debate_http(filter_query: Annotated[QueryDebateRequest, Query()]):
         )
         result = {
             "is_success": True,
-            "data": [model2dict(debate) for debate in debates],
+            "data": debates,
         }
     except Exception as e:
         result = {"is_success": False, "msg": str(e)}

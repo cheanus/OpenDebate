@@ -17,12 +17,12 @@ class QueryDebateRequest(BaseModel):
     description: str | None = None
     creator: str | None = None
     debate_id: str | None = None
-    start_timestamp: float | None = Field(
+    start_timestamp: int | None = Field(
         None,
-        description="Start timestamp for filtering debates, in seconds since epoch",
+        description="Start timestamp for filtering debates, in ms since epoch",
     )
-    end_timestamp: float | None = Field(
-        None, description="End timestamp for filtering debates, in seconds since epoch"
+    end_timestamp: int | None = Field(
+        None, description="End timestamp for filtering debates, in ms since epoch"
     )
 
 

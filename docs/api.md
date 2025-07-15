@@ -2,6 +2,7 @@
 
 基础路径：`/api`
 所有响应数据均为JSON格式，都携带`is_success`字段，表示操作是否成功，若失败则携带`msg`字段。
+所有时间戳均为Unix时间戳（整型毫秒级）。
 
 ---
 
@@ -9,7 +10,7 @@
 
 ### ➕ 添加辩论
 
-`POST /debates/create`  
+`POST /debate/create`  
 **Body**
 
 ```json
@@ -22,7 +23,7 @@
 
 ### ❌ 删除辩论
 
-`POST /debates/delete`
+`POST /debate/delete`
 **Body**
 
 ```json
@@ -33,7 +34,7 @@
 
 ### 🔍 条件查询辩论信息
 
-`GET /debates/query?title=AI&...`
+`GET /debate/query?title=AI&...`
 
 - description
 - creator
@@ -48,19 +49,21 @@
 
 ```json
 [
-  {
-    "id": "xxx",
-    "title": "AI是否应拥有意识",
-    "description": "探讨人工智能是否应该具备自主意识。",
-    "created_at": 1700000000,
-    "creator": "user1",
-  }
+  "data": [
+    {
+      "id": "xxx",
+      "title": "AI是否应拥有意识",
+      "description": "探讨人工智能是否应该具备自主意识。",
+      "created_at": 1700000000,
+      "creator": "user1",
+    }
+  ]
 ]
 ```
 
 ### ✏️ 修改辩论信息
 
-`POST /debates/patch`  
+`POST /debate/patch`  
 **Body (任意字段)**
 
 ```json
@@ -79,7 +82,7 @@
 ### ➕ 建立辩论与某已有观点的关系
 考虑到有些辩论要引用某观点，或者某观点要添加到某辩论中去。
 
-`POST /debates/cite`  
+`POST /debate/cite`  
 **Body**
 
 ```json
@@ -95,7 +98,7 @@
 
 ### ➕ 添加单个或观点
 
-`POST /opinions/create_or`  
+`POST /opinion/create_or`  
 **Body**
 
 ```json
@@ -115,7 +118,7 @@
 
 ### ➕ 添加单个与观点
 
-`POST /opinions/create_and`  
+`POST /opinion/create_and`  
 **Body**
 
 ```json
@@ -134,7 +137,7 @@
 
 ### ❌ 删除辩论中的单个观点及其所有链
 
-`POST /opinions/delete`
+`POST /opinion/delete`
 **Body**
 
 ```json
@@ -148,7 +151,7 @@
 
 ### 🔍 查询观点信息及其链
 
-`GET /opinions/info?opinion_id=xxx&debate_id=xxx`
+`GET /opinion/info?opinion_id=xxx&debate_id=xxx`
 
 `debate_id`可选，默认设定为全辩论。
 
@@ -156,56 +159,64 @@
 
 ```json
 {
-  "id": "xxx",
-  "created_at": 1700000000,
-  "creator": "user1",
-  "content": "AI不具备主观体验，因此不应有意识。",
-  "host": "local",
-  "logic_type": "or",
-  "node_type": "solid",
-  "score": {
-    "positive": 0.7,
-    "negative": 0.3
-  },
-  "relationship": {
-    "support": ["link_id1", "link_id2"],
-    "opposes": ["link_id3"],
-    "supported_by": ["link_id4"],
-    "opposed_by": ["link_id5"]
-  }
+  "data": [
+    {
+      "id": "xxx",
+      "created_at": 1700000000,
+      "creator": "user1",
+      "content": "AI不具备主观体验，因此不应有意识。",
+      "host": "local",
+      "logic_type": "or",
+      "node_type": "solid",
+      "score": {
+        "positive": 0.7,
+        "negative": 0.3
+      },
+      "relationship": {
+        "support": ["link_id1", "link_id2"],
+        "opposes": ["link_id3"],
+        "supported_by": ["link_id4"],
+        "opposed_by": ["link_id5"]
+      }
+    }
+  ]
 }
 ```
 
 ### 🔍 条件模糊查询观点信息
 
-`GET /opinions/query?q=AI&debate_id=xxx&min_score=0.5&max_score=0.9`  
+`GET /opinion/query?q=AI&debate_id=xxx&min_score=0.5&max_score=0.9&is_time_accending=true&max_num=20`  
 
 其他情况模糊查询，`q`和`debate_id`二选一，后者为空即设定为全辩论。
+`is_time_accending`是可选的，默认为true，表示结果按创建时间升序排。
+`max_num`是可选的，默认为20，最多为100，表示返回的最大观点数量。
 返回匹配的观点列表（数据参考数据库），相较info接口，返回更少字段。
 
 返回示例：
 
 ```json
 [
-  {
-    "id": "xxx",
-    "created_at": 1700000000,
-    "creator": "user1",
-    "content": "AI不具备主观体验，因此不应有意识。",
-    "host": "local",
-    "logic_type": "or",
-    "node_type": "solid",
-    "score": {
-      "positive": 0.7,
-      "negative": 0.3
+  "data": [
+    {
+      "id": "xxx",
+      "created_at": 1700000000,
+      "creator": "user1",
+      "content": "AI不具备主观体验，因此不应有意识。",
+      "host": "local",
+      "logic_type": "or",
+      "node_type": "solid",
+      "score": {
+        "positive": 0.7,
+        "negative": 0.3
+      }
     }
-  }
+  ]
 ]
 ```
 
 ### ✏️ 修改观点信息（包括LLM赋分）
 
-`POST/opinions/patch`  
+`POST/opinion/patch`  
 **Body**
 
 ```json
@@ -227,7 +238,7 @@
 
 ### ➕ 添加链（两个已存在观点间）
 
-`POST /links/create`  
+`POST /link/create`  
 **Body**
 
 ```json
@@ -242,7 +253,7 @@
 
 ### ❌ 删除链（两个已存在观点间）
 
-`POST /links/delete`
+`POST /link/delete`
 
 ```json
 {
@@ -252,7 +263,7 @@
 
 ### 🔍 查询链信息
 
-`GET /links/info?link_id=xxx`
+`GET /link/info?link_id=xxx`
 
 返回示例：
 
@@ -267,7 +278,7 @@
 
 ### ✏️ 修改链信息
 
-`POST /links/patch`  
+`POST /link/patch`  
 **Body**
 
 ```json
@@ -281,7 +292,7 @@
 
 考虑到有些链需要辩论，因而在链上插入一个与观点，用一个或观点支持它，该或观点表示链是正确的，可被辩论。
 
-`POST /links/attack`  
+`POST /link/attack`  
 **Body**
 ```json
 {
