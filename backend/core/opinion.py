@@ -222,8 +222,16 @@ def info_opinion(
                     "logic_type": opinion_neo4j.logic_type,
                     "node_type": opinion_neo4j.node_type,
                     "score": {
-                        "positive": opinion_neo4j.positive_score,
-                        "negative": opinion_neo4j.negative_score,
+                        "positive": (
+                            round(opinion_neo4j.positive_score, 2)
+                            if opinion_neo4j.positive_score
+                            else None
+                        ),
+                        "negative": (
+                            round(opinion_neo4j.negative_score, 2)
+                            if opinion_neo4j.negative_score
+                            else None
+                        ),
                     },
                 }
             )
@@ -240,12 +248,12 @@ def info_opinion(
             }
             try:
                 if debate_id:
-                    opinion_id_in_debate = (
+                    opinion_id_in_debate = {
                         str(row[0])
                         for row in psql_session.query(OpinionPsql.id)
                         .filter(OpinionPsql.debates.any(id=debate_id))
                         .all()
-                    )
+                    }
                 else:
                     opinion_id_in_debate = {
                         str(row[0]) for row in psql_session.query(OpinionPsql.id).all()

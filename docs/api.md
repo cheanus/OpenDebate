@@ -159,27 +159,25 @@
 
 ```json
 {
-  "data": [
-    {
-      "id": "xxx",
-      "created_at": 1700000000,
-      "creator": "user1",
-      "content": "AI不具备主观体验，因此不应有意识。",
-      "host": "local",
-      "logic_type": "or",
-      "node_type": "solid",
-      "score": {
-        "positive": 0.7,
-        "negative": 0.3
-      },
-      "relationship": {
-        "support": ["link_id1", "link_id2"],
-        "opposes": ["link_id3"],
-        "supported_by": ["link_id4"],
-        "opposed_by": ["link_id5"]
-      }
+  "data": {
+    "id": "xxx",
+    "created_at": 1700000000,
+    "creator": "user1",
+    "content": "AI不具备主观体验，因此不应有意识。",
+    "host": "local",
+    "logic_type": "or",
+    "node_type": "solid",
+    "score": {
+      "positive": 0.7,
+      "negative": 0.3
+    },
+    "relationship": {
+      "support": ["link_id1", "link_id2"],
+      "opposes": ["link_id3"],
+      "supported_by": ["link_id4"],
+      "opposed_by": ["link_id5"]
     }
-  ]
+  }
 }
 ```
 
@@ -246,6 +244,14 @@
   "from_id": "xxx",
   "to_id": "yyy",
   "link_type": "support",
+}
+```
+
+返回示例：
+
+```json
+{
+  "id": "link_id",
 }
 ```
 

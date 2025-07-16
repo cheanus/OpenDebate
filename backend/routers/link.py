@@ -63,6 +63,7 @@ def info_link_http(filter_query: Annotated[LinkRequest, Query()]):
         link_info = info_link(link_id=filter_query.link_id)
         return {
             "is_success": True,
+            "id": filter_query.link_id,
             "from_id": link_info["from_id"],
             "to_id": link_info["to_id"],
             "link_type": link_info["link_type"],

@@ -34,8 +34,26 @@ function getNodeSize(node) {
     if (pos != null && neg != null) avg = (pos + neg) / 2
     else if (pos != null) avg = pos
     else if (neg != null) avg = neg
-    if (avg == null) return 20
-    return 30 + 60 * avg // 最小30，最大90
+    if (avg == null) return 40
+    return 60 + 120 * avg // 最小30，最大90
+}
+
+function wrapLabelText(text, width, zoomFactor = 0.05) {
+    if (!text) return ''
+    const scaledWidth = Math.floor(width * zoomFactor)
+    if (scaledWidth < 1) return text
+
+    // 将文本每 scaledWidth 个字符分隔成一行
+    const regex = new RegExp(`.{1,${scaledWidth}}`, 'g')
+    const lines = text.match(regex) || []
+
+    // 以最大行数限制，当行数超过时，最后一行添加省略号
+    const maxLines = 2
+    if (lines.length > maxLines) {
+        lines[maxLines - 1] = lines[maxLines - 1] + '…'
+        return lines.slice(0, maxLines).join('\n')
+    }
+    return lines.join('\n')
 }
 
 onMounted(() => {
@@ -48,17 +66,18 @@ onMounted(() => {
                 {
                     selector: 'node',
                     style: {
-                        'background-color': ele => ele.data('logic_type') === 'and' ? '#4f8cff' : '#00b894',
-                        'label': 'data(label)',
+                        'background-color': ele => ele.data('logic_type') === 'and' ? '#809fff' : '#ffafe7',
+                        'label': ele => wrapLabelText(ele.data('label'), getNodeSize(ele)),
                         'width': ele => getNodeSize(ele),
                         'height': ele => getNodeSize(ele),
                         'font-size': 14,
                         'color': '#222',
                         'text-valign': 'center',
                         'text-halign': 'center',
-                        'border-width': 2,
-                        'border-color': ele => ele.data('node_type') === 'solid' ? '#222' : '#bbb',
-                        'opacity': 0.95
+                        // 'border-width': 2,
+                        // 'border-color': ele => ele.data('node_type') === 'solid' ? '#222' : '#bbb',
+                        'opacity': 0.95,
+                        'text-wrap': 'wrap'
                     }
                 },
                 {
@@ -82,6 +101,7 @@ onMounted(() => {
                 const data = { ...evt.target.data() }
                 delete data.relationship
                 delete data.label
+                delete data.score
                 selectedNodeData.value = data
                 // 计算元数据栏位置
                 const pos = evt.position || evt.target.position()

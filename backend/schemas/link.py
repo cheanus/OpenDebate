@@ -23,6 +23,7 @@ class LinkRequest(BaseModel):
 
 
 class InfoLinkResponse(MsgResponse):
+    id: str | None = None
     from_id: str | None = None
     to_id: str | None = None
     link_type: LinkType | None = None
