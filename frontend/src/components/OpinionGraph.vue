@@ -9,8 +9,11 @@
 </template>
 
 <script setup>
+
 import { ref, onMounted, watch, nextTick } from 'vue'
 import cytoscape from 'cytoscape'
+import dagre from 'cytoscape-dagre'
+cytoscape.use(dagre)
 
 const props = defineProps({
     elements: Array, // [{ data: { id, label, ... }, classes: '' }, ...]
@@ -61,7 +64,15 @@ onMounted(() => {
         cy = cytoscape({
             container: cyContainer.value,
             elements: props.elements,
-            layout: props.layout || { name: 'breadthfirst', directed: true, padding: 10 },
+            layout: props.layout || {
+                name: 'dagre',
+                rankDir: 'BT', // top-bottom
+                nodeSep: 50,
+                edgeSep: 10,
+                rankSep: 80,
+                fit: true,
+                padding: 50
+            },
             style: [
                 {
                     selector: 'node',
@@ -74,8 +85,8 @@ onMounted(() => {
                         'color': '#222',
                         'text-valign': 'center',
                         'text-halign': 'center',
-                        // 'border-width': 2,
-                        // 'border-color': ele => ele.data('node_type') === 'solid' ? '#222' : '#bbb',
+                        'border-width': ele => ele.data('has_more_children') ? 6 : 0,
+                        'border-color': '#bbb',
                         'opacity': 0.95,
                         'text-wrap': 'wrap'
                     }
@@ -105,9 +116,12 @@ onMounted(() => {
                 selectedNodeData.value = data
                 // 计算元数据栏位置
                 const pos = evt.position || evt.target.position()
+                const containerRect = cyContainer.value.getBoundingClientRect()
+                const zoom = cy.zoom()
+                const pan = cy.pan()
                 metaPanelStyle.value = {
-                    left: `${pos.x + 40}px`,
-                    top: `${pos.y}px`
+                    left: `${containerRect.left + (pos.x * zoom + pan.x) + 40}px`,
+                    top: `${containerRect.top + (pos.y * zoom + pan.y)}px`
                 }
                 tapTimer = null
             }, 300) // 调整延时毫秒数以匹配双击间隔
@@ -134,7 +148,16 @@ onMounted(() => {
 watch(() => props.elements, (newEls) => {
     if (cy) {
         cy.json({ elements: newEls })
-        cy.layout(props.layout || { name: 'breadthfirst', directed: true, padding: 10 }).run()
+        const layoutConfig = props.layout || {
+            name: 'dagre',
+            rankDir: 'BT',
+            nodeSep: 50,
+            edgeSep: 10,
+            rankSep: 80,
+            fit: true,
+            padding: 50
+        }
+        cy.layout(layoutConfig).run()
     }
 })
 </script>
