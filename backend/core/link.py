@@ -19,6 +19,19 @@ def create_link(
     :return: Link ID
     """
     try:
+        if from_id == to_id:
+            raise ValueError("Cannot create a link from a node to itself.")
+        # 检查是否会形成环
+        # 检查从to_id是否可达from_id，如果可达则加边会成环
+        cycle_query = """
+        MATCH (start:Opinion {uid: $to_id}), (end:Opinion {uid: $from_id})
+        MATCH path = shortestPath((start)-[:supports|opposes*1..100]->(end))
+        RETURN COUNT(path) > 0 AS has_cycle
+        """
+        results, _ = db.cypher_query(cycle_query, {"from_id": from_id, "to_id": to_id})
+        if results and results[0][0]:
+            raise ValueError("Adding this link would create a cycle in the graph.")
+
         from_opinion = OpinionNeo4j.nodes.get(uid=from_id)
         to_opinion = OpinionNeo4j.nodes.get(uid=to_id)
 
