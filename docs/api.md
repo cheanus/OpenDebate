@@ -21,6 +21,14 @@
 }
 ```
 
+返回debate_id。
+
+```json
+{
+  "id": "xxx"
+}
+```
+
 ### ❌ 删除辩论
 
 `POST /debate/delete`
@@ -116,6 +124,14 @@
 `logic_type`可选，默认为or。
 `is_llm_score`可选，默认为false，表示该观点不自动调用LLM生成分数。
 
+返回示例：
+
+```json
+{
+  "id": "xxx"
+}
+```
+
 ### ➕ 添加单个与观点
 
 `POST /opinion/create_and`  
@@ -134,6 +150,14 @@
 
 `parent_id`是父观点，`son_ids`是子观点列表。
 `debate_id`可选，代表新观点放在哪个辩论里，默认为空代表**全辩论**。
+
+返回示例：
+
+```json
+{
+  "id": "xxx"
+}
+```
 
 ### ❌ 删除辩论中的单个观点及其所有链
 
@@ -212,6 +236,28 @@
 ]
 ```
 
+### 🔍 查询观点的叶或根节点
+
+`POST /opinion/head`
+**Body**
+```json
+{
+  "debate_id": "xxx",
+  "is_leaf": true
+}
+```
+
+返回该观点的所有叶节点（即没有子观点的观点）或根节点的id列表，示例：
+
+```json
+{
+  "data": [
+    "xxx",
+    "yyy",
+  ]
+}
+```
+
 ### ✏️ 修改观点信息（包括LLM赋分）
 
 `POST/opinion/patch`  
@@ -221,13 +267,16 @@
 {
   "id": "xxx",
   "content": "修改后的观点内容",
-  "positive_socre": 0.8,
+  "score": {
+    "positive": 0.8
+  },
   "is_llm_score": false,
   "creator": "user1",
 }
 ```
 
 `id`必选，其他可选。
+`score`可选，只能包含`positive`键，表示新的正证分数，其值为浮点数或`None`（表示不提供分数）。
 `is_llm_score`默认false，若true则`score`无效，后端会自己调用LLM生成分数。
 
 ---

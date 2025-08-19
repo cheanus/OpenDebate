@@ -1,6 +1,6 @@
 from pytest import approx
 from core.debate import create_debate
-from core.opinion import create_or_opinion, create_and_opinion, info_opinion
+from core.opinion import create_or_opinion, create_and_opinion, info_opinion, patch_opinion
 from core.link import create_link, attack_link
 from core.db_life import init_db, close_db
 from schemas.link import LinkType
@@ -43,13 +43,17 @@ def positive_test(debate_id: str, op_root: str):
     op_1pos1pos2 = create_or_opinion(
         content="未知带来快乐",
         creator="test_user",
-        positive_score=0.2,
+        # positive_score=0.2,
         debate_id=debate_id,
     )
     create_link(
         from_id=op_1pos1pos2,
         to_id=op_1pos1,
         link_type=LinkType.SUPPORT,
+    )
+    patch_opinion(
+        opinion_id=op_1pos1pos2,
+        score={"positive": 0.2},
     )
 
     op_1pos2pos1 = create_or_opinion(

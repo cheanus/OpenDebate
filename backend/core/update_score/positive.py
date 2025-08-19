@@ -18,18 +18,18 @@ def update_node_score_positively_from(opinion_id: str, is_refresh: bool = False)
     opinion_neo4j = OpinionNeo4j.nodes.get(uid=opinion_id)
 
     new_positive_score = opinion_neo4j.positive_score
-    if is_refresh:
-        new_positive_score = None
 
     for related_opinion in opinion_neo4j.supports:
         update_node_score_positively_recursively(
             related_opinion.uid,
             {"positive": new_positive_score},
+            is_refresh=is_refresh,
         )
     for related_opinion in opinion_neo4j.opposes:
         update_node_score_positively_recursively(
             related_opinion.uid,
             {"negative": new_positive_score},
+            is_refresh=is_refresh,
         )
 
 
@@ -37,6 +37,7 @@ def update_node_score_positively_from(opinion_id: str, is_refresh: bool = False)
 def update_node_score_positively_recursively(
     opinion_id: str,
     new_score: dict[str, float | None],
+    is_refresh: bool = False,
 ):
     """
     Recursively update the scores of a node positively.
@@ -45,6 +46,7 @@ def update_node_score_positively_recursively(
         opinion_id (str): The ID of the root node to update.
         new_score (dict[str, float | None]): A dictionary containing the new scores.
             It can contain "positive" and/or "negative" keys with their respective scores.
+        is_refresh (bool): If True, the scores of son nodes will be refreshed.
     """
     opinion_neo4j = OpinionNeo4j.nodes.get(uid=opinion_id)
     new_positive_score = new_score.get(ScoreType.POSITIVE, None)
@@ -61,7 +63,7 @@ def update_node_score_positively_recursively(
 
     # Update the con negative score
     if "negative" in new_score:
-        if new_negative_score is None:
+        if is_refresh or new_negative_score is None:
             is_updated |= refresh_son_type_score(opinion_id, score_type="negative")
         elif (
             opinion_neo4j.son_negative_score is None
@@ -69,10 +71,11 @@ def update_node_score_positively_recursively(
         ):
             is_updated = True
             opinion_neo4j.son_negative_score = new_negative_score
+            opinion_neo4j.save()
 
     # Update the con positive score
     if "positive" in new_score:
-        if new_positive_score is None:
+        if is_refresh or new_positive_score is None:
             is_updated |= refresh_son_type_score(opinion_id, score_type="positive")
         elif (
             opinion_neo4j.son_positive_score is None
@@ -83,8 +86,10 @@ def update_node_score_positively_recursively(
         ):
             is_updated = True
             opinion_neo4j.son_positive_score = new_positive_score
+            opinion_neo4j.save()
 
     if is_updated:
+        opinion_neo4j = OpinionNeo4j.nodes.get(uid=opinion_id)
         # calculate the new score and update related opinions
         next_new_score = avg_of_list(
             [

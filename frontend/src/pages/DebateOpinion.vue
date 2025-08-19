@@ -17,7 +17,6 @@ const debateId = route.params.id
 const elements = ref([])
 const loadedNodes = ref(new Set())
 const loadedEdges = ref(new Set())
-const nodeChildren = ref([])
 const maxUpdatedSon = ref(5)
 const numClickUpdatedSon = ref(5)
 
@@ -38,13 +37,22 @@ onMounted(() => {
 })
 
 async function loadInitialNodes() {
-    // 加载本辩论最早的观点节点
-    const res = await fetch(`/api/opinion/query?debate_id=${debateId}&is_time_accending=true&max_num=1`)
-    const data = await res.json()
-    if (data?.data?.length) {
-        const root = data.data[0]
-        await addNode(root)
-        await loadChildren(root.id, maxUpdatedSon.value)
+    // 先加载所有叶节点
+    const res = await fetch(`/api/opinion/head`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ debate_id: debateId, is_leaf: true })
+    });
+    const leafData = await res.json();
+    if (leafData?.data && leafData.data.length) {
+        for (const leafId of leafData.data) {
+            const nodeRes = await fetch(`/api/opinion/info?opinion_id=${leafId}&debate_id=${debateId}`);
+            const nodeData = await nodeRes.json();
+            if (nodeData?.data) {
+                await addNode(nodeData.data);
+                await loadChildren(nodeData.data.id, maxUpdatedSon.value);
+            }
+        }
     }
 }
 
@@ -81,7 +89,9 @@ async function addNode(node, hasMore = null) {
 }
 
 function addEdge(edge) {
+    // 检测这条边是否已经存在
     if (loadedEdges.value.has(edge.id)) return
+    // 添加边到元素列表
     elements.value = [
         ...elements.value,
         {
@@ -125,17 +135,14 @@ async function loadChildren(parentId, num) {
     })
     // 判断是否还有未加载的子节点
     const hasMore = pairs.length > num
-    // 移除父节点已经在nodeChildren中的id
-    nodeChildren.value = nodeChildren.value.filter(id => id !== parentId)
     // 加载未存在的子节点直到达到num个
     let addedCount = 0
     for (let p of pairs) {
         if (addedCount >= num) break
-        if (loadedNodes.value.has(p.child.id)) continue
         // 添加新子节点
         await addNode(p.child)
-        nodeChildren.value.push(p.child.id)
         addEdge(p.link)
+        if (loadedNodes.value.has(p.child.id)) continue
         addedCount++
     }
     // 更新父节点的has_more_children属性

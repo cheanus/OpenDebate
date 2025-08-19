@@ -5,3 +5,5 @@ sqlalchemy
 neomodel>=4.0
 # black
 pytest
+openai
+httpx

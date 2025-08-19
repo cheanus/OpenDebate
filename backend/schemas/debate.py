@@ -8,6 +8,10 @@ class CreateDebateRequest(BaseModel):
     description: str | None = None
 
 
+class CreateDebateResponse(MsgResponse):
+    id: str | None = Field(None, description="ID of the created debate")
+
+
 class DeleteDebateRequest(BaseModel):
     id: str = Field(..., min_length=1)
 

@@ -30,7 +30,7 @@ def create_link_http(request: CreateLinkRequest):
         link_id = create_link(
             from_id=request.from_id, to_id=request.to_id, link_type=request.link_type
         )
-        return {"is_success": True, "link_id": link_id}
+        return {"is_success": True, "id": link_id}
     except Exception as e:
         return {"is_success": False, "error": str(e)}
 

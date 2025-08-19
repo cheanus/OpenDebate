@@ -15,7 +15,7 @@ class CreateLinkRequest(BaseModel):
 
 
 class CreateLinkResponse(MsgResponse):
-    link_id: str | None = None
+    id: str | None = None
 
 
 class LinkRequest(BaseModel):

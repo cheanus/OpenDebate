@@ -3,7 +3,6 @@ from typing import Annotated
 from schemas.db.neo4j import Opinion as OpinionNeo4j
 from schemas.debate import *
 from schemas.msg import MsgResponse
-from schemas.db.psql import model2dict
 from core.debate import (
     create_debate,
     delete_debate,
@@ -15,7 +14,7 @@ from core.debate import (
 router = APIRouter()
 
 
-@router.post("/create", response_model=MsgResponse)
+@router.post("/create", response_model=CreateDebateResponse)
 def create_debate_http(request: CreateDebateRequest):
     title = request.title
     creator = request.creator
@@ -23,8 +22,8 @@ def create_debate_http(request: CreateDebateRequest):
 
     # 调用核心函数实现逻辑
     try:
-        create_debate(title, creator, description)
-        result = {"is_success": True}
+        id = create_debate(title, creator, description)
+        result = {"is_success": True, "id": id}
     except Exception as e:
         result = {"is_success": False, "error": str(e)}
 

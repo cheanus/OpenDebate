@@ -8,13 +8,14 @@ from core.opinion import (
     delete_opinion,
     info_opinion,
     query_opinion,
+    head_opinion,
     patch_opinion,
 )
 
 router = APIRouter()
 
 
-@router.post("/create_or", response_model=MsgResponse)
+@router.post("/create_or", response_model=CreateOpinionResponse)
 def create_or_opinion_http(request: CreateOrOpinionRequest):
     if request.is_llm_score:
         try:
@@ -22,7 +23,7 @@ def create_or_opinion_http(request: CreateOrOpinionRequest):
         except Exception as e:
             return {"is_success": False, "error": str(e)}
     try:
-        create_or_opinion(
+        id = create_or_opinion(
             content=request.content,
             creator=request.creator,
             host="local",
@@ -30,17 +31,17 @@ def create_or_opinion_http(request: CreateOrOpinionRequest):
             positive_score=request.positive_score,
             debate_id=request.debate_id,
         )
-        result = {"is_success": True}
+        result = {"is_success": True, "id": id}
     except Exception as e:
         result = {"is_success": False, "error": str(e)}
 
     return result
 
 
-@router.post("/create_and", response_model=MsgResponse)
+@router.post("/create_and", response_model=CreateOpinionResponse)
 def create_and_opinion_http(request: CreateAndOpinionRequest):
     try:
-        create_and_opinion(
+        id = create_and_opinion(
             parent_id=request.parent_id,
             son_ids=request.son_ids,
             link_type=request.link_type,
@@ -48,7 +49,7 @@ def create_and_opinion_http(request: CreateAndOpinionRequest):
             host="local",
             debate_id=request.debate_id,
         )
-        result = {"is_success": True}
+        result = {"is_success": True, "id": id}
     except Exception as e:
         result = {"is_success": False, "error": str(e)}
 
@@ -109,12 +110,31 @@ def query_opinion_http(filter_query: Annotated[QueryOpinionRequest, Query()]):
         }
 
 
+@router.post("/head", response_model=HeadOpinionResponse)
+def head_opinion_http(request: HeadOpinionRequest):
+    try:
+        result = head_opinion(
+            debate_id=request.debate_id,
+            is_leaf=request.is_leaf,
+        )
+        return {
+            "is_success": True,
+            "data": result,
+        }
+    except Exception as e:
+        return {
+            "is_success": False,
+            "msg": str(e),
+        }
+
+
 @router.post("/patch", response_model=MsgResponse)
 def patch_opinion_http(request: PatchOpinionRequest):
     try:
         patch_opinion(
             opinion_id=request.id,
             content=request.content,
+            score=request.score,
             is_llm_score=request.is_llm_score,
             creator=request.creator,
         )
