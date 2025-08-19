@@ -7,7 +7,7 @@ DOC_PATH = "/home/test/Documents/个人/辩驳.txt"
 BACKEND_URL = "http://localhost:3142/api"
 MODEL = "deepseek-chat"
 BASE_URL = "https://api.deepseek.com"
-API_KEY = "sk-0bccf453ee5c487091487d21ed40b9eb"
+API_KEY = "sk-***"
 
 
 def chat(prompt, client: OpenAI) -> str:

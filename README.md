@@ -1,0 +1,85 @@
+# 辩织 & OpenDebate：民主化的开放辩论平台
+
+欢迎来到**辩织（OpenDebate）**，一款基于算法与可视化的辩论图应用。我们相信，真正的真理诞生于公开、公平的观点碰撞，而机器算法是助力理性辩论的关键。
+
+## 哲学
+
+- 观念独立于人
+- 辩论只能是手段，真理必须是目的
+- 一切皆观点
+- 观点唯一性
+- 辩论必须借助机器算法的客观性
+- 算法开源，辩论民主
+
+## 宣言
+
+相比于高度发达的信息时代，人类当前获取真理的效率低得令人发指。
+
+至少三千年前书籍就已被发明，两千年前造纸术的诞生开启了文明大范围对话的时代，近一个世纪信息技术的快速发展让观点的大规模碰撞成为可能……
+
+可是我们在几千年里干了些什么？颠倒黑白、党同伐异、异端倾轧、愚弄众人……
+
+我们又给出了什么解决方案呢？公开辩论、引文制度、论坛管理、问答平台……
+
+无论是互联网还是现实世界，每个角落都充斥着令人发指的逻辑谬误与偏见。OpenDebate 将颠覆传统，让算法与群体智慧相融合，真正实现公开、公平、公正的真理探索。
+
+在这里，每一个声音都被尊重，每一次论证都被严谨审视，真理不再遥不可及。
+
+## 功能亮点
+
+- 支持多辩论主题管理与全局观点视图
+- 完善的增删查改 API：辩论 (Debate)、观点 (Opinion)、关联 (Link)
+- 实时可视化辩论图，支持“与/或”逻辑关系
+- 后端基于 FastAPI、PostgreSQL 与 Neo4j，前端采用 Vue.js + Vite
+- 开源透明，社区协作，共同进化
+
+## 技术栈
+
+- 后端：Python · FastAPI · PostgreSQL · Neo4j
+- 前端：Vue.js · Vite · JavaScript
+- 部署：Docker · docker-compose
+
+## 快速开始
+
+```bash
+# 克隆项目
+git clone https://github.com/cheanus/OpenDebate.git
+cd OpenDebate
+```
+
+### 1. 手动部署
+```bash
+# 后端启动
+cd backend
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+python main.oy
+
+# 前端启动
+cd ../frontend
+pnpm install
+pnpm dev
+```
+
+### 2. 使用 Docker 部署
+```bash
+cd docker
+# 构建并启动容器
+docker-compose up --build -d
+```
+
+访问 http://localhost:3141 即可体验。
+
+## TODO
+
+本项目仍处初步阶段，未来计划：
+
+- [ ] 实现分布式部署联动
+- [ ] 增加用户认证与权限管理
+- [ ] 支持多语言界面
+- [ ] 优化算法与可视化效果
+
+## 参与贡献
+
+欢迎提交 Issue、PR，让我们一起重塑辩论的未来！

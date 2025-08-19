@@ -141,7 +141,7 @@
 {
   "parent_id": "xxx",
   "son_ids": ["yyy", "zzz"],
-  "link_type": "support",
+  "link_type": "supports",
   "creator": "user1",
   "host": "local",
   "debate_id": "xxx"
@@ -196,7 +196,7 @@
       "negative": 0.3
     },
     "relationship": {
-      "support": ["link_id1", "link_id2"],
+      "supports": ["link_id1", "link_id2"],
       "opposes": ["link_id3"],
       "supported_by": ["link_id4"],
       "opposed_by": ["link_id5"]
@@ -292,7 +292,7 @@
 {
   "from_id": "xxx",
   "to_id": "yyy",
-  "link_type": "support",
+  "link_type": "supports",
 }
 ```
 
@@ -327,7 +327,7 @@
   "id": "xxx",
   "from_id": "opinion1",
   "to_id": "opinion2",
-  "link_type": "support"
+  "link_type": "supports"
 }
 ```
 
@@ -339,7 +339,7 @@
 ```json
 {
   "id": "xxx",
-  "link_type": "support",
+  "link_type": "supports",
 }
 ```
 
