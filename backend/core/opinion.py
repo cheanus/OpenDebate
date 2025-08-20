@@ -118,14 +118,16 @@ def create_and_opinion(
         new_opinion_neo4j.positive_score = new_opinion_neo4j.son_positive_score
         new_opinion_neo4j.save()
         update_score.update_node_score_positively_from(str(new_opinion_psql.id))
+        ## No need to update negative score here, as it will be updated in update_node_score_positively_from above
+        ## And here new_opinion_neo4j.negative_score is None by default
         # Update negative score for AND opinion
-        min_son_opinions = OpinionNeo4j.nodes.filter(
-            uid__in=son_ids, positive_score=new_opinion_neo4j.son_positive_score
-        ).all()
-        for min_son_opinion in min_son_opinions:
-            update_score.update_node_score_negatively_recursively(
-                min_son_opinion.uid, new_opinion_neo4j.negative_score
-            )
+        # min_son_opinions = OpinionNeo4j.nodes.filter(
+        #     uid__in=son_ids, positive_score=new_opinion_neo4j.son_positive_score
+        # ).all()
+        # for min_son_opinion in min_son_opinions:
+        #     update_score.update_node_score_negatively_recursively(
+        #         min_son_opinion.uid, new_opinion_neo4j.negative_score
+        #     )
     except Exception as e:
         raise RuntimeError(f"Failed to create opinion in Neo4j: {str(e)}")
 
