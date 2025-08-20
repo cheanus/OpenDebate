@@ -61,8 +61,9 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
+import type { Debate } from '@/types';
 
-const debates = ref([]);
+const debates = ref<Array<Debate>>([]);
 const search = ref({ title: '', creator: '' });
 const showCreate = ref(false);
 const showEdit = ref(false);
@@ -85,7 +86,7 @@ function closeModal() {
   form.value = { id: '', title: '', description: '', creator: '' };
 }
 
-function editDebate(debate) {
+function editDebate(debate: Debate) {
   form.value = { ...debate };
   showEdit.value = true;
 }
@@ -123,7 +124,7 @@ async function submitEdit() {
   }
 }
 
-async function deleteDebate(id) {
+async function deleteDebate(id: string) {
   if (!confirm('确定要删除该辩论吗？')) return;
   const res = await fetch('/api/debate/delete', {
     method: 'POST',

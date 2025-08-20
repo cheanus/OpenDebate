@@ -66,8 +66,8 @@ import LinkEditor from '../components/LinkEditor.vue';
 const route = useRoute();
 const debateId = route.params.id;
 const elements = ref([]);
-const loadedNodes = ref(new Set());
-const loadedEdges = ref(new Set());
+const loadedNodes = ref<Set<string>>(new Set());
+const loadedEdges = ref<Set<string>>(new Set());
 const maxUpdatedSon = ref(5);
 const numClickUpdatedSon = ref(5);
 

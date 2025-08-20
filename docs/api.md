@@ -36,7 +36,7 @@
 
 ```json
 {
-  "id": "xxx",
+  "id": "xxx"
 }
 ```
 
@@ -56,17 +56,17 @@
 返回示例：
 
 ```json
-[
+{
   "data": [
     {
       "id": "xxx",
       "title": "AI是否应拥有意识",
       "description": "探讨人工智能是否应该具备自主意识。",
       "created_at": 1700000000,
-      "creator": "user1",
+      "creator": "user1"
     }
   ]
-]
+}
 ```
 
 ### ✏️ 修改辩论信息
@@ -94,7 +94,7 @@
 ```json
 {
   "debate_id": "xxx",
-  "opinion_id": "xxx",
+  "opinion_id": "xxx"
 }
 ```
 
@@ -114,7 +114,7 @@
   "logic_type": "or",
   "is_llm_score": false,
   "creator": "user1",
-  "debate_id": "xxx",
+  "debate_id": "xxx"
 }
 ```
 
@@ -215,7 +215,7 @@
 返回示例：
 
 ```json
-[
+{
   "data": [
     {
       "id": "xxx",
@@ -231,7 +231,7 @@
       }
     }
   ]
-]
+}
 ```
 
 ### 🔍 查询观点的叶或根节点
@@ -251,7 +251,7 @@
 {
   "data": [
     "xxx",
-    "yyy",
+    "yyy"
   ]
 }
 ```
@@ -269,7 +269,7 @@
     "positive": 0.8
   },
   "is_llm_score": false,
-  "creator": "user1",
+  "creator": "user1"
 }
 ```
 
@@ -290,7 +290,7 @@
 {
   "from_id": "xxx",
   "to_id": "yyy",
-  "link_type": "supports",
+  "link_type": "supports"
 }
 ```
 
@@ -298,7 +298,7 @@
 
 ```json
 {
-  "id": "link_id",
+  "id": "link_id"
 }
 ```
 
@@ -310,7 +310,7 @@
 
 ```json
 {
-  "id": "xxx",
+  "id": "xxx"
 }
 ```
 
@@ -337,7 +337,7 @@
 ```json
 {
   "id": "xxx",
-  "link_type": "supports",
+  "link_type": "supports"
 }
 ```
 

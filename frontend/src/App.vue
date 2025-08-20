@@ -11,7 +11,7 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
 const router = useRouter();
-function goToDebate(id) {
+function goToDebate(id: string) {
   router.push(`/debate/${id}`);
 }
 </script>

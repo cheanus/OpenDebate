@@ -22,6 +22,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
+
 const maxUpdatedSon = ref(5);
 const numClickUpdatedSon = ref(5);
 
@@ -44,7 +45,8 @@ function saveSettings() {
       numClickUpdatedSon: numClickUpdatedSon.value,
     }),
   );
-  window.$message?.success?.('设置已保存');
+  // window.$message?.success?.('设置已保存');
+  alert('设置已保存');
 }
 </script>
 
