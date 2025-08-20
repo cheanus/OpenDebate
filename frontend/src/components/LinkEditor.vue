@@ -5,7 +5,7 @@
         <h3>{{ isEdit ? '编辑连接' : '创建连接' }}</h3>
         <button class="close-btn" @click="$emit('close')">&times;</button>
       </div>
-      
+
       <form @submit.prevent="submit" class="editor-form">
         <!-- 起始节点 -->
         <div class="form-group">
@@ -23,9 +23,9 @@
           <label for="to_id">目标观点 *</label>
           <select id="to_id" v-model="form.to_id" required>
             <option value="">请选择目标观点</option>
-            <option 
-              v-for="node in availableNodes" 
-              :key="node.id" 
+            <option
+              v-for="node in availableNodes"
+              :key="node.id"
               :value="node.id"
               :disabled="node.id === form.from_id"
             >
@@ -52,7 +52,7 @@
         <div class="form-actions">
           <button type="button" @click="$emit('close')" class="btn-cancel">取消</button>
           <button type="submit" class="btn-submit" :disabled="isSubmitting">
-            {{ isSubmitting ? '提交中...' : (isEdit ? '更新' : '创建') }}
+            {{ isSubmitting ? '提交中...' : isEdit ? '更新' : '创建' }}
           </button>
         </div>
       </form>
@@ -60,55 +60,59 @@
   </div>
 </template>
 
-<script setup>
-import { ref, watch } from 'vue'
+<script setup lang="ts">
+import { ref, watch } from 'vue';
 
 const props = defineProps({
   isEdit: Boolean,
   link: Object,
-  availableNodes: Array
-})
+  availableNodes: Array,
+});
 
-const emit = defineEmits(['close', 'submit'])
+const emit = defineEmits(['close', 'submit']);
 
 const form = ref({
   from_id: '',
   to_id: '',
-  link_type: 'supports'
-})
+  link_type: 'supports',
+});
 
-const isSubmitting = ref(false)
+const isSubmitting = ref(false);
 
 // 监听编辑模式下的连接数据变化
-watch(() => props.link, (newLink) => {
-  if (props.isEdit && newLink) {
-    form.value = {
-      from_id: newLink.from_id || '',
-      to_id: newLink.to_id || '',
-      link_type: newLink.link_type || 'supports'
+watch(
+  () => props.link,
+  (newLink) => {
+    if (props.isEdit && newLink) {
+      form.value = {
+        from_id: newLink.from_id || '',
+        to_id: newLink.to_id || '',
+        link_type: newLink.link_type || 'supports',
+      };
     }
-  }
-}, { immediate: true })
+  },
+  { immediate: true },
+);
 
 async function submit() {
-  if (isSubmitting.value) return
-  isSubmitting.value = true
+  if (isSubmitting.value) return;
+  isSubmitting.value = true;
 
   try {
-    const submitData = { ...form.value }
+    const submitData = { ...form.value };
     if (props.isEdit) {
-      submitData.id = props.link.id
+      submitData.id = props.link.id;
     }
-    
-    emit('submit', submitData)
+
+    emit('submit', submitData);
   } finally {
-    isSubmitting.value = false
+    isSubmitting.value = false;
   }
 }
 
 function closeIfClickOutside(event) {
   if (event.target.classList.contains('link-editor-overlay')) {
-    emit('close')
+    emit('close');
   }
 }
 </script>

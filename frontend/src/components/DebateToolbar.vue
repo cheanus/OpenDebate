@@ -7,19 +7,11 @@
           <span class="icon">+</span>
           添加观点
         </button>
-        <button 
-          @click="$emit('editOpinion')" 
-          :disabled="!selectedNode"
-          class="btn btn-secondary"
-        >
+        <button @click="$emit('editOpinion')" :disabled="!selectedNode" class="btn btn-secondary">
           <span class="icon">✎</span>
           编辑观点
         </button>
-        <button 
-          @click="$emit('deleteOpinion')" 
-          :disabled="!selectedNode"
-          class="btn btn-danger"
-        >
+        <button @click="$emit('deleteOpinion')" :disabled="!selectedNode" class="btn btn-danger">
           <span class="icon">×</span>
           删除观点
         </button>
@@ -33,19 +25,11 @@
           <span class="icon">↔</span>
           添加连接
         </button>
-        <button 
-          @click="$emit('editLink')" 
-          :disabled="!selectedEdge"
-          class="btn btn-secondary"
-        >
+        <button @click="$emit('editLink')" :disabled="!selectedEdge" class="btn btn-secondary">
           <span class="icon">✎</span>
           编辑连接
         </button>
-        <button 
-          @click="$emit('deleteLink')" 
-          :disabled="!selectedEdge"
-          class="btn btn-danger"
-        >
+        <button @click="$emit('deleteLink')" :disabled="!selectedEdge" class="btn btn-danger">
           <span class="icon">×</span>
           删除连接
         </button>
@@ -71,7 +55,10 @@
       <div class="selection-info">
         <div v-if="selectedNode">
           <strong>已选中观点:</strong>
-          <p>{{ selectedNode.content?.slice(0, 60) }}{{ selectedNode.content?.length > 60 ? '...' : '' }}</p>
+          <p>
+            {{ selectedNode.content?.slice(0, 60)
+            }}{{ selectedNode.content?.length > 60 ? '...' : '' }}
+          </p>
           <small>类型: {{ selectedNode.logic_type === 'and' ? '与观点' : '或观点' }}</small>
         </div>
         <div v-if="selectedEdge">
@@ -83,22 +70,22 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 defineProps({
   selectedNode: Object,
-  selectedEdge: Object
-})
+  selectedEdge: Object,
+});
 
 defineEmits([
   'addOpinion',
-  'editOpinion', 
+  'editOpinion',
   'deleteOpinion',
   'addLink',
   'editLink',
   'deleteLink',
   'refreshView',
-  'fitToScreen'
-])
+  'fitToScreen',
+]);
 </script>
 
 <style scoped>

@@ -5,7 +5,7 @@
         <h3>{{ isEdit ? '编辑观点' : '创建观点' }}</h3>
         <button class="close-btn" @click="$emit('close')">&times;</button>
       </div>
-      
+
       <form @submit.prevent="submit" class="editor-form">
         <!-- 观点类型 -->
         <div class="form-group">
@@ -25,9 +25,9 @@
         <!-- 观点内容 -->
         <div class="form-group" v-if="form.logic_type === 'or'">
           <label for="content">观点内容 *</label>
-          <textarea 
-            id="content" 
-            v-model="form.content" 
+          <textarea
+            id="content"
+            v-model="form.content"
             placeholder="请输入观点内容..."
             rows="4"
             required
@@ -45,14 +45,14 @@
               </option>
             </select>
           </div>
-          
+
           <div class="form-group">
             <label>子观点</label>
             <div class="checkbox-group">
               <label v-for="node in availableNodes" :key="node.id">
-                <input 
-                  type="checkbox" 
-                  :value="node.id" 
+                <input
+                  type="checkbox"
+                  :value="node.id"
                   v-model="form.son_ids"
                   :disabled="node.id === form.parent_id"
                 />
@@ -79,12 +79,12 @@
         <!-- 正证分数 -->
         <div class="form-group" v-if="form.logic_type === 'or'">
           <label for="positive_score">正证分数 (0-1)</label>
-          <input 
-            type="number" 
-            id="positive_score" 
-            v-model.number="form.positive_score" 
-            min="0" 
-            max="1" 
+          <input
+            type="number"
+            id="positive_score"
+            v-model.number="form.positive_score"
+            min="0"
+            max="1"
             step="0.01"
             placeholder="可选，如0.7"
           />
@@ -101,10 +101,10 @@
         <!-- 创建者 -->
         <div class="form-group">
           <label for="creator">创建者 *</label>
-          <input 
-            type="text" 
-            id="creator" 
-            v-model="form.creator" 
+          <input
+            type="text"
+            id="creator"
+            v-model="form.creator"
             placeholder="请输入创建者名称"
             required
           />
@@ -113,7 +113,7 @@
         <div class="form-actions">
           <button type="button" @click="$emit('close')" class="btn-cancel">取消</button>
           <button type="submit" class="btn-submit" :disabled="isSubmitting">
-            {{ isSubmitting ? '提交中...' : (isEdit ? '更新' : '创建') }}
+            {{ isSubmitting ? '提交中...' : isEdit ? '更新' : '创建' }}
           </button>
         </div>
       </form>
@@ -121,17 +121,17 @@
   </div>
 </template>
 
-<script setup>
-import { ref, watch, onMounted } from 'vue'
+<script setup lang="ts">
+import { ref, watch, onMounted } from 'vue';
 
 const props = defineProps({
   isEdit: Boolean,
   opinion: Object,
   debateId: String,
-  availableNodes: Array
-})
+  availableNodes: Array,
+});
 
-const emit = defineEmits(['close', 'submit'])
+const emit = defineEmits(['close', 'submit']);
 
 const form = ref({
   logic_type: 'or',
@@ -141,73 +141,77 @@ const form = ref({
   link_type: 'supports',
   positive_score: null,
   is_llm_score: false,
-  creator: ''
-})
+  creator: '',
+});
 
-const isSubmitting = ref(false)
+const isSubmitting = ref(false);
 
 // 监听编辑模式下的观点数据变化
-watch(() => props.opinion, (newOpinion) => {
-  if (props.isEdit && newOpinion) {
-    form.value = {
-      logic_type: newOpinion.logic_type || 'or',
-      content: newOpinion.content || '',
-      parent_id: '',
-      son_ids: [],
-      link_type: 'supports',
-      positive_score: newOpinion.score?.positive || null,
-      is_llm_score: false,
-      creator: newOpinion.creator || ''
+watch(
+  () => props.opinion,
+  (newOpinion) => {
+    if (props.isEdit && newOpinion) {
+      form.value = {
+        logic_type: newOpinion.logic_type || 'or',
+        content: newOpinion.content || '',
+        parent_id: '',
+        son_ids: [],
+        link_type: 'supports',
+        positive_score: newOpinion.score?.positive || null,
+        is_llm_score: false,
+        creator: newOpinion.creator || '',
+      };
     }
-  }
-}, { immediate: true })
+  },
+  { immediate: true },
+);
 
 async function submit() {
-  if (isSubmitting.value) return
-  isSubmitting.value = true
+  if (isSubmitting.value) return;
+  isSubmitting.value = true;
 
   try {
-    const submitData = { ...form.value }
+    const submitData = { ...form.value };
     if (props.debateId) {
-      submitData.debate_id = props.debateId
+      submitData.debate_id = props.debateId;
     }
-    
+
     if (props.isEdit) {
-      submitData.id = props.opinion.id
+      submitData.id = props.opinion.id;
       // 编辑时只发送修改的字段
       const patchData = {
         id: props.opinion.id,
         content: form.value.content,
-        creator: form.value.creator
-      }
+        creator: form.value.creator,
+      };
       if (form.value.positive_score !== null) {
-        patchData.score = { positive: form.value.positive_score }
+        patchData.score = { positive: form.value.positive_score };
       }
       if (form.value.is_llm_score) {
-        patchData.is_llm_score = true
+        patchData.is_llm_score = true;
       }
-      
-      emit('submit', patchData)
+
+      emit('submit', patchData);
     } else {
-      emit('submit', submitData)
+      emit('submit', submitData);
     }
   } finally {
-    isSubmitting.value = false
+    isSubmitting.value = false;
   }
 }
 
 function closeIfClickOutside(event) {
   if (event.target.classList.contains('opinion-editor-overlay')) {
-    emit('close')
+    emit('close');
   }
 }
 
 onMounted(() => {
   // 默认创建者可以从localStorage获取或设为默认值
   if (!form.value.creator) {
-    form.value.creator = localStorage.getItem('default_creator') || 'user'
+    form.value.creator = localStorage.getItem('default_creator') || 'user';
   }
-})
+});
 </script>
 
 <style scoped>

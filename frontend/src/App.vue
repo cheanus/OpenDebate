@@ -8,11 +8,11 @@
   </div>
 </template>
 
-<script setup>
-import { useRouter } from 'vue-router'
-const router = useRouter()
+<script setup lang="ts">
+import { useRouter } from 'vue-router';
+const router = useRouter();
 function goToDebate(id) {
-  router.push(`/debate/${id}`)
+  router.push(`/debate/${id}`);
 }
 </script>
 
@@ -31,7 +31,7 @@ function goToDebate(id) {
   background: var(--card-bg);
   border-bottom: 1px solid var(--border);
   margin-bottom: 32px;
-  box-shadow: 0 2px 8px rgba(30,41,59,0.03);
+  box-shadow: 0 2px 8px rgba(30, 41, 59, 0.03);
 }
 
 .main-nav a {
@@ -41,7 +41,9 @@ function goToDebate(id) {
   font-size: 20px;
   letter-spacing: 0.02em;
   padding: 4px 0;
-  transition: color 0.2s, border-bottom 0.2s;
+  transition:
+    color 0.2s,
+    border-bottom 0.2s;
   border-bottom: 2px solid transparent;
 }
 .main-nav a.router-link-exact-active {
