@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from routers import debate, opinion, link
-from config import CORS_ALLOW_ORIGIN, LOG_LEVEL
+from config_private import CORS_ALLOW_ORIGIN, LOG_LEVEL
 from core.db_life import init_db, close_db
 import uvicorn.config
 import uvicorn

@@ -15,7 +15,12 @@ cd OpenDebate
 1. 创建 postgresql 新用户或使用现有用户
 2. 创建 postgresql 新数据库 `debatedb`
 3. 安装 Neo4j (community) 后设置用户名和密码
-4. 修改 [backend/config.py](../backend/config.py) 中的数据库连接信息，包括`NEO4J_URI`、`NEO4J_USER`、`NEO4J_PASSWORD`、`psql_config` 等。若使用默认配置，记得修改各数据库**端口号**。
+4. 创建 [backend/config.py](../backend/config.py) 副本`config_private.py`，添加数据库连接信息，包括`NEO4J_URI`、`NEO4J_USER`、`NEO4J_PASSWORD`、`psql_config` 等。若使用默认配置，记得修改各数据库**端口号**
+    ```bash
+    cd backend
+    cp config.py config_private.py
+    # 编辑 config_private.py
+    ```
 
 ## 后端启动
 ```bash

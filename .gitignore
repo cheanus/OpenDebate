@@ -2,3 +2,5 @@
 /frontend/pnpm-lock.yaml
 **/__pycache__/
 .idea/
+
+backend/config_private.py

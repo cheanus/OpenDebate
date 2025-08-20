@@ -2,7 +2,7 @@ from neomodel import config
 from contextlib import contextmanager
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
-from config import NEO4J_URI, NEO4J_USER, NEO4J_PASSWORD, psql_config
+from config_private import NEO4J_URI, NEO4J_USER, NEO4J_PASSWORD, psql_config
 from schemas.db.psql import DbBase
 
 psql_sessioner = None
