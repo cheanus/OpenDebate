@@ -112,11 +112,9 @@ async function submitEdit() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
             id: form.value.id,
-            patch: {
-                title: form.value.title,
-                description: form.value.description,
-                creator: form.value.creator
-            }
+            title: form.value.title,
+            description: form.value.description,
+            creator: form.value.creator
         })
     })
     if (res.ok) {

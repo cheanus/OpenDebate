@@ -1,5 +1,5 @@
 <template>
-    <div ref="cyContainer" class="cytoscape-container"></div>
+    <div ref="cyContainer" class="cytoscape-container" @contextmenu.prevent></div>
     <div v-if="selectedNode" class="meta-panel" :style="metaPanelStyle">
         <h3>节点元数据</h3>
         <div v-for="(v, k) in selectedNodeData" :key="k">

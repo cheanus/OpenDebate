@@ -77,11 +77,9 @@
 ```json
 {
   "id": "xxx",
-  "patch": {
-	  "title": "修改后的标题",
-	  "description": "新的描述",
-	  "creator": "user2"
-  }
+  "title": "修改后的标题",
+  "description": "新的描述",
+  "creator": "user2"
 }
 ```
 
