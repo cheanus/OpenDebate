@@ -44,32 +44,14 @@
 ```bash
 # 克隆项目
 git clone https://github.com/cheanus/OpenDebate.git
-cd OpenDebate
-```
-
-### 1. 手动部署
-```bash
-# 后端启动
-cd backend
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-python main.oy
-
-# 前端启动
-cd ../frontend
-pnpm install
-pnpm dev
-```
-
-### 2. 使用 Docker 部署
-```bash
-cd docker
+cd OpenDebate/docker
 # 构建并启动容器
-docker-compose up --build -d
+docker-compose up -d
 ```
 
 访问 http://localhost:3141 即可体验。
+
+其他安装方式请参考[手动安装](docs/man_install.md)。
 
 ## TODO
 
