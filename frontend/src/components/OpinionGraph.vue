@@ -79,12 +79,12 @@ import type { Element, GraphLayout, Node, Edge } from '@/types';
 import type { Core, NodeSingular, EdgeSingular, EventObject } from 'cytoscape';
 
 // 类型断言以避免cytoscape版本冲突
-cytoscape.use(dagre as any);
+cytoscape.use(dagre as any); // 保留 any: dagre 插件类型定义与当前 cytoscape 版本可能存在兼容问题
 
 interface Props {
   elements: Array<Element>; // [{ data: { id, label, ... }, classes: '' }, ...]
   layout?: GraphLayout;
-  styleOptions?: any;
+  styleOptions?: Record<string, unknown>; // 样式配置对象，具体结构依赖于cytoscape
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -103,7 +103,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<{
   nodeDblClick: [nodeData: Node];
-  viewportChanged: [extent: any];
+  viewportChanged: [extent: { x1: number; y1: number; x2: number; y2: number; w: number; h: number }]; // cytoscape extent 对象
   nodeSelected: [nodeData: Node | null];
   edgeSelected: [edgeData: Edge | null];
   contextMenuAction: [action: string];
@@ -112,9 +112,9 @@ const emit = defineEmits<{
 const cyContainer = ref<HTMLElement | null>(null);
 let cy: Core | null = null;
 const selectedNode = ref<NodeSingular | null>(null);
-const selectedNodeData = ref<Record<string, any>>({});
+const selectedNodeData = ref<Partial<Node>>({});
 const selectedEdge = ref<EdgeSingular | null>(null);
-const selectedEdgeData = ref<Record<string, any>>({});
+const selectedEdgeData = ref<Partial<Edge>>({});
 const metaPanelStyle = ref<Record<string, string>>({});
 const edgeMetaPanelStyle = ref<Record<string, string>>({});
 const showContextMenu = ref(false);
@@ -189,16 +189,16 @@ onMounted(() => {
         {
           selector: 'node',
           style: {
-            'background-color': (ele: any) =>
+            'background-color': (ele: NodeSingular) => // cytoscape 节点元素
               ele.data('logic_type') === 'and' ? '#809fff' : '#ffafe7',
-            label: (ele: any) => wrapLabelText(ele.data('label'), getNodeSize(ele)),
-            width: (ele: any) => getNodeSize(ele),
-            height: (ele: any) => getNodeSize(ele),
+            label: (ele: NodeSingular) => wrapLabelText(ele.data('label'), getNodeSize(ele)),
+            width: (ele: NodeSingular) => getNodeSize(ele),
+            height: (ele: NodeSingular) => getNodeSize(ele),
             'font-size': 14,
             color: '#222',
             'text-valign': 'center',
             'text-halign': 'center',
-            'border-width': (ele: any) => (ele.data('has_more_children') ? 6 : 0),
+            'border-width': (ele: NodeSingular) => (ele.data('has_more_children') ? 6 : 0),
             'border-color': '#bbb',
             opacity: 0.95,
             'text-wrap': 'wrap',
@@ -208,9 +208,9 @@ onMounted(() => {
           selector: 'edge',
           style: {
             width: 4,
-            'line-color': (ele: any) =>
+            'line-color': (ele: EdgeSingular) => // cytoscape 边元素
               ele.data('link_type') === 'supports' ? '#00b894' : '#e17055',
-            'target-arrow-color': (ele: any) =>
+            'target-arrow-color': (ele: EdgeSingular) =>
               ele.data('link_type') === 'supports' ? '#00b894' : '#e17055',
             'target-arrow-shape': 'triangle',
             'curve-style': 'bezier',

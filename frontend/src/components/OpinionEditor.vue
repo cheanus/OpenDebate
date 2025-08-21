@@ -147,6 +147,17 @@ const form = ref<OpinionFormData>({
 
 const isSubmitting = ref(false);
 
+// 定义编辑时的数据类型
+interface PatchOpinionData {
+  id: string;
+  content: string;
+  creator: string;
+  score?: {
+    positive: number;
+  };
+  is_llm_score?: boolean;
+}
+
 // 监听编辑模式下的观点数据变化
 watch(
   () => props.opinion,
@@ -180,7 +191,7 @@ async function submit() {
     if (props.isEdit) {
       submitData.id = props.opinion!.id;
       // 编辑时只发送修改的字段
-      const patchData: any = {
+      const patchData: PatchOpinionData = {
         id: props.opinion!.id,
         content: form.value.content,
         creator: form.value.creator,
