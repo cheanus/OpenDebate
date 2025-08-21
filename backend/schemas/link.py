@@ -36,7 +36,7 @@ class PatchLinkRequest(BaseModel):
 
 class AttackLinkRequest(BaseModel):
     link_id: str
-    debate_id: str
+    debate_id: str | None = None
 
 
 class AttackLinkResponse(MsgResponse):

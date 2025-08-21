@@ -171,7 +171,7 @@ def patch_link(link_id: str, link_type: LinkType):
         raise RuntimeError(f"Failed to patch link in Neo4j: {str(e)}")
 
 
-def attack_link(link_id: str, debate_id: str) -> tuple[str, str]:
+def attack_link(link_id: str, debate_id: str | None = None) -> tuple[str, str]:
     """
     Split a link into an AND opinion, and create another OR opinion to attack it.
 
