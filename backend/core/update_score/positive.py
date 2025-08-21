@@ -13,7 +13,7 @@ def update_node_score_positively_from(opinion_id: str, is_refresh: bool = False)
 
     Args:
         opinion_id (str): The ID of the root node to update.
-        is_refresh (bool): If True, the scores of son nodes will be refreshed.
+        is_refresh (bool): If True, the scores of parent nodes will be refreshed.
     """
     opinion_neo4j = OpinionNeo4j.nodes.get(uid=opinion_id)
 
@@ -46,7 +46,7 @@ def update_node_score_positively_recursively(
         opinion_id (str): The ID of the root node to update.
         new_score (dict[str, float | None]): A dictionary containing the new scores.
             It can contain "positive" and/or "negative" keys with their respective scores.
-        is_refresh (bool): If True, the scores of son nodes will be refreshed.
+        is_refresh (bool): If True, the scores of parent nodes will be refreshed.
     """
     opinion_neo4j = OpinionNeo4j.nodes.get(uid=opinion_id)
     new_positive_score = new_score.get(ScoreType.POSITIVE, None)
