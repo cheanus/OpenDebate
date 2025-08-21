@@ -62,7 +62,7 @@ import { useRoute } from 'vue-router';
 import OpinionGraph from '../components/OpinionGraph.vue';
 import OpinionEditor from '../components/OpinionEditor.vue';
 import LinkEditor from '../components/LinkEditor.vue';
-import type { Node, Element, Edge, OpinionFormData, LinkFormData, NodePair, ApiResponse } from '@/types';
+import type { Node, Element, Edge, OpinionFormData, LinkFormData } from '@/types';
 import type { Core } from 'cytoscape';
 
 const route = useRoute();
@@ -240,7 +240,7 @@ function updateNodeHasMore(nodeId: string, hasMore: boolean) {
 async function onNodeDblClick(nodeData: Node) {
   // 如果节点没有更多子节点，直接返回
   if (!nodeData.has_more_children) return;
-  
+
   // 双击加载更多子节点
   await loadChildren(nodeData.id, numClickUpdatedSon.value);
 }

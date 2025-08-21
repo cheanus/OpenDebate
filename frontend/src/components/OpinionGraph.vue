@@ -82,7 +82,7 @@ import type { Core, NodeSingular, EdgeSingular, EventObject } from 'cytoscape';
 cytoscape.use(dagre as any);
 
 interface Props {
-  elements: Array<Element>;  // [{ data: { id, label, ... }, classes: '' }, ...]
+  elements: Array<Element>; // [{ data: { id, label, ... }, classes: '' }, ...]
   layout?: GraphLayout;
   styleOptions?: any;
 }
@@ -189,7 +189,8 @@ onMounted(() => {
         {
           selector: 'node',
           style: {
-            'background-color': (ele: any) => (ele.data('logic_type') === 'and' ? '#809fff' : '#ffafe7'),
+            'background-color': (ele: any) =>
+              ele.data('logic_type') === 'and' ? '#809fff' : '#ffafe7',
             label: (ele: any) => wrapLabelText(ele.data('label'), getNodeSize(ele)),
             width: (ele: any) => getNodeSize(ele),
             height: (ele: any) => getNodeSize(ele),
@@ -207,7 +208,8 @@ onMounted(() => {
           selector: 'edge',
           style: {
             width: 4,
-            'line-color': (ele: any) => (ele.data('link_type') === 'supports' ? '#00b894' : '#e17055'),
+            'line-color': (ele: any) =>
+              ele.data('link_type') === 'supports' ? '#00b894' : '#e17055',
             'target-arrow-color': (ele: any) =>
               ele.data('link_type') === 'supports' ? '#00b894' : '#e17055',
             'target-arrow-shape': 'triangle',
