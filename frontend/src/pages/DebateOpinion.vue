@@ -62,8 +62,8 @@ import { useRoute } from 'vue-router';
 import OpinionGraph from '../components/OpinionGraph.vue';
 import OpinionEditor from '../components/OpinionEditor.vue';
 import LinkEditor from '../components/LinkEditor.vue';
-import type { Node, Element, Edge, OpinionFormData } from '@/types';
-import cytoscape from 'cytoscape';
+import type { Node, Element, Edge, OpinionFormData, LinkFormData, NodePair, ApiResponse } from '@/types';
+import type { Core } from 'cytoscape';
 
 const route = useRoute();
 const debateId = route.params.id as string;
@@ -76,7 +76,7 @@ const numClickUpdatedSon = ref(5);
 // 选中状态
 const selectedNodeData = ref<Node | null>(null);
 const selectedEdgeData = ref<Edge | null>(null);
-const opinionGraphRef = ref<{ cy: () => cytoscape.Core } | null>(null);
+const opinionGraphRef = ref<{ cy: () => Core } | null>(null);
 
 // 编辑器状态
 const showOpinionEditorDialog = ref(false);
@@ -237,26 +237,22 @@ function updateNodeHasMore(nodeId: string, hasMore: boolean) {
   });
 }
 
-async function onNodeDblClick(nodeData: Node, event: Event) {
+async function onNodeDblClick(nodeData: Node) {
   // 如果节点没有更多子节点，直接返回
   if (!nodeData.has_more_children) return;
-  // 阻止默认行为和冒泡，避免元数据栏弹出
-  if (event) {
-    event.preventDefault();
-    event.stopPropagation();
-  }
+  
   // 双击加载更多子节点
   await loadChildren(nodeData.id, numClickUpdatedSon.value);
 }
 
 // 处理节点选中
-function onNodeSelected(nodeData: Node) {
+function onNodeSelected(nodeData: Node | null) {
   selectedNodeData.value = nodeData;
   selectedEdgeData.value = null;
 }
 
 // 处理边选中
-function onEdgeSelected(edgeData: Edge) {
+function onEdgeSelected(edgeData: Edge | null) {
   selectedEdgeData.value = edgeData;
   selectedNodeData.value = null;
 }
@@ -424,7 +420,7 @@ async function handleOpinionSubmit(formData: OpinionFormData) {
 }
 
 // 处理连接提交
-async function handleLinkSubmit(formData: OpinionFormData) {
+async function handleLinkSubmit(formData: LinkFormData) {
   try {
     let url = '/api/link/create';
     const method = 'POST';

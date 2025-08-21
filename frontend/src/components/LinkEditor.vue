@@ -62,7 +62,7 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue';
-import type { Edge, Node } from '@/types';
+import type { Edge, Node, LinkFormData } from '@/types';
 
 const props = defineProps<{
   isEdit: boolean;
@@ -70,9 +70,12 @@ const props = defineProps<{
   availableNodes: Array<Node>;
 }>();
 
-const emit = defineEmits(['close', 'submit']);
+const emit = defineEmits<{
+  close: [];
+  submit: [data: LinkFormData];
+}>();
 
-const form = ref({
+const form = ref<LinkFormData>({
   from_id: '',
   to_id: '',
   link_type: 'supports',
@@ -111,8 +114,9 @@ async function submit() {
   }
 }
 
-function closeIfClickOutside(event) {
-  if (event.target.classList.contains('link-editor-overlay')) {
+function closeIfClickOutside(event: Event) {
+  const target = event.target as HTMLElement;
+  if (target.classList.contains('link-editor-overlay')) {
     emit('close');
   }
 }

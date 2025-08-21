@@ -178,10 +178,10 @@ async function submit() {
     }
 
     if (props.isEdit) {
-      submitData.id = props.opinion.id;
+      submitData.id = props.opinion!.id;
       // 编辑时只发送修改的字段
-      const patchData = {
-        id: props.opinion.id,
+      const patchData: any = {
+        id: props.opinion!.id,
         content: form.value.content,
         creator: form.value.creator,
       };
@@ -201,8 +201,9 @@ async function submit() {
   }
 }
 
-function closeIfClickOutside(event) {
-  if (event.target.classList.contains('opinion-editor-overlay')) {
+function closeIfClickOutside(event: Event) {
+  const target = event.target as HTMLElement;
+  if (target.classList.contains('opinion-editor-overlay')) {
     emit('close');
   }
 }

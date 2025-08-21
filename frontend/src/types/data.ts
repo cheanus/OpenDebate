@@ -66,10 +66,46 @@ export interface OpinionFormData {
   positive_score: number | null;
   is_llm_score: boolean;
   creator: string;
+  id?: string;
+  debate_id?: string;
+  score?: {
+    positive: number | null;
+  };
 }
 
 export interface LinkFormData {
   from_id: string;
   to_id: string;
   link_type: LinkType;
+  id?: string;
+}
+
+// 额外的类型定义
+export interface ContextMenuAction {
+  action: string;
+  nodeData?: Node;
+  edgeData?: Edge;
+}
+
+export interface NodePair {
+  child: Node;
+  link: Link;
+}
+
+// API 响应类型
+export interface ApiResponse<T = any> {
+  is_success: boolean;
+  data?: T;
+  msg?: string;
+}
+
+// 图形布局配置类型
+export interface GraphLayout {
+  name: string;
+  rankDir?: string;
+  nodeSep?: number;
+  edgeSep?: number;
+  rankSep?: number;
+  fit?: boolean;
+  padding?: number;
 }

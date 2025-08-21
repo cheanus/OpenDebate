@@ -75,36 +75,54 @@
 import { ref, onMounted, watch, nextTick } from 'vue';
 import cytoscape from 'cytoscape';
 import dagre from 'cytoscape-dagre';
+import type { Element, GraphLayout, Node, Edge } from '@/types';
+import type { Core, NodeSingular, EdgeSingular, EventObject } from 'cytoscape';
 
-cytoscape.use(dagre);
+// 类型断言以避免cytoscape版本冲突
+cytoscape.use(dagre as any);
 
-const props = defineProps({
-  elements: Array, // [{ data: { id, label, ... }, classes: '' }, ...]
-  layout: Object,
-  styleOptions: Object,
+interface Props {
+  elements: Array<Element>;  // [{ data: { id, label, ... }, classes: '' }, ...]
+  layout?: GraphLayout;
+  styleOptions?: any;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  elements: () => [],
+  layout: () => ({
+    name: 'dagre',
+    rankDir: 'BT',
+    nodeSep: 50,
+    edgeSep: 10,
+    rankSep: 80,
+    fit: true,
+    padding: 50,
+  }),
+  styleOptions: () => ({}),
 });
 
-const emit = defineEmits([
-  'nodeDblClick',
-  'viewportChanged',
-  'nodeSelected',
-  'edgeSelected',
-  'contextMenuAction',
-]);
-const cyContainer = ref(null);
-let cy: cytoscape.Core | null = null;
-const selectedNode = ref(null);
-const selectedNodeData = ref({});
-const selectedEdge = ref(null);
-const selectedEdgeData = ref({});
-const metaPanelStyle = ref({});
-const edgeMetaPanelStyle = ref({});
-const showContextMenu = ref(false);
-const contextMenuStyle = ref({});
-const contextMenuType = ref('');
-let tapTimer = null; // 新增延时定时器
+const emit = defineEmits<{
+  nodeDblClick: [nodeData: Node];
+  viewportChanged: [extent: any];
+  nodeSelected: [nodeData: Node | null];
+  edgeSelected: [edgeData: Edge | null];
+  contextMenuAction: [action: string];
+}>();
 
-function getNodeSize(node) {
+const cyContainer = ref<HTMLElement | null>(null);
+let cy: Core | null = null;
+const selectedNode = ref<NodeSingular | null>(null);
+const selectedNodeData = ref<Record<string, any>>({});
+const selectedEdge = ref<EdgeSingular | null>(null);
+const selectedEdgeData = ref<Record<string, any>>({});
+const metaPanelStyle = ref<Record<string, string>>({});
+const edgeMetaPanelStyle = ref<Record<string, string>>({});
+const showContextMenu = ref(false);
+const contextMenuStyle = ref<Record<string, string>>({});
+const contextMenuType = ref('');
+let tapTimer: number | null = null; // 新增延时定时器
+
+function getNodeSize(node: NodeSingular) {
   // 依据正证分、反证分平均值调整节点大小
   const pos = node.data('positive_score');
   const neg = node.data('negative_score');
@@ -116,7 +134,7 @@ function getNodeSize(node) {
   return 60 + 120 * avg; // 最小30，最大90
 }
 
-function wrapLabelText(text, width, zoomFactor = 0.05) {
+function wrapLabelText(text: string, width: number, zoomFactor = 0.05): string {
   if (!text) return '';
   const scaledWidth = Math.floor(width * zoomFactor);
   if (scaledWidth < 1) return text;
@@ -135,7 +153,7 @@ function wrapLabelText(text, width, zoomFactor = 0.05) {
 }
 
 // 处理右键菜单事件
-function showContextMenuAt(x, y, type /* targetData = null */) {
+function showContextMenuAt(x: number, y: number, type: string): void {
   showContextMenu.value = true;
   contextMenuType.value = type;
   contextMenuStyle.value = {
@@ -144,11 +162,11 @@ function showContextMenuAt(x, y, type /* targetData = null */) {
   };
 }
 
-function hideContextMenu() {
+function hideContextMenu(): void {
   showContextMenu.value = false;
 }
 
-function handleMenuAction(action) {
+function handleMenuAction(action: string): void {
   hideContextMenu();
   emit('contextMenuAction', action);
 }
@@ -171,15 +189,15 @@ onMounted(() => {
         {
           selector: 'node',
           style: {
-            'background-color': (ele) => (ele.data('logic_type') === 'and' ? '#809fff' : '#ffafe7'),
-            label: (ele) => wrapLabelText(ele.data('label'), getNodeSize(ele)),
-            width: (ele) => getNodeSize(ele),
-            height: (ele) => getNodeSize(ele),
+            'background-color': (ele: any) => (ele.data('logic_type') === 'and' ? '#809fff' : '#ffafe7'),
+            label: (ele: any) => wrapLabelText(ele.data('label'), getNodeSize(ele)),
+            width: (ele: any) => getNodeSize(ele),
+            height: (ele: any) => getNodeSize(ele),
             'font-size': 14,
             color: '#222',
             'text-valign': 'center',
             'text-halign': 'center',
-            'border-width': (ele) => (ele.data('has_more_children') ? 6 : 0),
+            'border-width': (ele: any) => (ele.data('has_more_children') ? 6 : 0),
             'border-color': '#bbb',
             opacity: 0.95,
             'text-wrap': 'wrap',
@@ -189,8 +207,8 @@ onMounted(() => {
           selector: 'edge',
           style: {
             width: 4,
-            'line-color': (ele) => (ele.data('link_type') === 'supports' ? '#00b894' : '#e17055'),
-            'target-arrow-color': (ele) =>
+            'line-color': (ele: any) => (ele.data('link_type') === 'supports' ? '#00b894' : '#e17055'),
+            'target-arrow-color': (ele: any) =>
               ele.data('link_type') === 'supports' ? '#00b894' : '#e17055',
             'target-arrow-shape': 'triangle',
             'curve-style': 'bezier',
@@ -213,7 +231,8 @@ onMounted(() => {
         selectedNodeData.value = data;
         // 计算元数据栏位置
         const pos = evt.position || evt.target.position();
-        const containerRect = cyContainer.value.getBoundingClientRect();
+        const containerRect = cyContainer.value?.getBoundingClientRect();
+        if (!containerRect || !cy) return;
         const zoom = cy.zoom();
         const pan = cy.pan();
         metaPanelStyle.value = {
@@ -243,7 +262,8 @@ onMounted(() => {
 
       // 显示右键菜单
       const pos = evt.renderedPosition;
-      const containerRect = cyContainer.value.getBoundingClientRect();
+      const containerRect = cyContainer.value?.getBoundingClientRect();
+      if (!containerRect) return;
       showContextMenuAt(containerRect.left + pos.x, containerRect.top + pos.y, 'node');
     });
 
@@ -258,7 +278,8 @@ onMounted(() => {
         selectedEdgeData.value = data;
         // 计算元数据栏位置
         const midpoint = evt.target.midpoint();
-        const containerRect = cyContainer.value.getBoundingClientRect();
+        const containerRect = cyContainer.value?.getBoundingClientRect();
+        if (!containerRect || !cy) return;
         const zoom = cy.zoom();
         const pan = cy.pan();
         edgeMetaPanelStyle.value = {
@@ -285,7 +306,8 @@ onMounted(() => {
 
       // 显示右键菜单
       const pos = evt.renderedPosition;
-      const containerRect = cyContainer.value.getBoundingClientRect();
+      const containerRect = cyContainer.value?.getBoundingClientRect();
+      if (!containerRect) return;
       showContextMenuAt(containerRect.left + pos.x, containerRect.top + pos.y, 'edge');
     });
 
@@ -317,7 +339,8 @@ onMounted(() => {
 
         // 显示画布右键菜单
         const pos = evt.renderedPosition;
-        const containerRect = cyContainer.value.getBoundingClientRect();
+        const containerRect = cyContainer.value?.getBoundingClientRect();
+        if (!containerRect) return;
         showContextMenuAt(containerRect.left + pos.x, containerRect.top + pos.y, 'canvas');
       }
     });
@@ -332,7 +355,9 @@ onMounted(() => {
     });
     cy.on('viewport', () => {
       hideContextMenu();
-      emit('viewportChanged', cy.extent());
+      if (cy) {
+        emit('viewportChanged', cy.extent());
+      }
     });
   });
 });
