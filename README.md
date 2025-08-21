@@ -53,6 +53,10 @@ docker-compose up -d
 
 其他安装方式请参考[手动安装](docs/man_install.md)。
 
+## 帮助
+
+见 [帮助](docs/help.md)。
+
 ## TODO
 
 本项目仍处初步阶段，未来计划：
