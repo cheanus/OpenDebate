@@ -23,6 +23,7 @@
   },
   "devDependencies": {
     "@tsconfig/node22": "^22.0.2",
+    "@types/cytoscape-dagre": "^2.3.3",
     "@types/node": "^22.16.5",
     "@vitejs/plugin-vue": "^6.0.1",
     "@vue/eslint-config-prettier": "^10.2.0",

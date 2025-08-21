@@ -62,33 +62,35 @@ import { useRoute } from 'vue-router';
 import OpinionGraph from '../components/OpinionGraph.vue';
 import OpinionEditor from '../components/OpinionEditor.vue';
 import LinkEditor from '../components/LinkEditor.vue';
+import type { Node, Element, Edge, OpinionFormData } from '@/types';
+import cytoscape from 'cytoscape';
 
 const route = useRoute();
-const debateId = route.params.id;
-const elements = ref([]);
+const debateId = route.params.id as string;
+const elements = ref<Array<Element>>([]);
 const loadedNodes = ref<Set<string>>(new Set());
 const loadedEdges = ref<Set<string>>(new Set());
 const maxUpdatedSon = ref(5);
 const numClickUpdatedSon = ref(5);
 
 // 选中状态
-const selectedNodeData = ref(null);
-const selectedEdgeData = ref(null);
-const opinionGraphRef = ref(null);
+const selectedNodeData = ref<Node | null>(null);
+const selectedEdgeData = ref<Edge | null>(null);
+const opinionGraphRef = ref<{ cy: () => cytoscape.Core } | null>(null);
 
 // 编辑器状态
 const showOpinionEditorDialog = ref(false);
 const showLinkEditorDialog = ref(false);
 const isEditingOpinion = ref(false);
 const isEditingLink = ref(false);
-const editingOpinion = ref(null);
-const editingLink = ref(null);
+const editingOpinion = ref<Node | null>(null);
+const editingLink = ref<Edge | null>(null);
 
 // 计算可用节点列表供编辑器使用
 const availableNodesForEditor = computed(() => {
   return elements.value
-    .filter((el) => el.data && el.data.id && el.data.content)
-    .map((el) => el.data);
+    .filter((el) => el.data && el.data.id && 'content' in el.data)
+    .map((el) => el.data) as Array<Node>;
 });
 
 function getSettings() {
@@ -115,11 +117,11 @@ async function loadInitialNodes() {
     body: JSON.stringify({ debate_id: debateId, is_leaf: true }),
   });
   const leafData = await res.json();
-  if (leafData?.data && leafData.data.length) {
+  if (leafData.data && leafData.data.length) {
     for (const leafId of leafData.data) {
       const nodeRes = await fetch(`/api/opinion/info?opinion_id=${leafId}&debate_id=${debateId}`);
       const nodeData = await nodeRes.json();
-      if (nodeData?.data) {
+      if (nodeData.data) {
         await addNode(nodeData.data);
         await loadChildren(nodeData.data.id, maxUpdatedSon.value);
       }
@@ -127,14 +129,14 @@ async function loadInitialNodes() {
   }
 }
 
-async function addNode(node, hasMore = null) {
+async function addNode(node: Node, hasMore: boolean | null = null) {
   if (loadedNodes.value.has(node.id)) return;
   let finalHasMore = hasMore;
   if (hasMore === null) {
     // 查询该节点是否有子节点
     const res = await fetch(`/api/opinion/info?opinion_id=${node.id}&debate_id=${debateId}`);
     const data = await res.json();
-    if (data?.data?.relationship) {
+    if (data.data.relationship) {
       const rel = data.data.relationship;
       finalHasMore =
         (rel.supported_by && rel.supported_by.length > 0) ||
@@ -143,24 +145,21 @@ async function addNode(node, hasMore = null) {
       finalHasMore = false;
     }
   }
-  elements.value = [
-    ...elements.value,
-    {
-      data: {
-        id: node.id,
-        label: node.content?.slice(0, 18) || '观点',
-        ...node,
-        positive_score: node.score?.positive,
-        negative_score: node.score?.negative,
-        has_more_children: finalHasMore,
-      },
-      classes: node.logic_type === 'and' ? 'and-node' : 'or-node',
+  elements.value.push({
+    data: {
+      ...node,
+      label: node.content.slice(0, 18) || '观点',
+      positive_score: node.score.positive,
+      negative_score: node.score.negative,
+      has_more_children: finalHasMore as boolean,
     },
-  ];
+    classes: node.logic_type === 'and' ? 'and-node' : 'or-node',
+  });
   loadedNodes.value.add(node.id);
 }
 
-function addEdge(edge) {
+function addEdge(edge: Edge) {
+  console.log(edge);
   // 检测这条边是否已经存在
   if (loadedEdges.value.has(edge.id)) return;
   // 添加边到元素列表
@@ -178,31 +177,31 @@ function addEdge(edge) {
   loadedEdges.value.add(edge.id);
 }
 
-async function loadChildren(parentId, num) {
+async function loadChildren(parentId: string, num: number) {
   // 查询parentId的子观点（支持/反驳），按节点大小降序
   const res = await fetch(`/api/opinion/info?opinion_id=${parentId}&debate_id=${debateId}`);
   const data = await res.json();
-  if (!data?.data) return;
+  if (!data.data) return;
   const rel = data.data.relationship;
   const childLinks = [...(rel.supported_by || []), ...(rel.opposed_by || [])];
   const pairs = [];
   for (const linkId of childLinks) {
     const linkRes = await fetch(`/api/link/info?link_id=${linkId}`);
     const link = await linkRes.json();
-    if (link?.id) {
+    if (link.id) {
       // 获取子节点
       const childId = link.from_id;
       const childRes = await fetch(`/api/opinion/info?opinion_id=${childId}&debate_id=${debateId}`);
       const childData = await childRes.json();
-      if (childData?.data) {
+      if (childData.data) {
         pairs.push({ child: childData.data, link });
       }
     }
   }
   // 按节点得分降序排序
   pairs.sort((a, b) => {
-    const sa = (a.child.score?.positive ?? 0) + (a.child.score?.negative ?? 0);
-    const sb = (b.child.score?.positive ?? 0) + (b.child.score?.negative ?? 0);
+    const sa = (a.child.score.positive ?? 0) + (a.child.score.negative ?? 0);
+    const sb = (b.child.score.positive ?? 0) + (b.child.score.negative ?? 0);
     return sb - sa;
   });
   // 判断是否还有未加载的子节点
@@ -221,23 +220,24 @@ async function loadChildren(parentId, num) {
   updateNodeHasMore(parentId, hasMore);
 }
 
-function updateNodeHasMore(nodeId, hasMore) {
+function updateNodeHasMore(nodeId: string, hasMore: boolean) {
   // 更新elements中对应节点的has_more_children属性
   elements.value = elements.value.map((el) => {
     if (el.data && el.data.id === nodeId) {
-      return {
-        ...el,
-        data: {
-          ...el.data,
-          has_more_children: hasMore,
-        },
-      };
+      // return {
+      //   ...el,
+      //   data: {
+      //     ...el.data,
+      //     has_more_children: hasMore,
+      //   },
+      // };
+      (el.data as Node).has_more_children = hasMore;
     }
     return el;
   });
 }
 
-async function onNodeDblClick(nodeData, event) {
+async function onNodeDblClick(nodeData: Node, event: Event) {
   // 如果节点没有更多子节点，直接返回
   if (!nodeData.has_more_children) return;
   // 阻止默认行为和冒泡，避免元数据栏弹出
@@ -250,19 +250,19 @@ async function onNodeDblClick(nodeData, event) {
 }
 
 // 处理节点选中
-function onNodeSelected(nodeData) {
+function onNodeSelected(nodeData: Node) {
   selectedNodeData.value = nodeData;
   selectedEdgeData.value = null;
 }
 
 // 处理边选中
-function onEdgeSelected(edgeData) {
+function onEdgeSelected(edgeData: Edge) {
   selectedEdgeData.value = edgeData;
   selectedNodeData.value = null;
 }
 
 // 处理右键菜单操作
-function onContextMenuAction(action) {
+function onContextMenuAction(action: string) {
   switch (action) {
     case 'addOpinion':
       showOpinionEditor();
@@ -313,7 +313,7 @@ async function deleteSelectedOpinion() {
   if (!selectedNodeData.value) return;
 
   const confirmed = confirm(
-    `确定要删除观点"${selectedNodeData.value.content?.slice(0, 30)}..."吗？`,
+    `确定要删除观点"${selectedNodeData.value.content.slice(0, 30)}..."吗？`,
   );
   if (!confirmed) return;
 
@@ -387,7 +387,7 @@ async function deleteSelectedLink() {
 }
 
 // 处理观点提交
-async function handleOpinionSubmit(formData) {
+async function handleOpinionSubmit(formData: OpinionFormData) {
   try {
     let url, method;
 
@@ -424,7 +424,7 @@ async function handleOpinionSubmit(formData) {
 }
 
 // 处理连接提交
-async function handleLinkSubmit(formData) {
+async function handleLinkSubmit(formData: OpinionFormData) {
   try {
     let url = '/api/link/create';
     const method = 'POST';
@@ -482,7 +482,7 @@ async function refreshView() {
 
 // 适配屏幕
 function fitToScreen() {
-  const cyInstance = opinionGraphRef.value?.cy();
+  const cyInstance = (opinionGraphRef.value as { cy: () => cytoscape.Core }).cy();
   if (cyInstance) {
     cyInstance.fit();
   }

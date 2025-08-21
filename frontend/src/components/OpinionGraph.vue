@@ -75,6 +75,7 @@
 import { ref, onMounted, watch, nextTick } from 'vue';
 import cytoscape from 'cytoscape';
 import dagre from 'cytoscape-dagre';
+
 cytoscape.use(dagre);
 
 const props = defineProps({
@@ -91,7 +92,7 @@ const emit = defineEmits([
   'contextMenuAction',
 ]);
 const cyContainer = ref(null);
-let cy = null;
+let cy: cytoscape.Core | null = null;
 const selectedNode = ref(null);
 const selectedNodeData = ref({});
 const selectedEdge = ref(null);

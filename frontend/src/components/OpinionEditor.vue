@@ -123,17 +123,18 @@
 
 <script setup lang="ts">
 import { ref, watch, onMounted } from 'vue';
+import type { Node, OpinionFormData } from '@/types';
 
-const props = defineProps({
-  isEdit: Boolean,
-  opinion: Object,
-  debateId: String,
-  availableNodes: Array,
-});
+const props = defineProps<{
+  isEdit: boolean;
+  opinion: Node | null;
+  debateId: string;
+  availableNodes: Array<Node>;
+}>();
 
 const emit = defineEmits(['close', 'submit']);
 
-const form = ref({
+const form = ref<OpinionFormData>({
   logic_type: 'or',
   content: '',
   parent_id: '',

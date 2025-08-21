@@ -62,12 +62,13 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue';
+import type { Edge, Node } from '@/types';
 
-const props = defineProps({
-  isEdit: Boolean,
-  link: Object,
-  availableNodes: Array,
-});
+const props = defineProps<{
+  isEdit: boolean;
+  link: Edge | null;
+  availableNodes: Array<Node>;
+}>();
 
 const emit = defineEmits(['close', 'submit']);
 
@@ -101,7 +102,7 @@ async function submit() {
   try {
     const submitData = { ...form.value };
     if (props.isEdit) {
-      submitData.id = props.link.id;
+      submitData.id = (props.link as Edge).id;
     }
 
     emit('submit', submitData);
