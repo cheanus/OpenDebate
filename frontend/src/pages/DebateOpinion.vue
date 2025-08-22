@@ -149,8 +149,10 @@ async function addNode(node: Node, hasMore: boolean | null = null) {
     data: {
       ...node,
       label: node.content.slice(0, 18) || '观点',
-      positive_score: node.score.positive,
-      negative_score: node.score.negative,
+      score: {
+        positive: node.score.positive,
+        negative: node.score.negative,
+      },
       has_more_children: finalHasMore as boolean,
     },
     classes: node.logic_type === 'and' ? 'and-node' : 'or-node',

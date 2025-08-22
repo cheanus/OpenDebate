@@ -76,10 +76,11 @@ import { ref, onMounted, watch, nextTick } from 'vue';
 import cytoscape from 'cytoscape';
 import dagre from 'cytoscape-dagre';
 import type { Element, GraphLayout, Node, Edge } from '@/types';
-import type { Core, NodeSingular, EdgeSingular, EventObject } from 'cytoscape';
+import type { Core, NodeSingular, EdgeSingular } from 'cytoscape';
 
 // 类型断言以避免cytoscape版本冲突
-cytoscape.use(dagre as any); // 保留 any: dagre 插件类型定义与当前 cytoscape 版本可能存在兼容问题
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+cytoscape.use(dagre as any); // dagre 插件类型定义与当前 cytoscape 版本存在兼容问题，暂时使用 any
 
 interface Props {
   elements: Array<Element>; // [{ data: { id, label, ... }, classes: '' }, ...]
@@ -124,8 +125,8 @@ let tapTimer: number | null = null; // 新增延时定时器
 
 function getNodeSize(node: NodeSingular) {
   // 依据正证分、反证分平均值调整节点大小
-  const pos = node.data('positive_score');
-  const neg = node.data('negative_score');
+  const pos = node.data('score') ? node.data('score').positive : null;
+  const neg = node.data('score') ? node.data('score').negative : null;
   let avg = null;
   if (pos != null && neg != null) avg = (pos + neg) / 2;
   else if (pos != null) avg = pos;

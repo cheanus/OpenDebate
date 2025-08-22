@@ -17,9 +17,7 @@ export interface Node {
   id: string;
   label: string;
   logic_type: LogicType;
-  negative_score: number | null;
   node_type: string;
-  positive_score: number | null;
   relationship: {
     supports: Array<string>;
     opposes: Array<string>;
