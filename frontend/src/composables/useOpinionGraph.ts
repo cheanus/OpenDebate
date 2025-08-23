@@ -47,7 +47,6 @@ export function useOpinionGraph(debateId: string) {
   // 添加节点
   const addNode = async (node: Node, hasMore: boolean | null = null) => {
     if (loadedNodes.value.has(node.id)) {
-      console.log(`[addNode] 节点 ${node.id} 已存在，跳过添加`);
       return;
     }
 
@@ -60,8 +59,6 @@ export function useOpinionGraph(debateId: string) {
         (rel.opposed_by && rel.opposed_by.length > 0);
     }
 
-    console.log(`[addNode] 添加节点 ${node.id}: ${node.content.slice(0, 30)}...，有更多子节点: ${finalHasMore}`);
-
     elements.value.push({
       data: {
         ...node,
@@ -72,17 +69,13 @@ export function useOpinionGraph(debateId: string) {
     });
 
     loadedNodes.value.add(node.id);
-    console.log(`[addNode] 当前总节点数: ${elements.value.length}`);
   };
 
   // 添加边
   const addEdge = (edge: Edge) => {
     if (loadedEdges.value.has(edge.id)) {
-      console.log(`[addEdge] 边 ${edge.id} 已存在，跳过添加`);
       return;
     }
-
-    console.log(`[addEdge] 添加边 ${edge.id}: ${edge.from_id} -> ${edge.to_id} (${edge.link_type})`);
 
     elements.value.push({
       data: {
@@ -94,34 +87,27 @@ export function useOpinionGraph(debateId: string) {
     });
 
     loadedEdges.value.add(edge.id);
-    console.log(`[addEdge] 当前总边数: ${loadedEdges.value.size}`);
   };
 
   // 加载子节点（支持深度加载）
   const loadChildren = async (parentId: string, num: number, depth: number = 1) => {
     if (depth <= 0) return;
     
-    console.log(`[loadChildren] 开始加载节点 ${parentId} 的子节点，数量限制: ${num}，深度: ${depth}`);
-    
     try {
       const response = await opinionService.getInfo(parentId, debateId);
       if (!response.is_success || !response.data) {
-        console.log(`[loadChildren] 获取节点 ${parentId} 信息失败`);
         return;
       }
 
       const rel = response.data.relationship;
       const childLinks = [...(rel.supported_by || []), ...(rel.opposed_by || [])];
-      console.log(`[loadChildren] 节点 ${parentId} 有 ${childLinks.length} 个子连接:`, childLinks);
       
       const pairs: Array<{ child: Node; link: Edge }> = [];
 
       // 收集所有子节点信息
       for (const linkId of childLinks) {
         try {
-          console.log(`[loadChildren] 正在获取链接信息: ${linkId}`);
           const linkResponse = await linkService.getInfo(linkId);
-          console.log(`[loadChildren] 链接响应:`, linkResponse);
           
           if (linkResponse.is_success) {
             // 根据实际API响应格式提取链接数据
@@ -132,12 +118,9 @@ export function useOpinionGraph(debateId: string) {
               link_type: (linkResponse.link_type || 'supports') as import('@/types').LinkType,
             };
             
-            console.log(`[loadChildren] 链接数据: from=${linkData.from_id}, to=${linkData.to_id}`);
             const childResponse = await opinionService.getInfo(linkData.from_id, debateId);
-            console.log(`[loadChildren] 子节点响应:`, childResponse);
             
             if (childResponse.is_success && childResponse.data) {
-              console.log(`[loadChildren] 成功获取子节点: ${childResponse.data.id}`);
               pairs.push({ 
                 child: childResponse.data, 
                 link: linkData as Edge
@@ -152,8 +135,6 @@ export function useOpinionGraph(debateId: string) {
           console.warn(`[loadChildren] 处理链接 ${linkId} 时出错:`, error);
         }
       }
-
-      console.log(`[loadChildren] 共收集到 ${pairs.length} 个子节点`);
 
       // 按分数排序
       pairs.sort((a, b) => {
@@ -171,7 +152,6 @@ export function useOpinionGraph(debateId: string) {
         if (addedCount >= num) break;
         
         const wasNew = !loadedNodes.value.has(pair.child.id);
-        console.log(`[loadChildren] 添加节点 ${pair.child.id}，是否新节点: ${wasNew}`);
         
         await addNode(pair.child);
         addEdge(pair.link);
@@ -185,8 +165,6 @@ export function useOpinionGraph(debateId: string) {
         }
       }
 
-      console.log(`[loadChildren] 本层添加了 ${addedCount} 个节点，需要递归的节点: ${nodesToRecurse.length} 个`);
-
       // 然后递归加载更深层次的节点
       if (depth > 1 && nodesToRecurse.length > 0) {
         for (const nodeId of nodesToRecurse) {
@@ -197,7 +175,6 @@ export function useOpinionGraph(debateId: string) {
       }
 
       updateNodeHasMore(parentId, hasMore);
-      console.log(`[loadChildren] 完成加载节点 ${parentId} 的子节点，总节点数: ${loadedNodes.value.size}`);
     } catch (error) {
       console.error('加载子节点失败:', error);
     }

@@ -1,7 +1,7 @@
 from core.db_life import get_psql_session
 from core.debate import cited_in_debate
 from schemas.db.neo4j import Opinion as OpinionNeo4j
-from schemas.db.psql import Opinion as OpinionPsql, model2dict
+from schemas.db.psql import Opinion as OpinionPsql, Debate as DebatePsql, model2dict
 from schemas.opinion import LogicType
 from schemas.link import LinkType
 from core import update_score
@@ -181,8 +181,13 @@ def delete_opinion(opinion_id: str, debate_id: str | None = None):
         else:
             # If a debate_id is provided, only delete the opinion in the debate
             try:
-                opinion.debates.remove(debate_id)
-                psql_session.commit()
+                debate = psql_session.query(DebatePsql).filter_by(id=debate_id).first()
+                if not debate:
+                    raise ValueError(f"Debate with ID {debate_id} not found in PostgreSQL.")
+
+                if debate in opinion.debates:
+                    opinion.debates.remove(debate)
+                    psql_session.commit()
             except Exception as e:
                 psql_session.rollback()
                 raise RuntimeError(

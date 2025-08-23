@@ -415,35 +415,43 @@ defineExpose({
 .cytoscape-container {
   width: 100%;
   height: 50vh;
-  background: var(--color-gray-800);
+  /* 深色背景，优先使用全局变量（若存在）否则回落到自定义暗色 */
+  background: var(--color-gray-900, #07121a);
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 6px 20px rgba(2, 6, 23, 0.7);
   margin-bottom: 24px;
   position: relative;
+  overflow: hidden;
 }
 
 .meta-panel {
   position: absolute;
   min-width: 220px;
-  background: #fff;
-  border: 1px solid #e0e7ef;
+  background: linear-gradient(180deg, #0f1724 0%, #071224 100%);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 8px;
-  box-shadow: 0 2px 8px #e0e7ef;
-  padding: 16px;
+  box-shadow: 0 8px 30px rgba(2, 6, 23, 0.75);
+  padding: 14px;
   z-index: 10;
   top: 80px;
   left: 80px;
+  color: #e6eef8;
+}
+
+.meta-panel b {
+  color: #cfe8ff;
 }
 
 .context-menu {
   position: absolute;
-  background: #fff;
-  border: 1px solid #e0e7ef;
+  background: linear-gradient(180deg, #0b1220 0%, #06101a 100%);
+  border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 10px 30px rgba(2, 6, 23, 0.85);
   z-index: 1000;
   min-width: 150px;
-  padding: 4px 0;
+  padding: 6px 0;
+  color: #e6eef8;
 }
 
 .context-menu-item {
@@ -452,16 +460,17 @@ defineExpose({
   padding: 8px 16px;
   cursor: pointer;
   font-size: 14px;
-  color: #333;
-  transition: background-color 0.2s;
+  color: #d7e9ff;
+  transition: background-color 0.15s, color 0.15s;
 }
 
 .context-menu-item:hover {
-  background-color: #f5f5f5;
+  background-color: rgba(255, 255, 255, 0.03);
+  color: #fff;
 }
 
 .context-menu-item:active {
-  background-color: #e8e8e8;
+  background-color: rgba(255, 255, 255, 0.05);
 }
 
 .menu-icon {
@@ -469,11 +478,23 @@ defineExpose({
   width: 16px;
   text-align: center;
   font-weight: bold;
+  color: #9fb7ff;
 }
 
 .context-menu-divider {
   height: 1px;
-  background-color: #e0e7ef;
-  margin: 4px 0;
+  background-color: rgba(255, 255, 255, 0.04);
+  margin: 6px 0;
+}
+
+/* 小屏幕或极端缩放时保证面板可读 */
+@media (max-width: 640px) {
+  .meta-panel {
+    min-width: 180px;
+    padding: 10px;
+  }
+  .context-menu-item {
+    padding: 8px 12px;
+  }
 }
 </style>

@@ -185,6 +185,16 @@ const positiveScoreString = computed({
   }
 });
 
+// 清除表单错误
+const clearFormErrors = () => {
+  formErrors.value = {
+    content: '',
+    parent_id: '',
+    son_ids: '',
+    creator: '',
+  };
+};
+
 // 监听编辑模式下的观点数据变化
 watch(
   () => props.opinion,
@@ -217,16 +227,6 @@ watch(
   },
   { immediate: true },
 );
-
-// 清除表单错误
-const clearFormErrors = () => {
-  formErrors.value = {
-    content: '',
-    parent_id: '',
-    son_ids: '',
-    creator: '',
-  };
-};
 
 // 表单验证
 const validateForm = (): boolean => {
@@ -327,7 +327,7 @@ onMounted(() => {
 
 .form-section h4 {
   margin: 0;
-  color: var(--text);
+  color: var(--color-text-primary);
   font-size: 1rem;
   font-weight: 600;
 }
@@ -340,7 +340,7 @@ onMounted(() => {
 
 .form-group label {
   font-weight: 600;
-  color: var(--text);
+  color: var(--color-text-primary);
   font-size: 0.875rem;
 }
 
@@ -358,13 +358,13 @@ onMounted(() => {
   font-weight: normal;
   cursor: pointer;
   padding: 0.5rem;
-  border-radius: var(--radius);
+  border-radius: var(--border-radius-md);
   transition: background-color 0.2s ease;
 }
 
 .radio-group label:hover,
 .checkbox-label:hover {
-  background-color: var(--secondary);
+  background-color: var(--color-bg-tertiary);
 }
 
 .radio-group input,
@@ -375,25 +375,26 @@ onMounted(() => {
 .select-input {
   width: 100%;
   padding: 0.75rem;
-  border: 2px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--card-bg);
+  border: 2px solid var(--color-border);
+  border-radius: var(--border-radius-md);
+  background: var(--color-bg-secondary);
+  color: var(--color-text-primary);
   font-size: 0.875rem;
   transition: border-color 0.2s ease;
 }
 
 .select-input:focus {
   outline: none;
-  border-color: var(--primary);
+  border-color: var(--color-primary);
 }
 
 .checkbox-group {
   max-height: 200px;
   overflow-y: auto;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border: 1px solid var(--color-border);
+  border-radius: var(--border-radius-md);
   padding: 0.75rem;
-  background: var(--card-bg);
+  background: var(--color-bg-secondary);
 }
 
 .checkbox-group .checkbox-label {
@@ -402,7 +403,7 @@ onMounted(() => {
 }
 
 .error-text {
-  color: #ef4444;
+  color: var(--color-danger);
   font-size: 0.75rem;
   margin-top: 0.25rem;
 }

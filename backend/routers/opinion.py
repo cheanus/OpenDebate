@@ -21,7 +21,7 @@ def create_or_opinion_http(request: CreateOrOpinionRequest):
         try:
             pass
         except Exception as e:
-            return {"is_success": False, "error": str(e)}
+            return {"is_success": False, "msg": str(e)}
     try:
         id = create_or_opinion(
             content=request.content,
@@ -33,7 +33,7 @@ def create_or_opinion_http(request: CreateOrOpinionRequest):
         )
         result = {"is_success": True, "id": id}
     except Exception as e:
-        result = {"is_success": False, "error": str(e)}
+        result = {"is_success": False, "msg": str(e)}
 
     return result
 
@@ -51,7 +51,7 @@ def create_and_opinion_http(request: CreateAndOpinionRequest):
         )
         result = {"is_success": True, "id": id}
     except Exception as e:
-        result = {"is_success": False, "error": str(e)}
+        result = {"is_success": False, "msg": str(e)}
 
     return result
 
@@ -65,7 +65,7 @@ def delete_opinion_http(request: DeleteOpinionRequest):
         )
         result = {"is_success": True}
     except Exception as e:
-        result = {"is_success": False, "error": str(e)}
+        result = {"is_success": False, "msg": str(e)}
 
     return result
 
@@ -140,4 +140,4 @@ def patch_opinion_http(request: PatchOpinionRequest):
         )
         return {"is_success": True}
     except Exception as e:
-        return {"is_success": False, "error": str(e)}
+        return {"is_success": False, "msg": str(e)}

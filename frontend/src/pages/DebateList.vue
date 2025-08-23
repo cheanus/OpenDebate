@@ -144,7 +144,6 @@ const {
   createDebate,
   updateDebate,
   deleteDebate,
-  setSearchFilters,
   clearError,
 } = useDebates();
 

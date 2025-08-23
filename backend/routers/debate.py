@@ -25,7 +25,7 @@ def create_debate_http(request: CreateDebateRequest):
         id = create_debate(title, creator, description)
         result = {"is_success": True, "id": id}
     except Exception as e:
-        result = {"is_success": False, "error": str(e)}
+        result = {"is_success": False, "msg": str(e)}
 
     return result
 
@@ -39,7 +39,7 @@ def delete_debate_http(request: DeleteDebateRequest):
         delete_debate(debate_id)
         result = {"is_success": True}
     except Exception as e:
-        result = {"is_success": False, "error": str(e)}
+        result = {"is_success": False, "msg": str(e)}
 
     return result
 
@@ -77,7 +77,7 @@ def patch_debate_http(request: PatchDebateRequest):
         patch_debate(debate_id, title, description, creator)
         result = {"is_success": True}
     except Exception as e:
-        result = {"is_success": False, "error": str(e)}
+        result = {"is_success": False, "msg": str(e)}
 
     return result
 
@@ -94,6 +94,6 @@ def cited_in_debate_http(request: CiteDebateRequest):
         cited_in_debate(debate_id, opinion_id)
         result = {"is_success": True}
     except Exception as e:
-        result = {"is_success": False, "error": str(e)}
+        result = {"is_success": False, "msg": str(e)}
 
     return result

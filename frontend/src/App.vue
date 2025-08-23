@@ -5,11 +5,12 @@
       <router-link to="/settings">设置</router-link>
     </nav>
     <router-view />
+    <NotificationContainer />
   </div>
 </template>
 
 <script setup lang="ts">
-// 移除了不必要的路由处理，因为现在直接在页面内处理
+import NotificationContainer from './components/NotificationContainer.vue';
 </script>
 
 <style scoped>

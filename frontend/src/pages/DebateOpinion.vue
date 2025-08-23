@@ -6,12 +6,6 @@
       <p>双击节点展开更多子观点，右键进行操作</p>
     </div>
 
-    <!-- 错误提示 -->
-    <div v-if="error" class="error-message">
-      {{ error }}
-      <UiButton variant="ghost" size="small" @click="clearError">×</UiButton>
-    </div>
-
     <!-- 图形组件 -->
     <OpinionGraph
       :elements="elements"
@@ -55,13 +49,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import { UiButton } from '@/components/ui';
 import OpinionGraph from '../components/OpinionGraph.vue';
 import OpinionEditor from '../components/OpinionEditor.vue';
 import LinkEditor from '../components/LinkEditor.vue';
 import { useOpinionGraph } from '@/composables';
+import { useNotifications } from '@/composables';
 import type { Node, Edge, OpinionFormData, LinkFormData } from '@/types';
 import type { Core } from 'cytoscape';
 
@@ -84,12 +78,14 @@ const {
   createLink,
   updateLink,
   deleteLink,
-  clearError,
   setSelectedNode,
   setSelectedEdge,
   numClickUpdatedSon,
   loadDepth,
 } = useOpinionGraph(debateId);
+
+// 通知系统
+const { notifySuccess, notifyError } = useNotifications();
 
 // 本地状态
 const showOpinionEditor = ref(false);
@@ -179,7 +175,9 @@ const deleteSelectedOpinion = async () => {
   const success = await deleteOpinion(selectedNode.value.id);
   if (success) {
     setSelectedNode(null);
-    alert('观点删除成功');
+    notifySuccess('观点删除成功');
+  } else {
+    // 错误会通过 error 状态和 watch 处理，这里不需要额外处理
   }
 };
 
@@ -203,7 +201,9 @@ const deleteSelectedLink = async () => {
   const success = await deleteLink(selectedEdge.value.id);
   if (success) {
     setSelectedEdge(null);
-    alert('连接删除成功');
+    notifySuccess('连接删除成功');
+  } else {
+    // 错误会通过 error 状态和 watch 处理，这里不需要额外处理
   }
 };
 
@@ -235,7 +235,9 @@ const handleOpinionSubmit = async (formData: OpinionFormData) => {
 
   if (success) {
     closeOpinionEditor();
-    alert(isEditingOpinion.value ? '观点更新成功' : '观点创建成功');
+    notifySuccess(isEditingOpinion.value ? '观点更新成功' : '观点创建成功');
+  } else {
+    // 错误会通过 error 状态和 watch 处理，这里不需要额外处理
   }
 };
 
@@ -258,7 +260,9 @@ const handleLinkSubmit = async (formData: LinkFormData) => {
 
   if (success) {
     closeLinkEditor();
-    alert(isEditingLink.value ? '连接更新成功' : '连接创建成功');
+    notifySuccess(isEditingLink.value ? '连接更新成功' : '连接创建成功');
+  } else {
+    // 错误会通过 error 状态和 watch 处理，这里不需要额外处理
   }
 };
 
@@ -285,6 +289,13 @@ const fitToScreen = () => {
 onMounted(() => {
   loadInitialNodes();
 });
+
+// 监听错误变化，显示错误通知
+watch(error, (newError) => {
+  if (newError) {
+    notifyError(newError);
+  }
+}, { immediate: false });
 </script>
 
 <style scoped>
@@ -317,18 +328,6 @@ onMounted(() => {
   margin: 0;
   color: var(--color-text-secondary);
   font-size: 0.875rem;
-}
-
-.error-message {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem;
-  margin-bottom: 1.5rem;
-  background: rgba(239, 68, 68, 0.2);
-  border: 1px solid var(--color-danger);
-  border-radius: var(--border-radius-md);
-  color: var(--color-danger);
 }
 
 .operation-hints {

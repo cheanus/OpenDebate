@@ -25,14 +25,14 @@ def create_link_http(request: CreateLinkRequest):
         if to_opinion.logic_type == "and":
             return {
                 "is_success": False,
-                "error": "Cannot create link to an AND opinion.",
+                "msg": "Cannot create link to an AND opinion.",
             }
         link_id = create_link(
             from_id=request.from_id, to_id=request.to_id, link_type=request.link_type
         )
         return {"is_success": True, "id": link_id}
     except Exception as e:
-        return {"is_success": False, "error": str(e)}
+        return {"is_success": False, "msg": str(e)}
 
 
 @router.post("/delete", response_model=MsgResponse)
@@ -46,12 +46,12 @@ def delete_link_http(request: LinkRequest):
         if to_opinion.logic_type == "and":
             return {
                 "is_success": False,
-                "error": "Cannot delete link to an AND opinion.",
+                "msg": "Cannot delete link to an AND opinion.",
             }
         delete_link_by_info(link_info=link_info)
         return {"is_success": True}
     except Exception as e:
-        return {"is_success": False, "error": str(e)}
+        return {"is_success": False, "msg": str(e)}
 
 
 @router.get("/info", response_model=InfoLinkResponse)
@@ -69,7 +69,7 @@ def info_link_http(filter_query: Annotated[LinkRequest, Query()]):
             "link_type": link_info["link_type"],
         }
     except Exception as e:
-        return {"is_success": False, "error": str(e)}
+        return {"is_success": False, "msg": str(e)}
 
 
 @router.post("/patch", response_model=MsgResponse)
@@ -81,7 +81,7 @@ def patch_link_http(request: PatchLinkRequest):
         patch_link(link_id=request.link_id, link_type=request.link_type)
         return {"is_success": True}
     except Exception as e:
-        return {"is_success": False, "error": str(e)}
+        return {"is_success": False, "msg": str(e)}
 
 
 @router.post("/attack", response_model=AttackLinkResponse)
@@ -93,4 +93,4 @@ def attack_link_http(request: AttackLinkRequest):
         or_id, and_id = attack_link(link_id=request.link_id, debate_id=request.debate_id)
         return {"is_success": True, "or_id": or_id, "and_id": and_id}
     except Exception as e:
-        return {"is_success": False, "error": str(e)}
+        return {"is_success": False, "msg": str(e)}
