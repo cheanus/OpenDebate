@@ -33,17 +33,40 @@ export class ApiClient {
 
     try {
       const response = await fetch(url, config);
-      const data = await response.json();
+      const raw = await response.json();
+
+      // 当后端返回格式不统一时（有时把业务字段直接放在顶层，而不是在 `data` 内），
+      // 我们需要归一化：如果 is_success 为 true 且没有 data 字段，但存在其他业务字段，
+      // 则把这些业务字段作为 `data` 返回，方便上层代码直接读取 `resp.id` 或 `resp.data`。
+      const data = raw as Record<string, unknown>;
 
       if (!response.ok) {
         throw new ApiError(
-          data.msg || `HTTP error! status: ${response.status}`,
+          (data && (data.msg as string)) || `HTTP error! status: ${response.status}`,
           response.status,
           response,
         );
       }
 
-      return data;
+      // 如果后端明确返回了 data 字段，直接返回；否则当 is_success 为 true 时，把除 is_success/msg 外的字段作为 data
+      if (data && data.is_success) {
+        if (Object.prototype.hasOwnProperty.call(data, 'data')) {
+          return data as unknown as ApiResponse<T>;
+        }
+
+        // 组装一个带 data 的响应
+        const { is_success, msg, ...rest } = data;
+        const normalized: ApiResponse<T> = {
+          is_success: Boolean(is_success),
+          msg: typeof msg === 'string' ? msg : undefined,
+          data: (Object.keys(rest).length > 0 ? (rest as unknown as T) : (undefined as unknown as T)),
+        };
+        // 将原始字段也保留下来
+        Object.assign(normalized, rest);
+        return normalized;
+      }
+
+      return data as unknown as ApiResponse<T>;
     } catch (error) {
       if (error instanceof ApiError) {
         throw error;

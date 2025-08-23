@@ -126,10 +126,10 @@ export function useOpinionGraph(debateId: string) {
           if (linkResponse.is_success) {
             // 根据实际API响应格式提取链接数据
             const linkData = {
-              id: linkResponse.id || linkId,
-              from_id: linkResponse.from_id || '',
-              to_id: linkResponse.to_id || '',
-              link_type: linkResponse.link_type || 'supports',
+              id: (linkResponse.id || linkId) as string,
+              from_id: (linkResponse.from_id || '') as string,
+              to_id: (linkResponse.to_id || '') as string,
+              link_type: (linkResponse.link_type || 'supports') as import('@/types').LinkType,
             };
             
             console.log(`[loadChildren] 链接数据: from=${linkData.from_id}, to=${linkData.to_id}`);

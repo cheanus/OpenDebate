@@ -95,6 +95,10 @@ export interface ApiResponse<T = unknown> {
   is_success: boolean;
   data?: T;
   msg?: string;
+  // 后端有时把实际业务字段直接放在响应顶层（没有 `data` 字段），
+  // 客户端代码也会直接访问这些顶层字段（例如 `resp.id`），
+  // 因此允许任意额外顶层字段以兼容不同后端返回格式。
+  [key: string]: unknown;
 }
 
 // 图形布局配置类型
