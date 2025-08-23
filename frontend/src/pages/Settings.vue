@@ -3,7 +3,7 @@
     <h1>设置</h1>
     <form class="settings-form" @submit.prevent>
       <div class="form-group">
-        <label for="max-updated-son">单节点默认最大加载子节点数</label>
+        <label for="max-updated-son">单节点初始最大加载子节点数</label>
         <input id="max-updated-son" type="number" min="1" v-model.number="maxUpdatedSon" />
       </div>
       <div class="form-group">
@@ -15,6 +15,28 @@
           v-model.number="numClickUpdatedSon"
         />
       </div>
+      <div class="form-group">
+        <label for="load-depth">双击加载深度</label>
+        <input
+          id="load-depth"
+          type="number"
+          min="1"
+          max="5"
+          v-model.number="loadDepth"
+        />
+        <small class="hint">每次双击时向下加载的深度层级（1-5）</small>
+      </div>
+      <div class="form-group">
+        <label for="max-load-nodes">每次最大加载节点数</label>
+        <input
+          id="max-load-nodes"
+          type="number"
+          min="1"
+          max="100"
+          v-model.number="maxLoadNodes"
+        />
+        <small class="hint">限制单次操作加载的总节点数量</small>
+      </div>
       <button class="save-btn" @click="saveSettings">保存设置</button>
     </form>
   </div>
@@ -25,6 +47,8 @@ import { ref, onMounted } from 'vue';
 
 const maxUpdatedSon = ref(5);
 const numClickUpdatedSon = ref(5);
+const loadDepth = ref(2);
+const maxLoadNodes = ref(10);
 
 onMounted(() => {
   const s = localStorage.getItem('debate_settings');
@@ -33,6 +57,8 @@ onMounted(() => {
       const obj = JSON.parse(s);
       if (obj.maxUpdatedSon) maxUpdatedSon.value = obj.maxUpdatedSon;
       if (obj.numClickUpdatedSon) numClickUpdatedSon.value = obj.numClickUpdatedSon;
+      if (obj.loadDepth) loadDepth.value = obj.loadDepth;
+      if (obj.maxLoadNodes) maxLoadNodes.value = obj.maxLoadNodes;
     } catch {}
   }
 });
@@ -43,6 +69,8 @@ function saveSettings() {
     JSON.stringify({
       maxUpdatedSon: maxUpdatedSon.value,
       numClickUpdatedSon: numClickUpdatedSon.value,
+      loadDepth: loadDepth.value,
+      maxLoadNodes: maxLoadNodes.value,
     }),
   );
   // window.$message?.success?.('设置已保存');
@@ -52,11 +80,13 @@ function saveSettings() {
 
 <style scoped>
 .settings-page {
-  max-width: 480px;
+  width: 70%;
+  /* max-width: 480px; */
   margin: 40px auto;
-  background: #fff;
+  background: var(--color-gray-900);
+  color: var(--color-text-primary);
   border-radius: 12px;
-  box-shadow: 0 2px 12px #e0e7ef;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
   padding: 32px 40px 24px 40px;
 }
 
@@ -76,20 +106,30 @@ function saveSettings() {
 
 label {
   font-weight: 600;
-  color: #222;
+  color: var(--color-text-primary);
   font-size: 16px;
 }
 
 input[type='number'] {
   width: 120px;
   padding: 6px 10px;
-  border: 1px solid #e0e7ef;
+  background: var(--color-gray-800);
+  color: var(--color-text-primary);
+  border: 1px solid #2B2A33;
   border-radius: 6px;
   font-size: 16px;
 }
 
+.hint {
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  margin-top: 4px;
+  font-weight: normal;
+}
+
 .save-btn {
-  margin-top: 16px;
+  width: 200px;
+  margin: 16px auto 0;
   padding: 8px 24px;
   background: var(--primary, #4f8cff);
   color: #fff;

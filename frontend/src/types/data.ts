@@ -1,5 +1,5 @@
-type LogicType = 'and' | 'or';
-type LinkType = 'supports' | 'opposes';
+export type LogicType = 'and' | 'or';
+export type LinkType = 'supports' | 'opposes';
 
 export interface Debate {
   created_at: number;

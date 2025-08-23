@@ -115,7 +115,7 @@ def head_opinion_http(request: HeadOpinionRequest):
     try:
         result = head_opinion(
             debate_id=request.debate_id,
-            is_leaf=request.is_leaf,
+            is_root=request.is_root,
         )
         return {
             "is_success": True,

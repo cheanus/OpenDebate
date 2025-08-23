@@ -1,86 +1,124 @@
 <template>
-  <div class="link-editor-overlay" @click="closeIfClickOutside">
-    <div class="link-editor" @click.stop>
-      <div class="editor-header">
-        <h3>{{ isEdit ? '编辑连接' : '创建连接' }}</h3>
-        <button class="close-btn" @click="$emit('close')">&times;</button>
+  <UiModal 
+    v-model:show="isVisible" 
+    :title="isEdit ? '编辑连接' : '创建连接'"
+    size="medium"
+    @close="handleClose"
+  >
+    <form @submit.prevent="handleSubmit" class="link-form">
+      <!-- 起始节点 -->
+      <div class="form-group">
+        <label for="from-select">起始观点 *</label>
+        <select 
+          id="from-select" 
+          v-model="form.from_id" 
+          required 
+          class="select-input"
+          :class="{ 'error': formErrors.from_id }"
+        >
+          <option value="">请选择起始观点</option>
+          <option v-for="node in availableNodes" :key="node.id" :value="node.id">
+            {{ node.content?.slice(0, 60) }}...
+          </option>
+        </select>
+        <span v-if="formErrors.from_id" class="error-text">{{ formErrors.from_id }}</span>
       </div>
 
-      <form @submit.prevent="submit" class="editor-form">
-        <!-- 起始节点 -->
-        <div class="form-group">
-          <label for="from_id">起始观点 *</label>
-          <select id="from_id" v-model="form.from_id" required>
-            <option value="">请选择起始观点</option>
-            <option v-for="node in availableNodes" :key="node.id" :value="node.id">
-              {{ node.content?.slice(0, 60) }}...
-            </option>
-          </select>
-        </div>
+      <!-- 目标节点 -->
+      <div class="form-group">
+        <label for="to-select">目标观点 *</label>
+        <select 
+          id="to-select" 
+          v-model="form.to_id" 
+          required 
+          class="select-input"
+          :class="{ 'error': formErrors.to_id }"
+        >
+          <option value="">请选择目标观点</option>
+          <option
+            v-for="node in availableNodes"
+            :key="node.id"
+            :value="node.id"
+            :disabled="node.id === form.from_id"
+          >
+            {{ node.content?.slice(0, 60) }}...
+          </option>
+        </select>
+        <span v-if="formErrors.to_id" class="error-text">{{ formErrors.to_id }}</span>
+      </div>
 
-        <!-- 目标节点 -->
-        <div class="form-group">
-          <label for="to_id">目标观点 *</label>
-          <select id="to_id" v-model="form.to_id" required>
-            <option value="">请选择目标观点</option>
-            <option
-              v-for="node in availableNodes"
-              :key="node.id"
-              :value="node.id"
-              :disabled="node.id === form.from_id"
-            >
-              {{ node.content?.slice(0, 60) }}...
-            </option>
-          </select>
+      <!-- 连接类型 -->
+      <div class="form-group">
+        <label>连接类型 *</label>
+        <div class="radio-group">
+          <label class="radio-label">
+            <input type="radio" v-model="form.link_type" value="supports" />
+            <span class="radio-content">
+              <strong>支持</strong>
+              <small>起始观点支持目标观点</small>
+            </span>
+          </label>
+          <label class="radio-label">
+            <input type="radio" v-model="form.link_type" value="opposes" />
+            <span class="radio-content">
+              <strong>反驳</strong>
+              <small>起始观点反驳目标观点</small>
+            </span>
+          </label>
         </div>
+      </div>
+    </form>
 
-        <!-- 连接类型 -->
-        <div class="form-group">
-          <label>连接类型 *</label>
-          <div class="radio-group">
-            <label>
-              <input type="radio" v-model="form.link_type" value="supports" />
-              支持 - 起始观点支持目标观点
-            </label>
-            <label>
-              <input type="radio" v-model="form.link_type" value="opposes" />
-              反驳 - 起始观点反驳目标观点
-            </label>
-          </div>
-        </div>
-
-        <div class="form-actions">
-          <button type="button" @click="$emit('close')" class="btn-cancel">取消</button>
-          <button type="submit" class="btn-submit" :disabled="isSubmitting">
-            {{ isSubmitting ? '提交中...' : isEdit ? '更新' : '创建' }}
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
+    <template #footer>
+      <UiButton variant="secondary" @click="handleClose">
+        取消
+      </UiButton>
+      <UiButton 
+        variant="primary" 
+        @click="handleSubmit" 
+        :loading="isSubmitting"
+      >
+        {{ isEdit ? '更新' : '创建' }}
+      </UiButton>
+    </template>
+  </UiModal>
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue';
-import type { Edge, Node, LinkFormData } from '@/types';
+import { ref, watch, computed } from 'vue';
+import { UiButton, UiModal } from './ui';
+import type { Edge, Node, LinkFormData, LinkType } from '@/types';
 
-const props = defineProps<{
+interface Props {
   isEdit: boolean;
   link: Edge | null;
   availableNodes: Array<Node>;
-}>();
+}
+
+const props = defineProps<Props>();
 
 const emit = defineEmits<{
   close: [];
   submit: [data: LinkFormData];
 }>();
 
+// 显示控制
+const isVisible = ref(true);
+
+// 表单数据
 const form = ref<LinkFormData>({
   from_id: '',
   to_id: '',
-  link_type: 'supports',
+  link_type: 'supports' as LinkType,
 });
 
+// 表单错误
+const formErrors = ref({
+  from_id: '',
+  to_id: '',
+});
+
+// 提交状态
 const isSubmitting = ref(false);
 
 // 监听编辑模式下的连接数据变化
@@ -93,178 +131,180 @@ watch(
         to_id: newLink.to_id || '',
         link_type: newLink.link_type || 'supports',
       };
+    } else {
+      // 重置为创建模式的默认值
+      form.value = {
+        from_id: '',
+        to_id: '',
+        link_type: 'supports',
+      };
     }
+    clearFormErrors();
   },
   { immediate: true },
 );
 
-async function submit() {
-  if (isSubmitting.value) return;
-  isSubmitting.value = true;
+// 清除表单错误
+const clearFormErrors = () => {
+  formErrors.value = {
+    from_id: '',
+    to_id: '',
+  };
+};
 
+// 表单验证
+const validateForm = (): boolean => {
+  clearFormErrors();
+  let isValid = true;
+
+  if (!form.value.from_id) {
+    formErrors.value.from_id = '请选择起始观点';
+    isValid = false;
+  }
+
+  if (!form.value.to_id) {
+    formErrors.value.to_id = '请选择目标观点';
+    isValid = false;
+  }
+
+  if (form.value.from_id === form.value.to_id && form.value.from_id) {
+    formErrors.value.to_id = '目标观点不能与起始观点相同';
+    isValid = false;
+  }
+
+  return isValid;
+};
+
+// 处理提交
+const handleSubmit = async () => {
+  if (!validateForm()) return;
+
+  isSubmitting.value = true;
+  
   try {
     const submitData = { ...form.value };
-    if (props.isEdit) {
-      submitData.id = (props.link as Edge).id;
+    if (props.isEdit && props.link) {
+      submitData.id = props.link.id;
     }
 
     emit('submit', submitData);
   } finally {
     isSubmitting.value = false;
   }
-}
+};
 
-function closeIfClickOutside(event: Event) {
-  const target = event.target as HTMLElement;
-  if (target.classList.contains('link-editor-overlay')) {
-    emit('close');
-  }
-}
+// 处理关闭
+const handleClose = () => {
+  isVisible.value = false;
+  emit('close');
+};
 </script>
 
 <style scoped>
-.link-editor-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+.link-form {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
-.link-editor {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-  max-width: 500px;
-  width: 90%;
-  max-height: 80vh;
-  overflow-y: auto;
-}
-
-.editor-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 24px 32px;
-  border-bottom: 1px solid #e0e7ef;
-}
-
-.editor-header h3 {
-  margin: 0;
-  color: #2c3e50;
-  font-size: 20px;
-}
-
-.close-btn {
-  background: none;
-  border: none;
-  font-size: 24px;
-  cursor: pointer;
-  color: #95a5a6;
-  padding: 0;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-}
-
-.close-btn:hover {
-  background: #f8f9fa;
-  color: #2c3e50;
-}
-
-.editor-form {
-  padding: 32px;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
 .form-group {
-  margin-bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 .form-group label {
-  display: block;
-  margin-bottom: 8px;
   font-weight: 600;
-  color: #2c3e50;
+  color: var(--text);
+  font-size: 0.875rem;
 }
 
-.form-group select {
+.select-input {
   width: 100%;
-  padding: 12px 16px;
-  border: 2px solid #e0e7ef;
-  border-radius: 8px;
-  font-size: 14px;
-  transition: border-color 0.3s;
+  padding: 0.75rem;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card-bg);
+  font-size: 0.875rem;
+  transition: border-color 0.2s ease;
 }
 
-.form-group select:focus {
+.select-input:focus {
   outline: none;
-  border-color: #3498db;
+  border-color: var(--primary);
+}
+
+.select-input.error {
+  border-color: #ef4444;
+}
+
+.select-input option:disabled {
+  color: var(--text-light);
+  background-color: var(--secondary);
 }
 
 .radio-group {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin-top: 8px;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
 }
 
-.radio-group label {
+.radio-label {
   display: flex;
   align-items: flex-start;
-  gap: 8px;
-  font-weight: normal;
-  margin-bottom: 0;
-  line-height: 1.5;
-}
-
-.form-actions {
-  display: flex;
-  gap: 16px;
-  justify-content: flex-end;
-  margin-top: 32px;
-  padding-top: 24px;
-  border-top: 1px solid #e0e7ef;
-}
-
-.btn-cancel,
-.btn-submit {
-  padding: 12px 24px;
-  border: none;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 600;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
   cursor: pointer;
-  transition: all 0.3s;
+  transition: all 0.2s ease;
 }
 
-.btn-cancel {
-  background: #ecf0f1;
-  color: #7f8c8d;
+.radio-label:hover {
+  background-color: var(--secondary);
+  border-color: var(--primary);
 }
 
-.btn-cancel:hover {
-  background: #bdc3c7;
+.radio-label:has(input:checked) {
+  background-color: rgba(37, 99, 235, 0.1);
+  border-color: var(--primary);
 }
 
-.btn-submit {
-  background: #3498db;
-  color: white;
+.radio-label input {
+  margin: 0;
+  margin-top: 0.125rem;
 }
 
-.btn-submit:hover:not(:disabled) {
-  background: #2980b9;
+.radio-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
 }
 
-.btn-submit:disabled {
-  background: #bdc3c7;
-  cursor: not-allowed;
+.radio-content strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.radio-content small {
+  color: var(--text-light);
+  font-size: 0.75rem;
+}
+
+.error-text {
+  color: #ef4444;
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+@media (max-width: 768px) {
+  .link-form {
+    gap: 1rem;
+  }
+  
+  .radio-label {
+    padding: 0.75rem;
+  }
 }
 </style>

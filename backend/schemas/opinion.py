@@ -84,14 +84,14 @@ class QueryOpinionResponse(MsgResponse):
 
 class HeadOpinionRequest(BaseModel):
     debate_id: str
-    is_leaf: bool = Field(
+    is_root: bool = Field(
         ..., description="If True, return leaf opinions; if False, return root opinions"
     )
 
 
 class HeadOpinionResponse(MsgResponse):
     data: list[str] | None = Field(
-        None, description="Leaf opinions matching the query parameters"
+        None, description="Leaf/root opinions matching the query parameters"
     )
 
 

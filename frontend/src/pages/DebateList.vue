@@ -1,13 +1,51 @@
 <template>
   <div class="debate-list">
-    <h1>辩论总览</h1>
-    <div class="search-bar">
-      <input v-model="search.title" placeholder="标题关键词" />
-      <input v-model="search.creator" placeholder="创建者" />
-      <button @click="fetchDebates">搜索</button>
-      <button class="create-btn" @click="showCreate = true">新建辩论</button>
+    <div class="page-header">
+      <h1>辩论总览</h1>
+      <UiButton variant="primary" @click="showCreateModal">
+        新建辩论
+      </UiButton>
     </div>
-    <table class="debate-table">
+
+    <div class="search-section">
+      <div class="search-inputs">
+        <UiInput 
+          v-model="searchFilters.title" 
+          placeholder="搜索标题关键词..."
+          @input="handleSearchInput"
+        >
+          <template #prefix>🔍</template>
+        </UiInput>
+        <UiInput 
+          v-model="searchFilters.creator" 
+          placeholder="搜索创建者..."
+          @input="handleSearchInput"
+        >
+          <template #prefix>👤</template>
+        </UiInput>
+      </div>
+      <UiButton variant="secondary" @click="handleSearch" :loading="loading">
+        搜索
+      </UiButton>
+    </div>
+
+    <div v-if="error" class="error-message">
+      {{ error }}
+      <UiButton variant="ghost" size="small" @click="clearError">×</UiButton>
+    </div>
+
+    <div v-if="loading" class="loading-message">
+      正在加载辩论列表...
+    </div>
+
+    <div v-else-if="debates.length === 0" class="empty-state">
+      <p>暂无辩论数据</p>
+      <UiButton variant="primary" @click="showCreateModal">
+        创建第一个辩论
+      </UiButton>
+    </div>
+
+    <table v-else class="debate-table">
       <thead>
         <tr>
           <th>标题</th>
@@ -22,273 +60,383 @@
           <td :title="debate.title">{{ debate.title }}</td>
           <td :title="debate.description">{{ debate.description }}</td>
           <td :title="debate.creator">{{ debate.creator }}</td>
-          <td>{{ new Date(debate.created_at).toLocaleString() }}</td>
-          <td>
-            <button @click="$emit('viewDebate', debate.id)">查看</button>
-            <button @click="editDebate(debate)">编辑</button>
-            <button @click="deleteDebate(debate.id)">删除</button>
+          <td>{{ formatDate(debate.created_at) }}</td>
+          <td class="actions-cell">
+            <UiButton variant="ghost" size="small" @click="viewDebate(debate.id)">
+              查看
+            </UiButton>
+            <UiButton variant="ghost" size="small" @click="editDebate(debate)">
+              编辑
+            </UiButton>
+            <UiButton variant="danger" size="small" @click="handleDeleteDebate(debate)">
+              删除
+            </UiButton>
           </td>
         </tr>
       </tbody>
     </table>
 
-    <!-- 新建/编辑弹窗 -->
-    <div v-if="showCreate || showEdit" class="modal">
-      <div class="modal-content">
-        <h2>{{ showEdit ? '编辑辩论' : '新建辩论' }}</h2>
-        <form @submit.prevent="showEdit ? submitEdit() : submitCreate()">
-          <div>
-            <label>标题</label>
-            <input v-model="form.title" required />
-          </div>
-          <div>
-            <label>描述</label>
-            <textarea v-model="form.description"></textarea>
-          </div>
-          <div>
-            <label>创建者</label>
-            <input v-model="form.creator" required />
-          </div>
-          <div class="modal-actions">
-            <button type="submit">确定</button>
-            <button type="button" @click="closeModal">取消</button>
-          </div>
-        </form>
-      </div>
-    </div>
+    <!-- 创建/编辑弹窗 -->
+    <UiModal 
+      v-model:show="showModal" 
+      :title="isEditMode ? '编辑辩论' : '创建辩论'"
+      size="medium"
+    >
+      <form @submit.prevent="handleSubmit" class="debate-form">
+        <UiInput
+          v-model="form.title"
+          label="辩论标题"
+          placeholder="请输入辩论标题..."
+          required
+          :error="formErrors.title"
+        />
+
+        <UiInput
+          v-model="form.description"
+          label="辩论描述"
+          placeholder="请输入辩论描述..."
+          tag="textarea"
+          :rows="4"
+          :error="formErrors.description"
+        />
+
+        <UiInput
+          v-model="form.creator"
+          label="创建者"
+          placeholder="请输入创建者名称..."
+          required
+          :error="formErrors.creator"
+        />
+      </form>
+
+      <template #footer>
+        <UiButton variant="secondary" @click="closeModal">
+          取消
+        </UiButton>
+        <UiButton 
+          variant="primary" 
+          @click="handleSubmit" 
+          :loading="submitting"
+        >
+          {{ isEditMode ? '更新' : '创建' }}
+        </UiButton>
+      </template>
+    </UiModal>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
+import { UiButton, UiModal, UiInput } from '@/components/ui';
+import { useDebates } from '@/composables';
 import type { Debate } from '@/types';
 
-const debates = ref<Array<Debate>>([]);
-const search = ref({ title: '', creator: '' });
-const showCreate = ref(false);
-const showEdit = ref(false);
-const form = ref({ id: '', title: '', description: '', creator: '' });
+const router = useRouter();
 
-async function fetchDebates() {
-  let url = '/api/debate/query?';
-  if (search.value.title) url += `title=${encodeURIComponent(search.value.title)}&`;
-  if (search.value.creator) url += `creator=${encodeURIComponent(search.value.creator)}&`;
-  const res = await fetch(url);
-  if (res.ok) {
-    const result = await res.json();
-    debates.value = result.data;
-  }
-}
+// 使用组合函数
+const {
+  debates,
+  loading,
+  error,
+  searchFilters,
+  fetchDebates,
+  createDebate,
+  updateDebate,
+  deleteDebate,
+  setSearchFilters,
+  clearError,
+} = useDebates();
 
-function closeModal() {
-  showCreate.value = false;
-  showEdit.value = false;
-  form.value = { id: '', title: '', description: '', creator: '' };
-}
+// 本地状态
+const showModal = ref(false);
+const isEditMode = ref(false);
+const submitting = ref(false);
 
-function editDebate(debate: Debate) {
+// 表单状态
+const form = ref({
+  id: '',
+  title: '',
+  description: '',
+  creator: '',
+});
+
+const formErrors = ref({
+  title: '',
+  description: '',
+  creator: '',
+});
+
+// 搜索延时器
+let searchTimer: number | null = null;
+
+// 方法
+const formatDate = (timestamp: number) => {
+  return new Date(timestamp).toLocaleString();
+};
+
+const showCreateModal = () => {
+  isEditMode.value = false;
+  form.value = {
+    id: '',
+    title: '',
+    description: '',
+    creator: localStorage.getItem('default_creator') || '',
+  };
+  clearFormErrors();
+  showModal.value = true;
+};
+
+const editDebate = (debate: Debate) => {
+  isEditMode.value = true;
   form.value = { ...debate };
-  showEdit.value = true;
-}
+  clearFormErrors();
+  showModal.value = true;
+};
 
-async function submitCreate() {
-  const res = await fetch('/api/debate/create', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      title: form.value.title,
-      description: form.value.description,
-      creator: form.value.creator,
-    }),
-  });
-  if (res.ok) {
-    closeModal();
-    fetchDebates();
+const closeModal = () => {
+  showModal.value = false;
+  clearFormErrors();
+};
+
+const clearFormErrors = () => {
+  formErrors.value = {
+    title: '',
+    description: '',
+    creator: '',
+  };
+};
+
+const validateForm = () => {
+  let isValid = true;
+  clearFormErrors();
+
+  if (!form.value.title.trim()) {
+    formErrors.value.title = '请输入辩论标题';
+    isValid = false;
   }
-}
 
-async function submitEdit() {
-  const res = await fetch('/api/debate/patch', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      id: form.value.id,
-      title: form.value.title,
-      description: form.value.description,
-      creator: form.value.creator,
-    }),
-  });
-  if (res.ok) {
-    closeModal();
-    fetchDebates();
+  if (!form.value.creator.trim()) {
+    formErrors.value.creator = '请输入创建者名称';
+    isValid = false;
   }
-}
 
-async function deleteDebate(id: string) {
-  if (!confirm('确定要删除该辩论吗？')) return;
-  const res = await fetch('/api/debate/delete', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ id }),
-  });
-  if (res.ok) fetchDebates();
-}
+  return isValid;
+};
 
-onMounted(fetchDebates);
+const handleSubmit = async () => {
+  if (!validateForm()) return;
+
+  submitting.value = true;
+  
+  try {
+    let success = false;
+    
+    if (isEditMode.value) {
+      success = await updateDebate({
+        id: form.value.id,
+        title: form.value.title.trim(),
+        description: form.value.description.trim(),
+        creator: form.value.creator.trim(),
+      });
+    } else {
+      const result = await createDebate({
+        title: form.value.title.trim(),
+        description: form.value.description.trim(),
+        creator: form.value.creator.trim(),
+      });
+      success = !!result;
+    }
+
+    if (success) {
+      // 保存创建者到本地存储
+      localStorage.setItem('default_creator', form.value.creator.trim());
+      closeModal();
+    }
+  } finally {
+    submitting.value = false;
+  }
+};
+
+const handleDeleteDebate = async (debate: Debate) => {
+  const confirmed = confirm(`确定要删除辩论"${debate.title}"吗？`);
+  if (!confirmed) return;
+
+  await deleteDebate(debate.id);
+};
+
+const viewDebate = (debateId: string) => {
+  console.log('Navigating to debate with ID:', debateId);
+  router.push(`/debate/${debateId}`);
+};
+
+const handleSearchInput = () => {
+  if (searchTimer) {
+    clearTimeout(searchTimer);
+  }
+  
+  // 延迟搜索，避免频繁请求
+  searchTimer = window.setTimeout(() => {
+    handleSearch();
+  }, 500);
+};
+
+const handleSearch = () => {
+  fetchDebates();
+};
+
+// 初始化
+onMounted(() => {
+  fetchDebates();
+});
 </script>
 
 <style scoped>
-.debate-list {
-  max-width: 980px;
+ .debate-list {
+  width: 70%;
+  max-width: none;
   margin: 0 auto;
+  padding: 2rem;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.page-header h1 {
+  margin: 0;
+  color: var(--text);
+}
+
+.search-section {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-end;
+  margin-bottom: 2rem;
+  padding: 1.5rem;
   background: var(--card-bg);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
-  padding: 40px 36px 32px 36px;
 }
 
-.actions {
-  margin-bottom: 20px;
+.search-inputs {
   display: flex;
-  justify-content: flex-end;
+  gap: 1rem;
+  flex: 1;
 }
 
-.actions button {
-  font-size: 1.1em;
-  padding: 0.5em 1.6em;
-}
-
-.search-bar {
-  margin-bottom: 24px;
+.error-message {
   display: flex;
-  gap: 16px;
+  justify-content: space-between;
   align-items: center;
-}
-
-.search-bar input {
-  border: 1px solid var(--border);
+  padding: 1rem;
+  margin-bottom: 1rem;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
   border-radius: var(--radius);
-  padding: 0.5em 1em;
-  font-size: 1em;
-  background: var(--secondary);
-  outline: none;
-  transition: border 0.2s;
-  flex: 1; /* 让输入框自动填满剩余空间 */
-  min-width: 0; /* 防止溢出 */
+  color: #dc2626;
 }
 
-.search-bar button {
-  width: auto; /* 宽度自适应内容 */
-  white-space: nowrap; /* 不换行 */
-  flex-shrink: 0; /* 按钮不被压缩 */
+.loading-message {
+  text-align: center;
+  padding: 3rem;
+  color: var(--text-light);
+  font-size: 1.1rem;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 4rem;
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.empty-state p {
+  color: var(--text-light);
+  font-size: 1.1rem;
+  margin-bottom: 2rem;
 }
 
 .debate-table {
-  flex-wrap: wrap;
-  justify-content: flex-end;
   width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
   background: var(--card-bg);
   border-radius: var(--radius);
+  box-shadow: var(--shadow);
   overflow: hidden;
-  box-shadow: 0 1px 4px rgba(30, 41, 59, 0.04);
+  border-collapse: collapse;
+}
+
+.debate-table th,
+.debate-table td {
+  padding: 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
 }
 
 .debate-table th {
   background: var(--secondary);
-  color: var(--text-light);
   font-weight: 600;
-  padding: 12px 10px;
-  border-bottom: 2px solid var(--border);
-  text-align: center; /* 新增：表头居中 */
+  color: var(--text);
 }
 
-.debate-table td {
-  padding: 12px 10px;
-  border-bottom: 1px solid var(--border);
-  color: var(--text);
-  text-align: center; /* 新增：单元格内容居中 */
+.debate-table tr:hover {
+  background: var(--secondary);
 }
 
 .debate-table tr:last-child td {
   border-bottom: none;
 }
 
-.debate-table button {
-  margin-right: 8px;
-  font-size: 0.98em;
-  padding: 0.4em 1.1em;
-}
-
-.modal {
-  position: fixed;
-  left: 0;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(30, 41, 59, 0.1);
+.actions-cell {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
+  justify-content: space-evenly;
+  gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
-.modal-content {
-  background: var(--card-bg);
-  padding: 36px 32px 28px 32px;
-  border-radius: var(--radius);
-  min-width: 340px;
-  box-shadow: var(--shadow);
-}
-
-.modal-content h2 {
-  margin-bottom: 18px;
-}
-
-.modal-content label {
-  display: block;
-  margin-bottom: 6px;
-  color: var(--text-light);
-  font-size: 0.98em;
-}
-
-.modal-content input,
-.modal-content textarea {
-  width: 100%;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  font-size: 1em;
-  margin-bottom: 16px;
-  background: var(--secondary);
-  outline: none;
-  transition: border 0.2s;
-}
-
-.modal-content input:focus,
-.modal-content textarea:focus {
-  border: 1.5px solid var(--primary);
-}
-
-.modal-actions {
-  margin-top: 10px;
+.debate-form {
   display: flex;
-  gap: 16px;
-  justify-content: flex-end;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
-.modal-actions button {
-  min-width: 80px;
-}
-
-@media (max-width: 900px) {
+@media (max-width: 768px) {
   .debate-list {
-    padding: 16px 4px;
+    padding: 1rem;
   }
-
-  .modal-content {
-    padding: 18px 6px 12px 6px;
-    min-width: 0;
+  
+  .page-header {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: stretch;
+  }
+  
+  .search-section {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .search-inputs {
+    flex-direction: column;
+  }
+  
+  .debate-table {
+    font-size: 0.875rem;
+  }
+  
+  .debate-table th,
+  .debate-table td {
+    padding: 0.75rem 0.5rem;
+  }
+  
+  .actions-cell {
+    flex-direction: column;
   }
 }
 </style>

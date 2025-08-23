@@ -4,16 +4,12 @@
       <router-link to="/">辩论总览</router-link>
       <router-link to="/settings">设置</router-link>
     </nav>
-    <router-view @viewDebate="goToDebate" />
+    <router-view />
   </div>
 </template>
 
 <script setup lang="ts">
-import { useRouter } from 'vue-router';
-const router = useRouter();
-function goToDebate(id: string) {
-  router.push(`/debate/${id}`);
-}
+// 移除了不必要的路由处理，因为现在直接在页面内处理
 </script>
 
 <style scoped>

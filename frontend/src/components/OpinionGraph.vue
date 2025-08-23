@@ -121,7 +121,8 @@ const edgeMetaPanelStyle = ref<Record<string, string>>({});
 const showContextMenu = ref(false);
 const contextMenuStyle = ref<Record<string, string>>({});
 const contextMenuType = ref('');
-let tapTimer: number | null = null; // 新增延时定时器
+// 新增延时定时器，兼容浏览器和 Node 环境
+let tapTimer: ReturnType<typeof setTimeout> | null = null;
 
 function getNodeSize(node: NodeSingular) {
   // 依据正证分、反证分平均值调整节点大小
@@ -372,6 +373,10 @@ watch(
   () => props.elements,
   (newEls) => {
     if (cy) {
+      // 保存当前的视窗状态
+      const currentZoom = cy.zoom();
+      const currentPan = cy.pan();
+      
       cy.json({ elements: newEls });
       const layoutConfig = props.layout || {
         name: 'dagre',
@@ -382,7 +387,20 @@ watch(
         fit: true,
         padding: 50,
       };
-      cy.layout(layoutConfig).run();
+      
+      // 运行布局
+      const layout = cy.layout(layoutConfig);
+      layout.run();
+      
+      // 如果layout配置中fit为false，则恢复之前的视窗状态
+      if (!layoutConfig.fit) {
+        layout.on('layoutstop', () => {
+          if (cy) {
+            cy.zoom(currentZoom);
+            cy.pan(currentPan);
+          }
+        });
+      }
     }
   },
 );
@@ -396,10 +414,10 @@ defineExpose({
 <style scoped>
 .cytoscape-container {
   width: 100%;
-  height: 70vh;
-  background: #f8fafc;
+  height: 50vh;
+  background: var(--color-gray-800);
   border-radius: 8px;
-  box-shadow: 0 2px 8px #e0e7ef;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
   margin-bottom: 24px;
   position: relative;
 }

@@ -359,12 +359,12 @@ def query_opinion(
         raise RuntimeError(f"Failed to query opinions from Neo4j: {str(e)}")
 
 
-def head_opinion(debate_id: str, is_leaf: bool) -> list[str]:
+def head_opinion(debate_id: str, is_root: bool) -> list[str]:
     """
     Get leaf or root opinions in a debate.
 
     :param debate_id: Optional ID of the debate to filter head opinions by.
-    :param is_leaf: If True, return leaf opinions; if False, return root opinions.
+    :param is_root: If True, return root opinions; if False, return leaf opinions.
     :return: A list of head opinion IDs.
     """
     try:
@@ -386,12 +386,12 @@ def head_opinion(debate_id: str, is_leaf: bool) -> list[str]:
         for oid in opinion_ids:
             try:
                 op = OpinionNeo4j.nodes.get(uid=oid)
-                if is_leaf:
-                    # 没有任何 supports 和 opposes 关系的节点为叶节点
+                if is_root:
+                    # 没有任何 supports 和 opposes 关系的节点为根节点
                     if not op.supports.all() and not op.opposes.all():
                         head_ids.append(oid)
                 else:
-                    # 没有任何 supported_by 和 opposed_by 关系的节点为根节点
+                    # 没有任何 supported_by 和 opposed_by 关系的节点为叶节点
                     if not op.supported_by.all() and not op.opposed_by.all():
                         head_ids.append(oid)
             except Exception:

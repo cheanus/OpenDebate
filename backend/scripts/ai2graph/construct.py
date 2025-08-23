@@ -172,7 +172,7 @@ def create_and_opinion(
 def score_root_opinion(debate_id, session, client: OpenAI):
     resp = session.post(
         f"{BACKEND_URL}/opinion/head",
-        json={"debate_id": debate_id, "is_leaf": False},
+        json={"debate_id": debate_id, "is_root": False},
         timeout=30,
     )
     resp.raise_for_status()
