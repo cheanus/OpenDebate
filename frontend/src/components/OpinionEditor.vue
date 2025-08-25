@@ -1,139 +1,129 @@
 <template>
-  <UiModal 
-    v-model:show="isVisible" 
-    :title="isEdit ? '编辑观点' : '创建观点'"
-    size="large"
-    @close="handleClose"
-  >
-    <form @submit.prevent="handleSubmit" class="opinion-form">
-      <!-- 观点类型 -->
-      <div class="form-section">
-        <h4>观点类型</h4>
-        <div class="radio-group">
-          <label>
-            <input type="radio" v-model="form.logic_type" value="or" />
-            <span>或观点（独立观点）</span>
-          </label>
-          <label>
-            <input type="radio" v-model="form.logic_type" value="and" />
-            <span>与观点（组合观点）</span>
-          </label>
-        </div>
-      </div>
+  <v-dialog v-model="isVisible" max-width="800px" persistent>
+    <v-card>
+      <v-card-title class="text-h5">
+        <v-icon left>{{ isEdit ? 'mdi-pencil' : 'mdi-plus' }}</v-icon>
+        {{ isEdit ? '编辑观点' : '创建观点' }}
+      </v-card-title>
 
-      <!-- 或观点内容 -->
-      <div v-if="form.logic_type === 'or'" class="form-section">
-        <UiInput
-          v-model="form.content"
-          label="观点内容"
-          placeholder="请输入观点内容..."
-          tag="textarea"
-          :rows="4"
-          required
-          :error="formErrors.content"
-        />
-      </div>
+      <v-divider />
 
-      <!-- 与观点的父节点和子节点选择 -->
-      <div v-if="form.logic_type === 'and'" class="form-section">
-        <div class="form-group">
-          <label for="parent-select">父观点 *</label>
-          <select 
-            id="parent-select" 
-            v-model="form.parent_id" 
-            required 
-            class="select-input"
-          >
-            <option value="">请选择父观点</option>
-            <option v-for="node in availableNodes" :key="node.id" :value="node.id">
-              {{ node.content?.slice(0, 50) }}...
-            </option>
-          </select>
-          <span v-if="formErrors.parent_id" class="error-text">{{ formErrors.parent_id }}</span>
-        </div>
-
-        <div class="form-group">
-          <label>子观点 *</label>
-          <div class="checkbox-group">
-            <label v-for="node in availableNodes" :key="node.id" class="checkbox-label">
-              <input
-                type="checkbox"
-                :value="node.id"
-                v-model="form.son_ids"
-                :disabled="node.id === form.parent_id"
-              />
-              <span>{{ node.content?.slice(0, 40) }}...</span>
-            </label>
+      <v-card-text class="pa-6">
+        <v-form @submit.prevent="handleSubmit">
+          <!-- 观点类型 -->
+          <div class="mb-6">
+            <h4 class="text-h6 mb-3">观点类型</h4>
+            <v-radio-group v-model="form.logic_type" inline>
+              <v-radio label="或观点（独立观点）" value="or" />
+              <v-radio label="与观点（组合观点）" value="and" />
+            </v-radio-group>
           </div>
-          <span v-if="formErrors.son_ids" class="error-text">{{ formErrors.son_ids }}</span>
-        </div>
 
-        <div class="form-group">
-          <label>连接类型 *</label>
-          <div class="radio-group">
-            <label>
-              <input type="radio" v-model="form.link_type" value="supports" />
-              <span>支持 - 子观点支持父观点</span>
-            </label>
-            <label>
-              <input type="radio" v-model="form.link_type" value="opposes" />
-              <span>反驳 - 子观点反驳父观点</span>
-            </label>
+          <!-- 或观点内容 -->
+          <div v-if="form.logic_type === 'or'" class="mb-6">
+            <v-textarea
+              v-model="form.content"
+              label="观点内容"
+              placeholder="请输入观点内容..."
+              variant="outlined"
+              rows="4"
+              required
+              :error-messages="formErrors.content"
+            />
           </div>
-        </div>
-      </div>
 
-      <!-- 正证分数（仅或观点） -->
-      <div v-if="form.logic_type === 'or'" class="form-section">
-        <UiInput
-          v-model.number="positiveScoreString"
-          label="正证分数 (0-1)"
-          type="number"
-          min="0"
-          max="1"
-          step="0.01"
-          placeholder="可选，如0.7"
-        />
-      </div>
+          <!-- 与观点的父节点和子节点选择 -->
+          <div v-if="form.logic_type === 'and'" class="mb-6">
+            <v-select
+              v-model="form.parent_id"
+              :items="availableNodes"
+              item-title="content"
+              item-value="id"
+              label="父观点"
+              placeholder="请选择父观点"
+              variant="outlined"
+              required
+              :error-messages="formErrors.parent_id"
+              class="mb-4"
+            >
+              <template v-slot:item="{ props, item }">
+                <v-list-item v-bind="props" :title="item.raw.content?.slice(0, 50) + '...'" />
+              </template>
+            </v-select>
+            <v-autocomplete
+              v-model="form.son_ids"
+              :items="availableSonNodes"
+              item-title="content"
+              item-value="id"
+              label="子观点"
+              placeholder="请选择子观点"
+              variant="outlined"
+              multiple
+              chips
+              closable-chips
+              :error-messages="formErrors.son_ids"
+              class="mb-4"
+            >
+              <template v-slot:item="{ props, item }">
+                <v-list-item v-bind="props" :title="item.raw.content?.slice(0, 40) + '...'" />
+              </template>
+            </v-autocomplete>
 
-      <!-- AI评分选项（仅或观点） -->
-      <div v-if="form.logic_type === 'or'" class="form-section">
-        <label class="checkbox-label">
-          <input type="checkbox" v-model="form.is_llm_score" />
-          <span>使用AI自动评分</span>
-        </label>
-      </div>
+            <h5 class="text-subtitle-1 mb-3">连接类型</h5>
+            <v-radio-group v-model="form.link_type" inline>
+              <v-radio label="支持 - 子观点支持父观点" value="supports" />
+              <v-radio label="反驳 - 子观点反驳父观点" value="opposes" />
+            </v-radio-group>
+          </div>
 
-      <!-- 创建者 -->
-      <div class="form-section">
-        <UiInput
-          v-model="form.creator"
-          label="创建者"
-          placeholder="请输入创建者名称"
-          required
-          :error="formErrors.creator"
-        />
-      </div>
-    </form>
+          <!-- 正证分数（仅或观点） -->
+          <div v-if="form.logic_type === 'or'" class="mb-6">
+            <v-text-field
+              v-model.number="positiveScoreString"
+              label="正证分数 (0-1)"
+              type="number"
+              min="0"
+              max="1"
+              step="0.01"
+              placeholder="可选，如0.7"
+              variant="outlined"
+            />
+          </div>
 
-    <template #footer>
-      <UiButton variant="secondary" @click="handleClose">
-        取消
-      </UiButton>
-      <UiButton 
-        variant="primary" 
-        @click="handleSubmit" 
-        :loading="isSubmitting"
-      >
-        {{ isEdit ? '更新' : '创建' }}
-      </UiButton>
-    </template>
-  </UiModal>
+          <!-- AI评分选项（仅或观点） -->
+          <div v-if="form.logic_type === 'or'" class="mb-6">
+            <v-checkbox v-model="form.is_llm_score" label="使用AI自动评分" />
+          </div>
+
+          <!-- 创建者 -->
+          <div class="mb-6">
+            <v-text-field
+              v-model="form.creator"
+              label="创建者"
+              placeholder="请输入创建者名称"
+              variant="outlined"
+              required
+              :error-messages="formErrors.creator"
+            />
+          </div>
+        </v-form>
+      </v-card-text>
+
+      <v-divider />
+
+      <v-card-actions class="pa-6">
+        <v-spacer />
+        <v-btn variant="text" @click="handleClose"> 取消 </v-btn>
+        <v-btn color="primary" variant="elevated" @click="handleSubmit" :loading="isSubmitting">
+          {{ isEdit ? '更新' : '创建' }}
+        </v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
 </template>
 
 <script setup lang="ts">
 import { ref, watch, onMounted, computed } from 'vue';
-import { UiButton, UiModal, UiInput } from './ui';
 import type { Node, OpinionFormData, LogicType, LinkType } from '@/types';
 
 interface Props {
@@ -176,13 +166,18 @@ const formErrors = ref({
 // 提交状态
 const isSubmitting = ref(false);
 
+// 计算可用的子节点（排除已选择的父节点，并过滤出 node_type 为 'solid' 的节点）
+const availableSonNodes = computed(() => {
+  return props.availableNodes.filter((node) => node.id !== form.value.parent_id && node.node_type === 'solid');
+});
+
 // 处理 positive_score 的类型转换
 const positiveScoreString = computed({
   get: () => form.value.positive_score?.toString() || '',
   set: (value: string | number) => {
     const numValue = typeof value === 'string' ? parseFloat(value) : value;
     form.value.positive_score = isNaN(numValue) ? null : numValue;
-  }
+  },
 });
 
 // 清除表单错误
@@ -268,7 +263,7 @@ const handleSubmit = async () => {
   if (!validateForm()) return;
 
   isSubmitting.value = true;
-  
+
   try {
     const submitData = { ...form.value };
     if (props.debateId) {
@@ -283,7 +278,7 @@ const handleSubmit = async () => {
         content: form.value.content,
         creator: form.value.creator,
         ...(form.value.positive_score !== null && {
-          score: { positive: form.value.positive_score }
+          score: { positive: form.value.positive_score },
         }),
         ...(form.value.is_llm_score && { is_llm_score: true }),
       };
@@ -313,112 +308,5 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.opinion-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.form-section {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.form-section h4 {
-  margin: 0;
-  color: var(--color-text-primary);
-  font-size: 1rem;
-  font-weight: 600;
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.form-group label {
-  font-weight: 600;
-  color: var(--color-text-primary);
-  font-size: 0.875rem;
-}
-
-.radio-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.radio-group label,
-.checkbox-label {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-weight: normal;
-  cursor: pointer;
-  padding: 0.5rem;
-  border-radius: var(--border-radius-md);
-  transition: background-color 0.2s ease;
-}
-
-.radio-group label:hover,
-.checkbox-label:hover {
-  background-color: var(--color-bg-tertiary);
-}
-
-.radio-group input,
-.checkbox-label input {
-  margin: 0;
-}
-
-.select-input {
-  width: 100%;
-  padding: 0.75rem;
-  border: 2px solid var(--color-border);
-  border-radius: var(--border-radius-md);
-  background: var(--color-bg-secondary);
-  color: var(--color-text-primary);
-  font-size: 0.875rem;
-  transition: border-color 0.2s ease;
-}
-
-.select-input:focus {
-  outline: none;
-  border-color: var(--color-primary);
-}
-
-.checkbox-group {
-  max-height: 200px;
-  overflow-y: auto;
-  border: 1px solid var(--color-border);
-  border-radius: var(--border-radius-md);
-  padding: 0.75rem;
-  background: var(--color-bg-secondary);
-}
-
-.checkbox-group .checkbox-label {
-  margin: 0;
-  padding: 0.5rem;
-}
-
-.error-text {
-  color: var(--color-danger);
-  font-size: 0.75rem;
-  margin-top: 0.25rem;
-}
-
-@media (max-width: 768px) {
-  .opinion-form {
-    gap: 1rem;
-  }
-  
-  .form-section {
-    gap: 0.75rem;
-  }
-  
-  .checkbox-group {
-    max-height: 150px;
-  }
-}
+/* 已使用 Vuetify 组件，不需要自定义样式 */
 </style>

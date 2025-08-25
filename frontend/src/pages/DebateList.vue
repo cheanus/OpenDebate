@@ -1,134 +1,177 @@
 <template>
-  <div class="debate-list">
-    <div class="page-header">
-      <h1>辩论总览</h1>
-      <UiButton variant="primary" @click="showCreateModal">
-        新建辩论
-      </UiButton>
-    </div>
+  <v-container class="debate-list">
+    <!-- 页面标题栏 -->
+    <v-row class="mb-6">
+      <v-col>
+        <div class="d-flex justify-space-between align-center">
+          <h1 class="text-h3">辩论总览</h1>
+          <v-btn color="primary" @click="showCreateModal" prepend-icon="mdi-plus"> 新建辩论 </v-btn>
+        </div>
+      </v-col>
+    </v-row>
 
-    <div class="search-section">
-      <div class="search-inputs">
-        <UiInput 
-          v-model="searchFilters.title" 
-          placeholder="搜索标题关键词..."
-          @input="handleSearchInput"
-        >
-          <template #prefix>🔍</template>
-        </UiInput>
-        <UiInput 
-          v-model="searchFilters.creator" 
-          placeholder="搜索创建者..."
-          @input="handleSearchInput"
-        >
-          <template #prefix>👤</template>
-        </UiInput>
-      </div>
-      <UiButton variant="secondary" @click="handleSearch" :loading="loading">
-        搜索
-      </UiButton>
-    </div>
+    <!-- 搜索区域 -->
+    <v-card class="mb-6">
+      <v-card-text>
+        <v-row>
+          <v-col cols="12" md="4">
+            <v-text-field
+              v-model="searchFilters.title"
+              label="搜索标题关键词"
+              placeholder="请输入标题关键词..."
+              prepend-inner-icon="mdi-magnify"
+              variant="outlined"
+              density="comfortable"
+              @input="handleSearchInput"
+            />
+          </v-col>
+          <v-col cols="12" md="4">
+            <v-text-field
+              v-model="searchFilters.creator"
+              label="搜索创建者"
+              placeholder="请输入创建者名称..."
+              prepend-inner-icon="mdi-account"
+              variant="outlined"
+              density="comfortable"
+              @input="handleSearchInput"
+            />
+          </v-col>
+          <v-col cols="12" md="4" class="d-flex align-center">
+            <v-btn
+              color="primary"
+              variant="outlined"
+              @click="handleSearch"
+              :loading="loading"
+              block
+            >
+              搜索
+            </v-btn>
+          </v-col>
+        </v-row>
+      </v-card-text>
+    </v-card>
 
-    <div v-if="error" class="error-message">
+    <!-- 错误提示 -->
+    <v-alert v-if="error" type="error" closable @click:close="clearError" class="mb-6">
       {{ error }}
-      <UiButton variant="ghost" size="small" @click="clearError">×</UiButton>
-    </div>
+    </v-alert>
 
-    <div v-if="loading" class="loading-message">
-      正在加载辩论列表...
-    </div>
+    <!-- 加载中 -->
+    <v-card v-if="loading" class="text-center pa-8">
+      <v-progress-circular indeterminate color="primary" size="64" class="mb-4" />
+      <p class="text-h6">正在加载辩论列表...</p>
+    </v-card>
 
-    <div v-else-if="debates.length === 0" class="empty-state">
-      <p>暂无辩论数据</p>
-      <UiButton variant="primary" @click="showCreateModal">
-        创建第一个辩论
-      </UiButton>
-    </div>
+    <!-- 空状态 -->
+    <v-card v-else-if="debates.length === 0" class="text-center pa-8">
+      <v-icon size="64" color="grey" class="mb-4">mdi-comment-question-outline</v-icon>
+      <p class="text-h6 mb-4">暂无辩论数据</p>
+      <v-btn color="primary" @click="showCreateModal">创建第一个辩论</v-btn>
+    </v-card>
 
-    <table v-else class="debate-table">
-      <thead>
-        <tr>
-          <th>标题</th>
-          <th>描述</th>
-          <th>创建者</th>
-          <th>创建时间</th>
-          <th>操作</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="debate in debates" :key="debate.id">
-          <td :title="debate.title">{{ debate.title }}</td>
-          <td :title="debate.description">{{ debate.description }}</td>
-          <td :title="debate.creator">{{ debate.creator }}</td>
-          <td>{{ formatDate(debate.created_at) }}</td>
-          <td class="actions-cell">
-            <UiButton variant="ghost" size="small" @click="viewDebate(debate.id)">
-              查看
-            </UiButton>
-            <UiButton variant="ghost" size="small" @click="editDebate(debate)">
-              编辑
-            </UiButton>
-            <UiButton variant="danger" size="small" @click="handleDeleteDebate(debate)">
-              删除
-            </UiButton>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+    <!-- 辩论列表 -->
+    <v-card v-else>
+      <v-data-table :headers="tableHeaders" :items="debates" item-value="id" class="elevation-1">
+        <template v-slot:[`item.title`]="{ item }">
+          <div class="text-truncate" style="max-width: 200px" :title="item.title">
+            {{ item.title }}
+          </div>
+        </template>
+
+        <template v-slot:[`item.description`]="{ item }">
+          <div class="text-truncate" style="max-width: 250px" :title="item.description">
+            {{ item.description }}
+          </div>
+        </template>
+
+        <template v-slot:[`item.created_at`]="{ item }">
+          {{ formatDate(item.created_at) }}
+        </template>
+
+        <template v-slot:[`item.actions`]="{ item }">
+          <v-btn
+            icon="mdi-eye"
+            variant="text"
+            color="primary"
+            size="small"
+            @click="viewDebate(item.id)"
+            title="查看"
+          />
+          <v-btn
+            icon="mdi-pencil"
+            variant="text"
+            color="primary"
+            size="small"
+            @click="editDebate(item)"
+            title="编辑"
+          />
+          <v-btn
+            icon="mdi-delete"
+            variant="text"
+            color="error"
+            size="small"
+            @click="handleDeleteDebate(item)"
+            title="删除"
+          />
+        </template>
+      </v-data-table>
+    </v-card>
 
     <!-- 创建/编辑弹窗 -->
-    <UiModal 
-      v-model:show="showModal" 
-      :title="isEditMode ? '编辑辩论' : '创建辩论'"
-      size="medium"
-    >
-      <form @submit.prevent="handleSubmit" class="debate-form">
-        <UiInput
-          v-model="form.title"
-          label="辩论标题"
-          placeholder="请输入辩论标题..."
-          required
-          :error="formErrors.title"
-        />
+    <v-dialog v-model="showModal" max-width="600px" persistent>
+      <v-card>
+        <v-card-title class="text-h5">
+          {{ isEditMode ? '编辑辩论' : '创建辩论' }}
+        </v-card-title>
 
-        <UiInput
-          v-model="form.description"
-          label="辩论描述"
-          placeholder="请输入辩论描述..."
-          tag="textarea"
-          :rows="4"
-          :error="formErrors.description"
-        />
+        <v-card-text>
+          <v-form ref="formRef" @submit.prevent="handleSubmit">
+            <v-text-field
+              v-model="form.title"
+              label="辩论标题"
+              placeholder="请输入辩论标题..."
+              variant="outlined"
+              :error-messages="formErrors.title"
+              required
+              class="mb-4"
+            />
 
-        <UiInput
-          v-model="form.creator"
-          label="创建者"
-          placeholder="请输入创建者名称..."
-          required
-          :error="formErrors.creator"
-        />
-      </form>
+            <v-textarea
+              v-model="form.description"
+              label="辩论描述"
+              placeholder="请输入辩论描述..."
+              variant="outlined"
+              :error-messages="formErrors.description"
+              rows="4"
+              class="mb-4"
+            />
 
-      <template #footer>
-        <UiButton variant="secondary" @click="closeModal">
-          取消
-        </UiButton>
-        <UiButton 
-          variant="primary" 
-          @click="handleSubmit" 
-          :loading="submitting"
-        >
-          {{ isEditMode ? '更新' : '创建' }}
-        </UiButton>
-      </template>
-    </UiModal>
-  </div>
+            <v-text-field
+              v-model="form.creator"
+              label="创建者"
+              placeholder="请输入创建者名称..."
+              variant="outlined"
+              :error-messages="formErrors.creator"
+              required
+            />
+          </v-form>
+        </v-card-text>
+
+        <v-card-actions>
+          <v-spacer />
+          <v-btn variant="text" @click="closeModal"> 取消 </v-btn>
+          <v-btn color="primary" @click="handleSubmit" :loading="submitting" variant="elevated">
+            {{ isEditMode ? '更新' : '创建' }}
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+  </v-container>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { UiButton, UiModal, UiInput } from '@/components/ui';
 import { useDebates } from '@/composables';
 import type { Debate } from '@/types';
 
@@ -146,6 +189,15 @@ const {
   deleteDebate,
   clearError,
 } = useDebates();
+
+// 表格头信息
+const tableHeaders = [
+  { title: '标题', key: 'title', sortable: false },
+  { title: '描述', key: 'description', sortable: false },
+  { title: '创建者', key: 'creator', sortable: false },
+  { title: '创建时间', key: 'created_at', sortable: false },
+  { title: '操作', key: 'actions', sortable: false, align: 'center' as const },
+];
 
 // 本地状态
 const showModal = ref(false);
@@ -227,10 +279,10 @@ const handleSubmit = async () => {
   if (!validateForm()) return;
 
   submitting.value = true;
-  
+
   try {
     let success = false;
-    
+
     if (isEditMode.value) {
       success = await updateDebate({
         id: form.value.id,
@@ -273,7 +325,7 @@ const handleSearchInput = () => {
   if (searchTimer) {
     clearTimeout(searchTimer);
   }
-  
+
   // 延迟搜索，避免频繁请求
   searchTimer = window.setTimeout(() => {
     handleSearch();
@@ -291,151 +343,14 @@ onMounted(() => {
 </script>
 
 <style scoped>
- .debate-list {
-  width: 70%;
-  max-width: none;
+.debate-list {
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 2rem;
 }
 
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid var(--border);
-}
-
-.page-header h1 {
-  margin: 0;
-  color: var(--text);
-}
-
-.search-section {
-  display: flex;
-  gap: 1rem;
-  align-items: flex-end;
-  margin-bottom: 2rem;
-  padding: 1.5rem;
-  background: var(--card-bg);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-}
-
-.search-inputs {
-  display: flex;
-  gap: 1rem;
-  flex: 1;
-}
-
-.error-message {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem;
-  margin-bottom: 1rem;
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  border-radius: var(--radius);
-  color: #dc2626;
-}
-
-.loading-message {
-  text-align: center;
-  padding: 3rem;
-  color: var(--text-light);
-  font-size: 1.1rem;
-}
-
-.empty-state {
-  text-align: center;
-  padding: 4rem;
-  background: var(--card-bg);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-}
-
-.empty-state p {
-  color: var(--text-light);
-  font-size: 1.1rem;
-  margin-bottom: 2rem;
-}
-
-.debate-table {
-  width: 100%;
-  background: var(--card-bg);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
+.text-truncate {
+  white-space: nowrap;
   overflow: hidden;
-  border-collapse: collapse;
-}
-
-.debate-table th,
-.debate-table td {
-  padding: 1rem;
-  text-align: left;
-  border-bottom: 1px solid var(--border);
-}
-
-.debate-table th {
-  background: var(--secondary);
-  font-weight: 600;
-  color: var(--text);
-}
-
-.debate-table tr:hover {
-  background: var(--secondary);
-}
-
-.debate-table tr:last-child td {
-  border-bottom: none;
-}
-
-.actions-cell {
-  display: flex;
-  justify-content: space-evenly;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-
-.debate-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-@media (max-width: 768px) {
-  .debate-list {
-    padding: 1rem;
-  }
-  
-  .page-header {
-    flex-direction: column;
-    gap: 1rem;
-    align-items: stretch;
-  }
-  
-  .search-section {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  
-  .search-inputs {
-    flex-direction: column;
-  }
-  
-  .debate-table {
-    font-size: 0.875rem;
-  }
-  
-  .debate-table th,
-  .debate-table td {
-    padding: 0.75rem 0.5rem;
-  }
-  
-  .actions-cell {
-    flex-direction: column;
-  }
+  text-overflow: ellipsis;
 }
 </style>

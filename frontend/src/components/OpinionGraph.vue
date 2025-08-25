@@ -72,7 +72,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch, nextTick } from 'vue';
+import { ref, onMounted, watch, nextTick, computed } from 'vue';
+import { useTheme } from 'vuetify';
 import cytoscape from 'cytoscape';
 import dagre from 'cytoscape-dagre';
 import type { Element, GraphLayout, Node, Edge } from '@/types';
@@ -104,11 +105,29 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<{
   nodeDblClick: [nodeData: Node];
-  viewportChanged: [extent: { x1: number; y1: number; x2: number; y2: number; w: number; h: number }]; // cytoscape extent 对象
+  viewportChanged: [
+    extent: { x1: number; y1: number; x2: number; y2: number; w: number; h: number },
+  ]; // cytoscape extent 对象
   nodeSelected: [nodeData: Node | null];
   edgeSelected: [edgeData: Edge | null];
   contextMenuAction: [action: string];
 }>();
+
+// 使用 Vuetify 主题
+const theme = useTheme();
+
+// 获取主题颜色的计算属性
+const themeColors = computed(() => {
+  const currentTheme = theme.current.value;
+  return {
+    andNodeColor: currentTheme.dark ? '#6C9AFF' : '#809fff',
+    orNodeColor: currentTheme.dark ? '#FFB3E6' : '#ffafe7',
+    textColor: currentTheme.dark ? '#FFFFFF' : '#222222',
+    borderColor: currentTheme.dark ? '#777777' : '#bbbbbb',
+    supportColor: currentTheme.colors.success,
+    opposeColor: currentTheme.colors.error,
+  };
+});
 
 const cyContainer = ref<HTMLElement | null>(null);
 let cy: Core | null = null;
@@ -175,6 +194,8 @@ function handleMenuAction(action: string): void {
 
 onMounted(() => {
   nextTick(() => {
+    const colors = themeColors.value;
+    
     cy = cytoscape({
       container: cyContainer.value,
       elements: props.elements,
@@ -191,17 +212,18 @@ onMounted(() => {
         {
           selector: 'node',
           style: {
-            'background-color': (ele: NodeSingular) => // cytoscape 节点元素
-              ele.data('logic_type') === 'and' ? '#809fff' : '#ffafe7',
+            'background-color': (
+              ele: NodeSingular, // cytoscape 节点元素
+            ) => (ele.data('logic_type') === 'and' ? colors.andNodeColor : colors.orNodeColor),
             label: (ele: NodeSingular) => wrapLabelText(ele.data('label'), getNodeSize(ele)),
             width: (ele: NodeSingular) => getNodeSize(ele),
             height: (ele: NodeSingular) => getNodeSize(ele),
             'font-size': 14,
-            color: '#222',
+            color: colors.textColor,
             'text-valign': 'center',
             'text-halign': 'center',
             'border-width': (ele: NodeSingular) => (ele.data('has_more_children') ? 6 : 0),
-            'border-color': '#bbb',
+            'border-color': colors.borderColor,
             opacity: 0.95,
             'text-wrap': 'wrap',
           },
@@ -210,10 +232,11 @@ onMounted(() => {
           selector: 'edge',
           style: {
             width: 4,
-            'line-color': (ele: EdgeSingular) => // cytoscape 边元素
-              ele.data('link_type') === 'supports' ? '#00b894' : '#e17055',
+            'line-color': (
+              ele: EdgeSingular, // cytoscape 边元素
+            ) => (ele.data('link_type') === 'supports' ? colors.supportColor : colors.opposeColor),
             'target-arrow-color': (ele: EdgeSingular) =>
-              ele.data('link_type') === 'supports' ? '#00b894' : '#e17055',
+              ele.data('link_type') === 'supports' ? colors.supportColor : colors.opposeColor,
             'target-arrow-shape': 'triangle',
             'curve-style': 'bezier',
             opacity: 0.7,
@@ -221,6 +244,7 @@ onMounted(() => {
         },
       ],
     });
+    // 绑定事件
     cy.on('tap', 'node', (evt) => {
       if (tapTimer) clearTimeout(tapTimer);
       tapTimer = setTimeout(() => {
@@ -369,6 +393,36 @@ onMounted(() => {
 // 点击其他地方隐藏右键菜单
 document.addEventListener('click', hideContextMenu);
 
+// 监听主题变化并更新 Cytoscape 样式
+watch(
+  () => theme.global.name.value,
+  () => {
+    if (cy) {
+      const colors = themeColors.value;
+      cy.style([
+        {
+          selector: 'node',
+          style: {
+            'background-color': (ele: NodeSingular) =>
+              ele.data('logic_type') === 'and' ? colors.andNodeColor : colors.orNodeColor,
+            color: colors.textColor,
+            'border-color': colors.borderColor,
+          },
+        },
+        {
+          selector: 'edge',
+          style: {
+            'line-color': (ele: EdgeSingular) =>
+              ele.data('link_type') === 'supports' ? colors.supportColor : colors.opposeColor,
+            'target-arrow-color': (ele: EdgeSingular) =>
+              ele.data('link_type') === 'supports' ? colors.supportColor : colors.opposeColor,
+          },
+        },
+      ]);
+    }
+  },
+);
+
 watch(
   () => props.elements,
   (newEls) => {
@@ -376,7 +430,7 @@ watch(
       // 保存当前的视窗状态
       const currentZoom = cy.zoom();
       const currentPan = cy.pan();
-      
+
       cy.json({ elements: newEls });
       const layoutConfig = props.layout || {
         name: 'dagre',
@@ -387,11 +441,11 @@ watch(
         fit: true,
         padding: 50,
       };
-      
+
       // 运行布局
       const layout = cy.layout(layoutConfig);
       layout.run();
-      
+
       // 如果layout配置中fit为false，则恢复之前的视窗状态
       if (!layoutConfig.fit) {
         layout.on('layoutstop', () => {
@@ -414,12 +468,11 @@ defineExpose({
 <style scoped>
 .cytoscape-container {
   width: 100%;
-  height: 50vh;
-  /* 深色背景，优先使用全局变量（若存在）否则回落到自定义暗色 */
-  background: var(--color-gray-900, #07121a);
+  height: 100%;
+  background: rgb(var(--v-theme-surface));
+  border: 1px solid rgb(var(--v-theme-outline));
   border-radius: 8px;
-  box-shadow: 0 6px 20px rgba(2, 6, 23, 0.7);
-  margin-bottom: 24px;
+  box-shadow: 0 4px 12px rgb(var(--v-theme-shadow));
   position: relative;
   overflow: hidden;
 }
@@ -427,31 +480,31 @@ defineExpose({
 .meta-panel {
   position: absolute;
   min-width: 220px;
-  background: linear-gradient(180deg, #0f1724 0%, #071224 100%);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgb(var(--v-theme-surface));
+  border: 1px solid rgb(var(--v-theme-outline));
   border-radius: 8px;
-  box-shadow: 0 8px 30px rgba(2, 6, 23, 0.75);
+  box-shadow: 0 4px 20px rgb(var(--v-theme-shadow));
   padding: 14px;
   z-index: 10;
   top: 80px;
   left: 80px;
-  color: #e6eef8;
+  color: rgb(var(--v-theme-on-surface));
 }
 
 .meta-panel b {
-  color: #cfe8ff;
+  color: rgb(var(--v-theme-primary));
 }
 
 .context-menu {
   position: absolute;
-  background: linear-gradient(180deg, #0b1220 0%, #06101a 100%);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgb(var(--v-theme-surface));
+  border: 1px solid rgb(var(--v-theme-outline));
   border-radius: 8px;
-  box-shadow: 0 10px 30px rgba(2, 6, 23, 0.85);
+  box-shadow: 0 8px 20px rgb(var(--v-theme-shadow));
   z-index: 1000;
   min-width: 150px;
   padding: 6px 0;
-  color: #e6eef8;
+  color: rgb(var(--v-theme-on-surface));
 }
 
 .context-menu-item {
@@ -460,17 +513,19 @@ defineExpose({
   padding: 8px 16px;
   cursor: pointer;
   font-size: 14px;
-  color: #d7e9ff;
-  transition: background-color 0.15s, color 0.15s;
+  color: rgb(var(--v-theme-on-surface));
+  transition:
+    background-color 0.15s,
+    color 0.15s;
 }
 
 .context-menu-item:hover {
-  background-color: rgba(255, 255, 255, 0.03);
-  color: #fff;
+  background-color: rgb(var(--v-theme-surface-bright));
+  color: rgb(var(--v-theme-on-surface));
 }
 
 .context-menu-item:active {
-  background-color: rgba(255, 255, 255, 0.05);
+  background-color: rgb(var(--v-theme-surface-container-high));
 }
 
 .menu-icon {
@@ -478,12 +533,12 @@ defineExpose({
   width: 16px;
   text-align: center;
   font-weight: bold;
-  color: #9fb7ff;
+  color: rgb(var(--v-theme-primary));
 }
 
 .context-menu-divider {
   height: 1px;
-  background-color: rgba(255, 255, 255, 0.04);
+  background-color: rgb(var(--v-theme-outline));
   margin: 6px 0;
 }
 

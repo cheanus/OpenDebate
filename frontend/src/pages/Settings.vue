@@ -1,45 +1,99 @@
 <template>
-  <div class="settings-page">
-    <h1>设置</h1>
-    <form class="settings-form" @submit.prevent>
-      <div class="form-group">
-        <label for="max-updated-son">单节点初始最大加载子节点数</label>
-        <input id="max-updated-son" type="number" min="1" v-model.number="maxUpdatedSon" />
-      </div>
-      <div class="form-group">
-        <label for="num-click-updated-son">双击加载的最大子节点数</label>
-        <input
-          id="num-click-updated-son"
-          type="number"
-          min="1"
-          v-model.number="numClickUpdatedSon"
-        />
-      </div>
-      <div class="form-group">
-        <label for="load-depth">双击加载深度</label>
-        <input
-          id="load-depth"
-          type="number"
-          min="1"
-          max="5"
-          v-model.number="loadDepth"
-        />
-        <small class="hint">每次双击时向下加载的深度层级（1-5）</small>
-      </div>
-      <div class="form-group">
-        <label for="max-load-nodes">每次最大加载节点数</label>
-        <input
-          id="max-load-nodes"
-          type="number"
-          min="1"
-          max="100"
-          v-model.number="maxLoadNodes"
-        />
-        <small class="hint">限制单次操作加载的总节点数量</small>
-      </div>
-      <button class="save-btn" @click="saveSettings">保存设置</button>
-    </form>
-  </div>
+  <v-container class="settings-page">
+    <v-row justify="center">
+      <v-col cols="12" md="8" lg="6">
+        <v-card elevation="2">
+          <v-card-title class="text-h4 pa-6">
+            <v-icon left class="mr-3">mdi-cog</v-icon>
+            设置
+          </v-card-title>
+
+          <v-divider />
+
+          <v-card-text class="pa-6">
+            <v-form @submit.prevent="saveSettings">
+              <v-row>
+                <v-col cols="12">
+                  <v-text-field
+                    v-model.number="maxUpdatedSon"
+                    label="单节点初始最大加载子节点数"
+                    type="number"
+                    :min="1"
+                    variant="outlined"
+                    prepend-inner-icon="mdi-chart-tree"
+                    :rules="[(v) => v >= 1 || '值必须大于等于1']"
+                  />
+                </v-col>
+
+                <v-col cols="12">
+                  <v-text-field
+                    v-model.number="numClickUpdatedSon"
+                    label="双击加载的最大子节点数"
+                    type="number"
+                    :min="1"
+                    variant="outlined"
+                    prepend-inner-icon="mdi-mouse"
+                    :rules="[(v) => v >= 1 || '值必须大于等于1']"
+                  />
+                </v-col>
+
+                <v-col cols="12">
+                  <v-text-field
+                    v-model.number="loadDepth"
+                    label="双击加载深度"
+                    type="number"
+                    :min="1"
+                    :max="5"
+                    variant="outlined"
+                    prepend-inner-icon="mdi-layers"
+                    :rules="[(v) => (v >= 1 && v <= 5) || '值必须在1-5之间']"
+                    hint="每次双击时向下加载的深度层级（1-5）"
+                    persistent-hint
+                  />
+                </v-col>
+
+                <v-col cols="12">
+                  <v-text-field
+                    v-model.number="maxLoadNodes"
+                    label="每次最大加载节点数"
+                    type="number"
+                    :min="1"
+                    :max="100"
+                    variant="outlined"
+                    prepend-inner-icon="mdi-sitemap"
+                    :rules="[(v) => (v >= 1 && v <= 100) || '值必须在1-100之间']"
+                    hint="限制单次操作加载的总节点数量"
+                    persistent-hint
+                  />
+                </v-col>
+              </v-row>
+            </v-form>
+          </v-card-text>
+
+          <v-divider />
+
+          <v-card-actions class="pa-6">
+            <v-spacer />
+            <v-btn
+              color="primary"
+              variant="elevated"
+              size="large"
+              @click="saveSettings"
+              prepend-icon="mdi-content-save"
+            >
+              保存设置
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-col>
+    </v-row>
+
+    <!-- 成功提示 -->
+    <v-snackbar v-model="showSnackbar" color="success" timeout="3000" location="top">
+      <v-icon left>mdi-check-circle</v-icon>
+      设置已保存
+    </v-snackbar>
+  </v-container>
 </template>
 
 <script setup lang="ts">
@@ -49,6 +103,7 @@ const maxUpdatedSon = ref(5);
 const numClickUpdatedSon = ref(5);
 const loadDepth = ref(2);
 const maxLoadNodes = ref(10);
+const showSnackbar = ref(false);
 
 onMounted(() => {
   const s = localStorage.getItem('debate_settings');
@@ -73,75 +128,12 @@ function saveSettings() {
       maxLoadNodes: maxLoadNodes.value,
     }),
   );
-  // window.$message?.success?.('设置已保存');
-  alert('设置已保存');
+  showSnackbar.value = true;
 }
 </script>
 
 <style scoped>
 .settings-page {
-  width: 70%;
-  /* max-width: 480px; */
-  margin: 40px auto;
-  background: var(--color-gray-900);
-  color: var(--color-text-primary);
-  border-radius: 12px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
-  padding: 32px 40px 24px 40px;
-}
-
-.settings-form {
-  display: flex;
-  flex-direction: column;
-  gap: 28px;
-  margin-top: 32px;
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 8px;
-}
-
-label {
-  font-weight: 600;
-  color: var(--color-text-primary);
-  font-size: 16px;
-}
-
-input[type='number'] {
-  width: 120px;
-  padding: 6px 10px;
-  background: var(--color-gray-800);
-  color: var(--color-text-primary);
-  border: 1px solid #2B2A33;
-  border-radius: 6px;
-  font-size: 16px;
-}
-
-.hint {
-  color: var(--color-text-secondary);
-  font-size: 14px;
-  margin-top: 4px;
-  font-weight: normal;
-}
-
-.save-btn {
-  width: 200px;
-  margin: 16px auto 0;
-  padding: 8px 24px;
-  background: var(--primary, #4f8cff);
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.save-btn:hover {
-  background: #2563eb;
+  padding-top: 2rem;
 }
 </style>

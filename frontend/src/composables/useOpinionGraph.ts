@@ -10,7 +10,7 @@ export function useOpinionGraph(debateId: string) {
   const loadedEdges = ref<Set<string>>(new Set());
   const loading = ref(false);
   const error = ref<string | null>(null);
-  
+
   // 选中状态
   const selectedNode = ref<Node | null>(null);
   const selectedEdge = ref<Edge | null>(null);
@@ -54,7 +54,7 @@ export function useOpinionGraph(debateId: string) {
     if (hasMore === null) {
       // 检查节点是否有子节点
       const rel = node.relationship;
-      finalHasMore = 
+      finalHasMore =
         (rel.supported_by && rel.supported_by.length > 0) ||
         (rel.opposed_by && rel.opposed_by.length > 0);
     }
@@ -92,7 +92,7 @@ export function useOpinionGraph(debateId: string) {
   // 加载子节点（支持深度加载）
   const loadChildren = async (parentId: string, num: number, depth: number = 1) => {
     if (depth <= 0) return;
-    
+
     try {
       const response = await opinionService.getInfo(parentId, debateId);
       if (!response.is_success || !response.data) {
@@ -101,14 +101,14 @@ export function useOpinionGraph(debateId: string) {
 
       const rel = response.data.relationship;
       const childLinks = [...(rel.supported_by || []), ...(rel.opposed_by || [])];
-      
+
       const pairs: Array<{ child: Node; link: Edge }> = [];
 
       // 收集所有子节点信息
       for (const linkId of childLinks) {
         try {
           const linkResponse = await linkService.getInfo(linkId);
-          
+
           if (linkResponse.is_success) {
             // 根据实际API响应格式提取链接数据
             const linkData = {
@@ -117,13 +117,13 @@ export function useOpinionGraph(debateId: string) {
               to_id: (linkResponse.to_id || '') as string,
               link_type: (linkResponse.link_type || 'supports') as import('@/types').LinkType,
             };
-            
+
             const childResponse = await opinionService.getInfo(linkData.from_id, debateId);
-            
+
             if (childResponse.is_success && childResponse.data) {
-              pairs.push({ 
-                child: childResponse.data, 
-                link: linkData as Edge
+              pairs.push({
+                child: childResponse.data,
+                link: linkData as Edge,
               });
             } else {
               console.log(`[loadChildren] 获取子节点失败: ${linkData.from_id}`);
@@ -150,12 +150,12 @@ export function useOpinionGraph(debateId: string) {
       // 首先添加当前层级的节点
       for (const pair of pairs) {
         if (addedCount >= num) break;
-        
+
         const wasNew = !loadedNodes.value.has(pair.child.id);
-        
+
         await addNode(pair.child);
         addEdge(pair.link);
-        
+
         if (wasNew) {
           addedCount++;
           // 记录需要递归加载的节点
@@ -196,9 +196,9 @@ export function useOpinionGraph(debateId: string) {
     error.value = null;
 
     try {
-      const response = await opinionService.getHeads({ 
-        debate_id: debateId, 
-        is_root: true 
+      const response = await opinionService.getHeads({
+        debate_id: debateId,
+        is_root: true,
       });
 
       if (response.is_success && response.data?.length) {
@@ -294,7 +294,7 @@ export function useOpinionGraph(debateId: string) {
 
     try {
       const response = await opinionService.update(data);
-      
+
       if (response.is_success) {
         await refreshView();
         return true;
@@ -337,17 +337,13 @@ export function useOpinionGraph(debateId: string) {
   };
 
   // 创建链接
-  const createLink = async (data: {
-    from_id: string;
-    to_id: string;
-    link_type: LinkType;
-  }) => {
+  const createLink = async (data: { from_id: string; to_id: string; link_type: LinkType }) => {
     loading.value = true;
     error.value = null;
 
     try {
       const response = await linkService.create(data);
-      
+
       if (response.is_success) {
         await refreshView();
         return response.data;
@@ -364,16 +360,13 @@ export function useOpinionGraph(debateId: string) {
   };
 
   // 更新链接
-  const updateLink = async (data: {
-    id: string;
-    link_type?: LinkType;
-  }) => {
+  const updateLink = async (data: { id: string; link_type?: LinkType }) => {
     loading.value = true;
     error.value = null;
 
     try {
       const response = await linkService.update(data);
-      
+
       if (response.is_success) {
         await refreshView();
         return true;
@@ -396,7 +389,7 @@ export function useOpinionGraph(debateId: string) {
 
     try {
       const response = await linkService.delete({ id: linkId });
-      
+
       if (response.is_success) {
         await refreshView();
         return true;
@@ -427,13 +420,13 @@ export function useOpinionGraph(debateId: string) {
     error: computed(() => error.value),
     selectedNode: computed(() => selectedNode.value),
     selectedEdge: computed(() => selectedEdge.value),
-    
+
     // 设置
     maxUpdatedSon,
     numClickUpdatedSon,
     loadDepth,
     maxLoadNodes,
-    
+
     // 方法
     loadInitialNodes,
     loadChildren,
@@ -445,9 +438,13 @@ export function useOpinionGraph(debateId: string) {
     updateLink,
     deleteLink,
     clearError,
-    
+
     // 选择相关
-    setSelectedNode: (node: Node | null) => { selectedNode.value = node; },
-    setSelectedEdge: (edge: Edge | null) => { selectedEdge.value = edge; },
+    setSelectedNode: (node: Node | null) => {
+      selectedNode.value = node;
+    },
+    setSelectedEdge: (edge: Edge | null) => {
+      selectedEdge.value = edge;
+    },
   };
 }

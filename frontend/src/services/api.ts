@@ -18,10 +18,7 @@ export class ApiClient {
     this.baseUrl = baseUrl;
   }
 
-  private async request<T>(
-    endpoint: string,
-    options: RequestInit = {},
-  ): Promise<ApiResponse<T>> {
+  private async request<T>(endpoint: string, options: RequestInit = {}): Promise<ApiResponse<T>> {
     const url = `${this.baseUrl}${endpoint}`;
     const config: RequestInit = {
       headers: {
@@ -59,7 +56,7 @@ export class ApiClient {
         const normalized: ApiResponse<T> = {
           is_success: Boolean(is_success),
           msg: typeof msg === 'string' ? msg : undefined,
-          data: (Object.keys(rest).length > 0 ? (rest as unknown as T) : (undefined as unknown as T)),
+          data: Object.keys(rest).length > 0 ? (rest as unknown as T) : (undefined as unknown as T),
         };
         // 将原始字段也保留下来
         Object.assign(normalized, rest);
@@ -97,17 +94,6 @@ export class ApiClient {
       method: 'POST',
       body: data ? JSON.stringify(data) : undefined,
     });
-  }
-
-  async put<T>(endpoint: string, data?: unknown): Promise<ApiResponse<T>> {
-    return this.request<T>(endpoint, {
-      method: 'PUT',
-      body: data ? JSON.stringify(data) : undefined,
-    });
-  }
-
-  async delete<T>(endpoint: string): Promise<ApiResponse<T>> {
-    return this.request<T>(endpoint, { method: 'DELETE' });
   }
 }
 

@@ -2,13 +2,13 @@ export const APP_CONFIG = {
   // 应用名称
   name: 'OpenDebate',
   version: '1.0.0',
-  
+
   // API 配置
   api: {
     baseUrl: '/api',
     timeout: 30000,
   },
-  
+
   // 图形配置
   graph: {
     defaultLayout: {
@@ -20,7 +20,7 @@ export const APP_CONFIG = {
       fit: true,
       padding: 50,
     },
-    
+
     // 节点样式配置
     nodeStyles: {
       minSize: 40,
@@ -30,7 +30,7 @@ export const APP_CONFIG = {
         hasMore: 6,
       },
     },
-    
+
     // 边样式配置
     edgeStyles: {
       width: 4,
@@ -41,7 +41,7 @@ export const APP_CONFIG = {
       },
     },
   },
-  
+
   // 默认设置
   defaults: {
     maxUpdatedSon: 5,
@@ -50,14 +50,14 @@ export const APP_CONFIG = {
     maxLoadNodes: 10, // 每次加载的最大节点数量
     creator: 'user',
   },
-  
+
   // UI 配置
   ui: {
     debounceDelay: 500,
     pageSize: 20,
     maxPageSize: 100,
   },
-  
+
   // 存储键名
   storageKeys: {
     debateSettings: 'debate_settings',

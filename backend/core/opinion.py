@@ -92,6 +92,14 @@ def create_and_opinion(
             raise RuntimeError(f"Failed to create opinion in PostgreSQL: {str(e)}")
 
     try:
+        # Firstly check if son opinions are not empty
+        son_opinion_neo4j_list = []
+        for son_id in son_ids:
+            son_opinion_neo4j = OpinionNeo4j.nodes.get(uid=son_id)
+            if son_opinion_neo4j.node_type == "empty":
+                raise ValueError(f"Son opinion {son_id} is empty.")
+            son_opinion_neo4j_list.append(son_opinion_neo4j)
+        # Create the new opinion node
         parent_opinion_neo4j = OpinionNeo4j.nodes.get(uid=parent_id)
         new_opinion_neo4j = OpinionNeo4j(
             uid=new_opinion_psql.id,
@@ -109,8 +117,7 @@ def create_and_opinion(
         else:
             raise ValueError(f"Unsupported link type: {link_type}")
         # Link the new AND opinion to the child opinions
-        for son_id in son_ids:
-            son_opinion_neo4j = OpinionNeo4j.nodes.get(uid=son_id)
+        for son_opinion_neo4j in son_opinion_neo4j_list:
             son_opinion_neo4j.supports.connect(new_opinion_neo4j)  # type: ignore
         # Update score
         update_score.refresh_son_type_score(str(new_opinion_neo4j.uid), "positive")
@@ -120,14 +127,6 @@ def create_and_opinion(
         update_score.update_node_score_positively_from(str(new_opinion_psql.id))
         ## No need to update negative score here, as it will be updated in update_node_score_positively_from above
         ## And here new_opinion_neo4j.negative_score is None by default
-        # Update negative score for AND opinion
-        # min_son_opinions = OpinionNeo4j.nodes.filter(
-        #     uid__in=son_ids, positive_score=new_opinion_neo4j.son_positive_score
-        # ).all()
-        # for min_son_opinion in min_son_opinions:
-        #     update_score.update_node_score_negatively_recursively(
-        #         min_son_opinion.uid, new_opinion_neo4j.negative_score
-        #     )
     except Exception as e:
         raise RuntimeError(f"Failed to create opinion in Neo4j: {str(e)}")
 

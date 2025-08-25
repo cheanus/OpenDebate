@@ -1,29 +1,70 @@
 <template>
-  <div class="opinion-page">
+  <v-container fluid class="opinion-page pa-0">
     <!-- 页面标题 -->
-    <div class="page-header">
-      <h2>辩论观点图</h2>
-      <p>双击节点展开更多子观点，右键进行操作</p>
-    </div>
+    <v-card class="ma-4" elevation="1">
+      <v-card-text class="pa-4">
+        <div class="d-flex align-center mb-2">
+          <v-icon color="primary" class="mr-3" size="large">mdi-sitemap</v-icon>
+          <h2 class="text-h4">辩论观点图</h2>
+        </div>
+        <p class="text-subtitle-1 text-medium-emphasis mb-0">
+          双击节点展开更多子观点，右键进行操作
+        </p>
+      </v-card-text>
+    </v-card>
 
     <!-- 图形组件 -->
-    <OpinionGraph
-      :elements="elements"
-      :layout="graphLayout"
-      @nodeDblClick="handleNodeDblClick"
-      @nodeSelected="handleNodeSelected"
-      @edgeSelected="handleEdgeSelected"
-      @contextMenuAction="handleContextMenuAction"
-      ref="opinionGraphRef"
-    />
+    <div class="graph-container ma-4">
+      <OpinionGraph
+        :elements="elements"
+        :layout="graphLayout"
+        @nodeDblClick="handleNodeDblClick"
+        @nodeSelected="handleNodeSelected"
+        @edgeSelected="handleEdgeSelected"
+        @contextMenuAction="handleContextMenuAction"
+        ref="opinionGraphRef"
+      />
+    </div>
 
     <!-- 操作提示 -->
-    <div class="operation-hints">
-      <div class="hint-item"><strong>双击节点：</strong>展开更多子观点</div>
-      <div class="hint-item"><strong>右键节点：</strong>编辑、删除观点或添加连接</div>
-      <div class="hint-item"><strong>右键连接：</strong>编辑、删除连接</div>
-      <div class="hint-item"><strong>右键空白：</strong>添加观点、连接或刷新视图</div>
-    </div>
+    <v-card class="ma-4" elevation="1">
+      <v-card-title class="text-h6">
+        <v-icon left>mdi-help-circle</v-icon>
+        操作提示
+      </v-card-title>
+      <v-card-text>
+        <v-row>
+          <v-col cols="12" sm="6" md="3">
+            <div class="d-flex align-center mb-2">
+              <v-icon color="primary" size="small" class="mr-2">mdi-mouse-double-click</v-icon>
+              <strong>双击节点：</strong>
+            </div>
+            <p class="text-body-2 ml-6">展开更多子观点</p>
+          </v-col>
+          <v-col cols="12" sm="6" md="3">
+            <div class="d-flex align-center mb-2">
+              <v-icon color="secondary" size="small" class="mr-2">mdi-mouse-right-click</v-icon>
+              <strong>右键节点：</strong>
+            </div>
+            <p class="text-body-2 ml-6">编辑、删除观点或添加连接</p>
+          </v-col>
+          <v-col cols="12" sm="6" md="3">
+            <div class="d-flex align-center mb-2">
+              <v-icon color="info" size="small" class="mr-2">mdi-vector-line</v-icon>
+              <strong>右键连接：</strong>
+            </div>
+            <p class="text-body-2 ml-6">编辑、删除连接</p>
+          </v-col>
+          <v-col cols="12" sm="6" md="3">
+            <div class="d-flex align-center mb-2">
+              <v-icon color="accent" size="small" class="mr-2">mdi-gesture-tap</v-icon>
+              <strong>右键空白：</strong>
+            </div>
+            <p class="text-body-2 ml-6">添加观点、连接或刷新视图</p>
+          </v-col>
+        </v-row>
+      </v-card-text>
+    </v-card>
 
     <!-- 观点编辑器 -->
     <OpinionEditor
@@ -45,7 +86,7 @@
       @submit="handleLinkSubmit"
       @close="closeLinkEditor"
     />
-  </div>
+  </v-container>
 </template>
 
 <script setup lang="ts">
@@ -167,9 +208,7 @@ const editSelectedOpinion = () => {
 const deleteSelectedOpinion = async () => {
   if (!selectedNode.value) return;
 
-  const confirmed = confirm(
-    `确定要删除观点"${selectedNode.value.content.slice(0, 30)}..."吗？`,
-  );
+  const confirmed = confirm(`确定要删除观点"${selectedNode.value.content.slice(0, 30)}..."吗？`);
   if (!confirmed) return;
 
   const success = await deleteOpinion(selectedNode.value.id);
@@ -291,89 +330,33 @@ onMounted(() => {
 });
 
 // 监听错误变化，显示错误通知
-watch(error, (newError) => {
-  if (newError) {
-    notifyError(newError);
-  }
-}, { immediate: false });
+watch(
+  error,
+  (newError) => {
+    if (newError) {
+      notifyError(newError);
+    }
+  },
+  { immediate: false },
+);
 </script>
 
 <style scoped>
 .opinion-page {
-  width: 70%;
-  margin: 0 auto;
-  padding: 2rem;
-  background: var(--color-gray-900);
-  color: var(--color-text-primary);
-  border-radius: 12px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
-  /* min-height: 80vh; */
+  height: 100vh;
+  overflow: hidden;
 }
 
-.page-header {
-  text-align: center;
-  margin-bottom: 1.5rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid var(--color-gray-700);
+.graph-container {
+  height: calc(100vh - 320px);
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
 }
 
-.page-header h2 {
-  margin: 0 0 0.5rem 0;
-  color: var(--color-text-primary);
-  font-size: 1.5rem;
-  font-weight: 600;
-}
-
-.page-header p {
-  margin: 0;
-  color: var(--color-text-secondary);
-  font-size: 0.875rem;
-}
-
-.operation-hints {
-  background: var(--color-gray-800);
-  border: 1px solid var(--color-gray-700);
-  border-radius: var(--border-radius-md);
-  padding: 1rem;
-  margin-top: 1rem;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 0.75rem;
-}
-
-.hint-item {
-  display: flex;
-  align-items: center;
-  font-size: 0.8125rem;
-  color: var(--color-text-secondary);
-  line-height: 1.4;
-}
-
-.hint-item strong {
-  color: var(--color-text-primary);
-  margin-right: 0.5rem;
-  min-width: 80px;
-}
-
-@media (max-width: 768px) {
-  .opinion-page {
-    margin: 1rem;
-    padding: 1rem;
-  }
-  
-  .operation-hints {
-    grid-template-columns: 1fr;
-  }
-
-  .hint-item {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.25rem;
-  }
-
-  .hint-item strong {
-    min-width: auto;
-    margin-right: 0;
+@media (max-width: 960px) {
+  .graph-container {
+    height: calc(100vh - 400px);
   }
 }
 </style>

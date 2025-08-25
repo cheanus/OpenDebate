@@ -1,0 +1,41 @@
+/* 全局样式重置和 Vuetify 样式补充 */
+
+/* 全局样式覆盖（如果需要） */
+.v-application {
+  font-family: 'Inter', 'Roboto', sans-serif;
+}
+
+/* 自定义滚动条 - 使用 Vuetify 主题变量 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgb(var(--v-theme-surface));
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgb(var(--v-theme-outline));
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgb(var(--v-theme-on-surface-variant));
+}
+
+/* 响应式辅助类 */
+@media (max-width: 600px) {
+  .v-card {
+    margin: 8px !important;
+  }
+}
+
+/* 辩论节点颜色辅助类 */
+.node-support {
+  background-color: rgb(var(--v-theme-success)) !important;
+}
+
+.node-oppose {
+  background-color: rgb(var(--v-theme-error)) !important;
+}

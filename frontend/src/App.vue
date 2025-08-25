@@ -1,12 +1,34 @@
 <template>
-  <div id="app">
-    <nav class="main-nav">
-      <router-link to="/">辩论总览</router-link>
-      <router-link to="/settings">设置</router-link>
-    </nav>
-    <router-view />
+  <v-app>
+    <!-- 顶部导航栏 -->
+    <v-app-bar elevation="2" color="primary" dark>
+      <v-app-bar-title class="text-h5 font-weight-bold">
+        <v-icon left class="mr-2">mdi-forum</v-icon>
+        OpenDebate
+      </v-app-bar-title>
+
+      <v-spacer />
+
+      <v-btn
+        :to="{ name: 'debates' }"
+        variant="text"
+        prepend-icon="mdi-view-dashboard"
+        class="mr-2"
+      >
+        辩论总览
+      </v-btn>
+
+      <v-btn :to="{ name: 'settings' }" variant="text" prepend-icon="mdi-cog"> 设置 </v-btn>
+    </v-app-bar>
+
+    <!-- 主要内容区域 -->
+    <v-main>
+      <router-view />
+    </v-main>
+
+    <!-- 通知容器 -->
     <NotificationContainer />
-  </div>
+  </v-app>
 </template>
 
 <script setup lang="ts">
@@ -14,37 +36,5 @@ import NotificationContainer from './components/NotificationContainer.vue';
 </script>
 
 <style scoped>
-#app {
-  min-height: 100vh;
-  background: var(--background);
-}
-
-.main-nav {
-  display: flex;
-  gap: 32px;
-  padding: 0 48px;
-  height: 64px;
-  align-items: center;
-  background: var(--card-bg);
-  border-bottom: 1px solid var(--border);
-  margin-bottom: 32px;
-  box-shadow: 0 2px 8px rgba(30, 41, 59, 0.03);
-}
-
-.main-nav a {
-  color: var(--text-light);
-  text-decoration: none;
-  font-weight: 600;
-  font-size: 20px;
-  letter-spacing: 0.02em;
-  padding: 4px 0;
-  transition:
-    color 0.2s,
-    border-bottom 0.2s;
-  border-bottom: 2px solid transparent;
-}
-.main-nav a.router-link-exact-active {
-  color: var(--primary);
-  border-bottom: 2px solid var(--primary);
-}
+/* 可以添加一些全局样式覆盖 */
 </style>

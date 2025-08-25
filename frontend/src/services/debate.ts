@@ -1,8 +1,5 @@
 import { apiClient } from './api';
-import type { 
-  Debate, 
-  ApiResponse 
-} from '@/types';
+import type { Debate, ApiResponse } from '@/types';
 
 export interface DebateCreateData {
   title: string;
@@ -42,7 +39,7 @@ export class DebateService {
 
   async query(params: DebateQueryParams = {}): Promise<ApiResponse<Debate[]>> {
     const queryParams: Record<string, string> = {};
-    
+
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined && value !== null) {
         queryParams[key] = String(value);

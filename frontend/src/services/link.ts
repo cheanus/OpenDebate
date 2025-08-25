@@ -1,9 +1,5 @@
 import { apiClient } from './api';
-import type { 
-  ApiResponse,
-  LinkType,
-  Edge
-} from '@/types';
+import type { ApiResponse, LinkType, Edge } from '@/types';
 
 export interface LinkCreateData {
   from_id: string;

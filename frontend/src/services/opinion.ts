@@ -1,10 +1,5 @@
 import { apiClient } from './api';
-import type { 
-  Node, 
-  ApiResponse,
-  LogicType,
-  LinkType
-} from '@/types';
+import type { Node, ApiResponse, LogicType, LinkType } from '@/types';
 
 export interface OpinionCreateOrData {
   content: string;
@@ -76,7 +71,7 @@ export class OpinionService {
 
   async query(params: OpinionQueryParams): Promise<ApiResponse<Node[]>> {
     const queryParams: Record<string, string> = {};
-    
+
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined && value !== null) {
         queryParams[key] = String(value);

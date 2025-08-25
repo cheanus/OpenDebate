@@ -18,13 +18,15 @@ const filteredDebates = computed(() => {
   if (!searchFilters.value.title && !searchFilters.value.creator) {
     return debates.value;
   }
-  
-  return debates.value.filter(debate => {
-    const titleMatch = !searchFilters.value.title || 
+
+  return debates.value.filter((debate) => {
+    const titleMatch =
+      !searchFilters.value.title ||
       debate.title.toLowerCase().includes(searchFilters.value.title.toLowerCase());
-    const creatorMatch = !searchFilters.value.creator || 
+    const creatorMatch =
+      !searchFilters.value.creator ||
       debate.creator.toLowerCase().includes(searchFilters.value.creator.toLowerCase());
-    
+
     return titleMatch && creatorMatch;
   });
 });
@@ -33,13 +35,13 @@ export function useDebates() {
   const fetchDebates = async () => {
     loading.value = true;
     error.value = null;
-    
+
     try {
       const response = await debateService.query({
         title: searchFilters.value.title || undefined,
         creator: searchFilters.value.creator || undefined,
       });
-      
+
       if (response.is_success && response.data) {
         debates.value = response.data;
       } else {
@@ -55,10 +57,10 @@ export function useDebates() {
   const createDebate = async (data: { title: string; description: string; creator: string }) => {
     loading.value = true;
     error.value = null;
-    
+
     try {
       const response = await debateService.create(data);
-      
+
       if (response.is_success) {
         await fetchDebates(); // 重新获取列表
         return response.data;
@@ -74,13 +76,18 @@ export function useDebates() {
     }
   };
 
-  const updateDebate = async (data: { id: string; title?: string; description?: string; creator?: string }) => {
+  const updateDebate = async (data: {
+    id: string;
+    title?: string;
+    description?: string;
+    creator?: string;
+  }) => {
     loading.value = true;
     error.value = null;
-    
+
     try {
       const response = await debateService.update(data);
-      
+
       if (response.is_success) {
         await fetchDebates(); // 重新获取列表
         return true;
@@ -99,10 +106,10 @@ export function useDebates() {
   const deleteDebate = async (id: string) => {
     loading.value = true;
     error.value = null;
-    
+
     try {
       const response = await debateService.delete(id);
-      
+
       if (response.is_success) {
         await fetchDebates(); // 重新获取列表
         return true;
@@ -132,7 +139,7 @@ export function useDebates() {
     loading: computed(() => loading.value),
     error: computed(() => error.value),
     searchFilters: computed(() => searchFilters.value),
-    
+
     // 方法
     fetchDebates,
     createDebate,

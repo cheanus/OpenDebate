@@ -17,15 +17,15 @@ export function formatDate(timestamp: number): string {
  */
 export function debounce<T extends (...args: any[]) => any>(
   func: T,
-  delay: number
+  delay: number,
 ): (...args: Parameters<T>) => void {
   let timeoutId: number | null = null;
-  
+
   return (...args: Parameters<T>) => {
     if (timeoutId) {
       clearTimeout(timeoutId);
     }
-    
+
     timeoutId = window.setTimeout(() => {
       func(...args);
       timeoutId = null;
@@ -38,10 +38,10 @@ export function debounce<T extends (...args: any[]) => any>(
  */
 export function throttle<T extends (...args: any[]) => any>(
   func: T,
-  limit: number
+  limit: number,
 ): (...args: Parameters<T>) => void {
   let inThrottle = false;
-  
+
   return (...args: Parameters<T>) => {
     if (!inThrottle) {
       func(...args);
@@ -68,7 +68,7 @@ export async function copyToClipboard(text: string): Promise<boolean> {
     textArea.style.opacity = '0';
     document.body.appendChild(textArea);
     textArea.select();
-    
+
     try {
       document.execCommand('copy');
       return true;

@@ -10,23 +10,23 @@ const routes: RouteRecordRaw[] = [
     path: '/',
     redirect: '/debates',
   },
-  { 
+  {
     path: '/debates',
-    name: 'debates', 
+    name: 'debates',
     component: DebateList,
-    meta: { 
+    meta: {
       title: '辩论列表',
-      description: '查看和管理所有辩论话题'
-    }
+      description: '查看和管理所有辩论话题',
+    },
   },
-  { 
-    path: '/debate/:id', 
-    name: 'debate-opinion', 
-    component: DebateOpinion, 
+  {
+    path: '/debate/:id',
+    name: 'debate-opinion',
+    component: DebateOpinion,
     props: true,
-    meta: { 
+    meta: {
       title: '辩论观点',
-      description: '查看和编辑辩论观点'
+      description: '查看和编辑辩论观点',
     },
     beforeEnter: (to) => {
       // 验证辩论 ID 格式
@@ -36,14 +36,14 @@ const routes: RouteRecordRaw[] = [
       }
     },
   },
-  { 
-    path: '/settings', 
-    name: 'settings', 
+  {
+    path: '/settings',
+    name: 'settings',
     component: Settings,
-    meta: { 
+    meta: {
       title: '设置',
-      description: '应用设置和配置'
-    }
+      description: '应用设置和配置',
+    },
   },
   // 404 页面
   {
