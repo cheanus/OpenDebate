@@ -1,8 +1,9 @@
 from pytest import approx
-from core.debate import create_debate
+from core.debate import create_debate, get_global_debate
 from core.opinion import create_or_opinion, create_and_opinion, info_opinion, patch_opinion
 from core.link import create_link, attack_link
 from core.db_life import init_db, close_db
+from core.utils.debate import init_global_debate
 from schemas.link import LinkType
 from tests.utils import clear_db
 
@@ -138,6 +139,8 @@ def test_score():
     init_db()
     # 清空数据库
     clear_db()
+    # 初始化全局辩论
+    init_global_debate()
 
     # 创建一个辩论
     debate_id = create_debate(

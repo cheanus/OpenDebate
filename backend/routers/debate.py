@@ -9,6 +9,7 @@ from core.debate import (
     query_debate,
     patch_debate,
     cited_in_debate,
+    get_global_debate
 )
 
 router = APIRouter()
@@ -96,4 +97,15 @@ def cited_in_debate_http(request: CiteDebateRequest):
     except Exception as e:
         result = {"is_success": False, "msg": str(e)}
 
+    return result
+
+
+@router.get("/global", response_model=GlobalDebateIDResponse)
+def get_global_debate_http():
+    try:
+        global_debate_id = get_global_debate()
+        assert global_debate_id is not None
+        result = {"is_success": True, "id": global_debate_id}
+    except Exception as e:
+        result = {"is_success": False, "msg": str(e)}
     return result

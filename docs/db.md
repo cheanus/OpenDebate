@@ -5,6 +5,7 @@ debate表：
 - description: 描述
 - created_at: 时间戳，默认当前
 - creator: 字符串，非空
+- is_all: 布尔，是否是全辩论
 
 opinion表：
 - id: 唯一UUID

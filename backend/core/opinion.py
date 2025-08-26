@@ -1,5 +1,6 @@
 from core.db_life import get_psql_session
 from core.debate import cited_in_debate
+from core.debate import get_global_debate
 from schemas.db.neo4j import Opinion as OpinionNeo4j
 from schemas.db.psql import Opinion as OpinionPsql, Debate as DebatePsql, model2dict
 from schemas.opinion import LogicType
@@ -10,20 +11,20 @@ from core import update_score
 def create_or_opinion(
     content: str,
     creator: str,
+    debate_id: str,
     host: str = "local",
     node_type: str = "solid",
     positive_score: float | None = None,
-    debate_id: str | None = None,
 ) -> str:
     """
     Create a new OR opinion with the given parameters.
 
     :param content: The content of the opinion.
     :param creator: The ID of the user creating the opinion.
+    :param debate_id: ID of the debate this opinion belongs to.
     :param host: The ID of the host (local or external) associated with the opinion.
     :param node_type: The type of the node (solid or empty).
     :param positive_score: Optional initial positive score for the opinion.
-    :param debate_id: Optional ID of the debate this opinion belongs to.
     :return: The ID of the created opinion or a success message.
     """
     with get_psql_session() as psql_session:
@@ -50,14 +51,17 @@ def create_or_opinion(
     except Exception as e:
         raise RuntimeError(f"Failed to create opinion in Neo4j: {str(e)}")
 
-    # Link the opinion to the debate if debate_id is provided
-    if debate_id:
-        try:
-            cited_in_debate(debate_id, str(new_opinion_psql.id))
-        except Exception as e:
-            raise RuntimeError(
-                f"Failed to link opinion to debate in PostgreSQL: {str(e)}"
-            )
+    # Link the opinion to the debate
+    try:
+        cited_in_debate(debate_id, str(new_opinion_psql.id))
+        global_debate_id = get_global_debate()
+        # Also link to the global debate
+        if global_debate_id and debate_id != global_debate_id:
+            cited_in_debate(global_debate_id, str(new_opinion_psql.id))
+    except Exception as e:
+        raise RuntimeError(
+            f"Failed to link opinion to debate in PostgreSQL: {str(e)}"
+        )
 
     return str(new_opinion_psql.id)
 
@@ -67,8 +71,8 @@ def create_and_opinion(
     son_ids: list[str],
     link_type: LinkType,
     creator: str,
+    debate_id: str,
     host: str = "local",
-    debate_id: str | None = None,
 ) -> str:
     """
     Create a new AND opinion with the given parameters.
@@ -77,8 +81,8 @@ def create_and_opinion(
     :param son_ids: List of IDs of the child opinions that this AND opinion will link to.
     :param link_type: The type of link to create between the opinion and the parent opinion.
     :param creator: The ID of the user creating the opinion.
+    :param debate_id: ID of the debate this opinion belongs to.
     :param host: The ID of the host (local or external) associated with the opinion.
-    :param debate_id: Optional ID of the debate this opinion belongs to.
     :return: The ID of the created opinion or a success message.
     """
     with get_psql_session() as psql_session:
@@ -130,31 +134,34 @@ def create_and_opinion(
     except Exception as e:
         raise RuntimeError(f"Failed to create opinion in Neo4j: {str(e)}")
 
-    # Link the opinion to the debate if debate_id is provided
-    if debate_id:
-        try:
-            cited_in_debate(debate_id, str(new_opinion_psql.id))
-        except Exception as e:
-            raise RuntimeError(
-                f"Failed to link opinion to debate in PostgreSQL: {str(e)}"
-            )
+    # Link the opinion to the debate
+    try:
+        cited_in_debate(debate_id, str(new_opinion_psql.id))
+        global_debate_id = get_global_debate()
+        # Also link to the global debate
+        if global_debate_id and debate_id != global_debate_id:
+            cited_in_debate(global_debate_id, str(new_opinion_psql.id))
+    except Exception as e:
+        raise RuntimeError(
+            f"Failed to link opinion to debate in PostgreSQL: {str(e)}"
+        )
 
     return str(new_opinion_psql.id)
 
 
-def delete_opinion(opinion_id: str, debate_id: str | None = None):
+def delete_opinion(opinion_id: str, debate_id: str):
     """
     Delete an opinion by its ID.
 
     :param opinion_id: The ID of the opinion to delete.
-    :param debate_id: Optional ID of the debate this opinion belongs to.
+    :param debate_id: ID of the debate this opinion belongs to.
     """
     with get_psql_session() as psql_session:
         opinion = psql_session.query(OpinionPsql).filter_by(id=opinion_id).first()
         if not opinion:
             raise ValueError(f"Opinion with ID {opinion_id} not found in PostgreSQL.")
 
-        if not debate_id:
+        if debate_id == get_global_debate():
             # If no debate_id is provided, delete the opinion from all debates
             try:
                 psql_session.delete(opinion)
@@ -182,8 +189,9 @@ def delete_opinion(opinion_id: str, debate_id: str | None = None):
             try:
                 debate = psql_session.query(DebatePsql).filter_by(id=debate_id).first()
                 if not debate:
-                    raise ValueError(f"Debate with ID {debate_id} not found in PostgreSQL.")
-
+                    raise ValueError(
+                        f"Debate with ID {debate_id} not found in PostgreSQL."
+                    )
                 if debate in opinion.debates:
                     opinion.debates.remove(debate)
                     psql_session.commit()
@@ -367,24 +375,19 @@ def head_opinion(debate_id: str, is_root: bool) -> list[str]:
     """
     Get leaf or root opinions in a debate.
 
-    :param debate_id: Optional ID of the debate to filter head opinions by.
+    :param debate_id: ID of the debate to filter head opinions by.
     :param is_root: If True, return root opinions; if False, return leaf opinions.
     :return: A list of head opinion IDs.
     """
     try:
         # Get all opinions from psql if debate_id is provided
         with get_psql_session() as psql_session:
-            if debate_id:
-                opinion_ids = [
-                    str(row[0])
-                    for row in psql_session.query(OpinionPsql.id)
-                    .filter(OpinionPsql.debates.any(id=debate_id))
-                    .all()
-                ]
-            else:
-                opinion_ids = [
-                    str(row[0]) for row in psql_session.query(OpinionPsql.id).all()
-                ]
+            opinion_ids = [
+                str(row[0])
+                for row in psql_session.query(OpinionPsql.id)
+                .filter(OpinionPsql.debates.any(id=debate_id))
+                .all()
+            ]
         # Get head opinions from Neo4j
         head_ids = []
         for oid in opinion_ids:
@@ -425,9 +428,13 @@ def patch_opinion(
     try:
         # Update PostgreSQL
         with get_psql_session() as psql_session:
-            opinion_psql = psql_session.query(OpinionPsql).filter_by(id=opinion_id).first()
+            opinion_psql = (
+                psql_session.query(OpinionPsql).filter_by(id=opinion_id).first()
+            )
             if not opinion_psql:
-                raise ValueError(f"Opinion with ID {opinion_id} not found in PostgreSQL.")
+                raise ValueError(
+                    f"Opinion with ID {opinion_id} not found in PostgreSQL."
+                )
 
             if creator:
                 opinion_psql.creator = creator  # type: ignore
@@ -435,7 +442,9 @@ def patch_opinion(
                     psql_session.commit()
                 except Exception as e:
                     psql_session.rollback()
-                    raise RuntimeError(f"Failed to update creator in PostgreSQL: {str(e)}")
+                    raise RuntimeError(
+                        f"Failed to update creator in PostgreSQL: {str(e)}"
+                    )
 
         # Update Neo4j
         opinion_neo4j = OpinionNeo4j.nodes.get(uid=opinion_id)

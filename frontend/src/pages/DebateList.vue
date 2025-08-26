@@ -73,8 +73,19 @@
     <v-card v-else>
       <v-data-table :headers="tableHeaders" :items="debates" item-value="id" class="elevation-1">
         <template v-slot:[`item.title`]="{ item }">
-          <div class="text-truncate" style="max-width: 200px" :title="item.title">
-            {{ item.title }}
+          <div class="d-flex align-center">
+            <v-chip
+              v-if="item.id === globalDebateId"
+              size="small"
+              color="primary"
+              variant="elevated"
+              class="mr-2"
+            >
+              全辩论
+            </v-chip>
+            <div class="text-truncate" style="max-width: 200px" :title="item.title">
+              {{ item.title }}
+            </div>
           </div>
         </template>
 
@@ -106,6 +117,7 @@
             title="编辑"
           />
           <v-btn
+            v-if="item.id !== globalDebateId"
             icon="mdi-delete"
             variant="text"
             color="error"
@@ -183,6 +195,7 @@ const {
   loading,
   error,
   searchFilters,
+  globalDebateId,
   fetchDebates,
   createDebate,
   updateDebate,

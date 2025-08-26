@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 from routers import debate, opinion, link
 from config_private import CORS_ALLOW_ORIGIN, LOG_LEVEL
 from core.db_life import init_db, close_db
+from core.utils.debate import init_global_debate
 import uvicorn.config
 import uvicorn
 
@@ -12,6 +13,8 @@ import uvicorn
 async def lifespan(app: FastAPI):
     init_db()
     print("✅ Database initialized")
+    init_global_debate()
+    print("✅ 'Global' debate initialized")
     yield
     close_db()
     print("❎ Database closed")

@@ -46,3 +46,7 @@ class PatchDebateRequest(BaseModel):
 class CiteDebateRequest(BaseModel):
     debate_id: str = Field(..., min_length=1)
     opinion_id: str = Field(..., min_length=1)
+
+
+class GlobalDebateIDResponse(MsgResponse):
+    id: str = Field(..., description="ID of the global debate")

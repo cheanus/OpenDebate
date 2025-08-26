@@ -40,6 +40,8 @@
 
 ### ❌ 删除辩论
 
+不能删除全辩论。
+
 `POST /debate/delete`
 **Body**
 
@@ -107,6 +109,18 @@
 }
 ```
 
+### ♾️ 获取全辩论ID
+
+`GET /debate/global`
+
+返回示例：
+
+```json
+{
+  "id": "global_debate_id"
+}
+```
+
 ---
 
 ## 📁 观点 Opinion
@@ -127,7 +141,7 @@
 }
 ```
 
-`debate_id`可选，代表新观点放在哪个辩论里。默认为空代表**全辩论**（容纳了所有观点）。
+`debate_id`必选，代表新观点放在哪个辩论里。
 `logic_type`可选，默认为or。
 `is_llm_score`可选，默认为false，表示该观点不自动调用LLM生成分数。
 
@@ -156,7 +170,7 @@
 ```
 
 `parent_id`是父观点，`son_ids`是子观点列表。
-`debate_id`可选，代表新观点放在哪个辩论里，默认为空代表**全辩论**。
+`debate_id`必选，代表新观点放在哪个辩论里。
 
 返回示例：
 
@@ -178,13 +192,13 @@
 }
 ```
 
-`debate_id`可选，空则删除全部辩论中的该观点。
+`debate_id`若为全辩论ID，则删除全部辩论中的该观点。
 
 ### 🔍 查询观点信息及其链
 
 `GET /opinion/info?opinion_id=xxx&debate_id=xxx`
 
-`debate_id`可选，默认设定为全辩论。
+`debate_id`可选，默认为空则设定为全辩论ID。
 
 返回示例：
 
@@ -363,7 +377,8 @@
 }
 ```
 
-`debate_id`，代表新观点放在哪个辩论里。默认为空代表**全辩论**。
+`debate_id`，代表新观点放在哪个辩论里。
+
 返回示例：
 
 ```json

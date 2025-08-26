@@ -1,4 +1,12 @@
-from sqlalchemy import Column, Text, TIMESTAMP, ForeignKey, Table
+from sqlalchemy import (
+    Column,
+    Text,
+    TIMESTAMP,
+    ForeignKey,
+    Table,
+    Boolean,
+    Index,
+)
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import relationship
@@ -34,8 +42,17 @@ class Debate(DbBase):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     title = Column(Text, nullable=False)
     description = Column(Text)
-    created_at = Column(TIMESTAMP, server_default=func.now())
+    created_at = Column(TIMESTAMP, server_default=func.now(), nullable=False)
     creator = Column(Text, nullable=False)
+    is_all = Column(Boolean, default=False, nullable=False)
+    __table_args__ = (
+        Index(
+            "uq_debate_is_all_true",
+            "is_all",
+            unique=True,
+            postgresql_where=(is_all == True),
+        ),
+    )
 
     # 多对多关系，通过中间表
     opinions = relationship(

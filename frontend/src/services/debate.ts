@@ -56,6 +56,10 @@ export class DebateService {
   async cite(data: DebateCiteData): Promise<ApiResponse<void>> {
     return apiClient.post('/debate/cite', data);
   }
+
+  async getGlobalDebateId(): Promise<ApiResponse<{ id: string }>> {
+    return apiClient.get('/debate/global');
+  }
 }
 
 export const debateService = new DebateService();

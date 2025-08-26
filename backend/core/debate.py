@@ -2,6 +2,8 @@ import datetime
 from core.db_life import get_psql_session
 from schemas.db.psql import Debate, Opinion, model2dict
 
+_global_debate_cache: str | None = None
+
 
 def create_debate(title: str, creator: str, description: str | None = None) -> str:
     """
@@ -23,6 +25,10 @@ def delete_debate(debate_id: str):
     """
     Delete a debate by its ID.
     """
+    # Cant delete the global debate
+    if debate_id == get_global_debate():
+        raise ValueError("Cannot delete the global debate.")
+
     with get_psql_session() as psql_session:
         debate_to_delete = (
             psql_session.query(Debate).filter(Debate.id == debate_id).first()
@@ -130,3 +136,17 @@ def cited_in_debate(debate_id: str, opinion_id: str):
                 raise RuntimeError(f"Failed to cite opinion: {str(e)}")
         else:
             raise ValueError("Opinion is already cited in this debate.")
+
+
+def get_global_debate() -> str | None:
+    """
+    Get the global debate with is_all=True
+    """
+    global _global_debate_cache
+    if _global_debate_cache is not None:
+        return _global_debate_cache
+
+    with get_psql_session() as session:
+        debate = session.query(Debate).filter(Debate.is_all == True).first()
+        _global_debate_cache = str(debate.id) if debate else None
+    return _global_debate_cache
