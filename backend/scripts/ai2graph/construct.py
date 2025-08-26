@@ -1,13 +1,11 @@
 from openai import OpenAI
+from config_private import BACKEND_API_BASEURL, MODEL, BASE_URL, API_KEY
 import re
 import httpx
 import json
 
-DOC_PATH = "/home/test/Documents/个人/辩驳.txt"
-BACKEND_URL = "http://localhost:3142/api"
-MODEL = "deepseek-chat"
-BASE_URL = "https://api.deepseek.com"
-API_KEY = "sk-***"
+# 以txt结尾则让AI生成辩论图代码，若是json则直接读取
+DOC_PATH = "/home/test/Documents/个人/辩驳.json"
 
 
 def chat(prompt, client: OpenAI) -> str:
@@ -26,25 +24,32 @@ def chat(prompt, client: OpenAI) -> str:
     return content
 
 
-def ai_struct(doc: str, client: OpenAI) -> tuple[str, str]:
-    prompt = (
-        "辩论图由多段代码组成，代码间用';'分割，每段代码遵循以下格式：\n"
-        "创建id为a1（字母数字组成）的观点，内容为'树好看'：a1:树好看\n"
-        "a1观点能演绎出a2观点：a1->a2\n"
-        "a1观点能反驳a2，即演绎出a2的否命题：a1->!a2\n"
-        "a1或a2观点能演绎出a3观点：a1|a2->a3\n"
-        "a1与a2与a3才能演绎出a4观点：a1&a2&a3->a4\n"
-        "请根据以下文章创建辩论图标题和代码，以反映其逻辑，用json格式如{'title': 'xx', 'code': 'xx'}输出，"
-        "观点内容必须是完整命题，要求逻辑完整、清晰精简：\n"
-        f"{doc}\n"
-    )
-    response = chat(prompt, client)
-    print("AI Response:\n", response)
-    # 提取标题和代码块
-    response = response.strip()
+def ai_struct(client: OpenAI) -> tuple[str, str]:
+    if DOC_PATH.endswith(".txt"):
+        with open(DOC_PATH, "r", encoding="utf-8") as f:
+            doc = f.read()
+        prompt = (
+            "辩论图由多段代码组成，代码间用';'分割，每段代码遵循以下格式：\n"
+            "创建id为a1（字母数字组成）的观点，内容为'树好看'：a1:树好看\n"
+            "a1观点能演绎出a2观点：a1->a2\n"
+            "a1观点能反驳a2，即演绎出a2的否命题：a1->!a2\n"
+            "a1或a2观点能演绎出a3观点：a1|a2->a3\n"
+            "a1与a2与a3才能演绎出a4观点：a1&a2&a3->a4\n"
+            "请根据以下文章创建辩论图标题和代码，以反映其逻辑，用json格式如{'title': 'xx', 'code': 'xx'}输出，"
+            "观点内容必须是完整命题，要求逻辑完整、清晰精简：\n"
+            f"{doc}\n"
+        )
+        response = chat(prompt, client)
+        # 提取标题和代码块
+        codes = response.strip()
+        print("AI Response:\n", codes)
+    else:
+        with open(DOC_PATH, "r", encoding="utf-8") as f:
+            codes = f.read()
+        print("Codes:\n", codes)
     # 使用json
     try:
-        match = re.search(r"\{.*\}", response, re.DOTALL)
+        match = re.search(r"\{.*\}", codes, re.DOTALL)
         if match is None:
             raise ValueError("Response does not contain valid JSON data.")
         data = json.loads(match.group(0))
@@ -103,7 +108,7 @@ def parse_debate_code(debate_code: str):
 
 def create_debate(title, description, creator, session) -> str:
     resp = session.post(
-        f"{BACKEND_URL}/debate/create",
+        f"{BACKEND_API_BASEURL}/debate/create",
         json={"title": title, "description": description, "creator": creator},
         timeout=30,
     )
@@ -114,7 +119,7 @@ def create_debate(title, description, creator, session) -> str:
 def create_or_opinion(opinion, debate_id, session, creator="ai") -> str:
     # AI 打分
     resp = session.post(
-        f"{BACKEND_URL}/opinion/create_or",
+        f"{BACKEND_API_BASEURL}/opinion/create_or",
         json={
             "content": opinion["content"],
             "logic_type": "or",
@@ -130,7 +135,7 @@ def create_or_opinion(opinion, debate_id, session, creator="ai") -> str:
 
 def create_link(from_id, to_id, session, link_type="supports"):
     resp = session.post(
-        f"{BACKEND_URL}/link/create",
+        f"{BACKEND_API_BASEURL}/link/create",
         json={
             "from_id": from_id,
             "to_id": to_id,
@@ -152,7 +157,7 @@ def create_and_opinion(
     creator="ai",
 ) -> str:
     resp = session.post(
-        f"{BACKEND_URL}/opinion/create_and",
+        f"{BACKEND_API_BASEURL}/opinion/create_and",
         json={
             "parent_id": parent_id,
             "son_ids": son_ids,
@@ -169,22 +174,22 @@ def create_and_opinion(
     return resp.json()["id"]
 
 
-def score_root_opinion(debate_id, session, client: OpenAI):
+def score_son_opinion(debate_id, session, client: OpenAI):
     resp = session.post(
-        f"{BACKEND_URL}/opinion/head",
+        f"{BACKEND_API_BASEURL}/opinion/head",
         json={"debate_id": debate_id, "is_root": False},
         timeout=30,
     )
     resp.raise_for_status()
     if resp.json()["is_success"] is False:
-        raise ValueError(f"Failed to score root opinion: {resp.json()['message']}")
+        raise ValueError(f"Failed to score son opinion: {resp.json()['message']}")
     root_ids = resp.json()["data"]
     if not root_ids:
-        raise ValueError("No root opinion found in the debate.")
+        raise ValueError("No son opinion found in the debate.")
     for root_id in root_ids:
         # 先获取观点内容
         info_resp = session.get(
-            f"{BACKEND_URL}/opinion/info",
+            f"{BACKEND_API_BASEURL}/opinion/info",
             params={"opinion_id": root_id, "debate_id": debate_id},
             timeout=30,
         )
@@ -196,7 +201,7 @@ def score_root_opinion(debate_id, session, client: OpenAI):
             continue
         # 更新观点分数
         patch_resp = session.post(
-            f"{BACKEND_URL}/opinion/patch",
+            f"{BACKEND_API_BASEURL}/opinion/patch",
             json={
                 "id": root_id,
                 "score": {"positive": score},
@@ -215,14 +220,12 @@ def main():
         api_key=API_KEY,
         base_url=BASE_URL,
     )
-    with open(DOC_PATH, "r", encoding="utf-8") as f:
-        doc = f.read()
-    debate_title, debate_code = ai_struct(doc, client)
+    debate_title, debate_code = ai_struct(client)
     # 1. 解析辩论图代码
     opinions, links = parse_debate_code(debate_code)
     # 2. 创建debate
     with httpx.Client() as session:
-        debate_id = create_debate(debate_title, doc[:10], creator="ai", session=session)
+        debate_id = create_debate(debate_title, "测试", creator="ai", session=session)
         # 3. 创建观点，记录id映射
         id_map = {}
         for op in opinions:
@@ -265,7 +268,7 @@ def main():
                         link_type="supports" if not to_neg else "opposes",
                     )
         # 5. 对根节点打分
-        score_root_opinion(debate_id, session, client)
+        score_son_opinion(debate_id, session, client)
 
 
 if __name__ == "__main__":

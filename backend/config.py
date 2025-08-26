@@ -21,6 +21,11 @@ psql_config = {
     'port': '3143'
 }
 
+# OpenAI格式 API 配置
+MODEL = "deepseek-chat"
+BASE_URL = "https://api.deepseek.com"
+API_KEY = "sk-***"
+
 # CORS
 CORS_ALLOW_ORIGIN = [
     FRONTEND_BASEURL,

@@ -255,7 +255,6 @@ onMounted(() => {
         const data = { ...evt.target.data() };
         delete data.relationship;
         delete data.label;
-        delete data.score;
         selectedNodeData.value = data;
         // 计算元数据栏位置
         const pos = evt.position || evt.target.position();

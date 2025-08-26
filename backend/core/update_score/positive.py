@@ -164,7 +164,7 @@ def refresh_son_type_score(opinion_id: str, score_type: str) -> bool:
                 and con_positive_score < opinion_neo4j.son_positive_score
             ):
                 old_min_opinions = opinion_neo4j.supported_by.filter(
-                    positive_score__equals=opinion_neo4j.son_positive_score,
+                    positive_score=opinion_neo4j.son_positive_score,
                 ).all()
                 for min_opinion in old_min_opinions:
                     update_node_score_negatively_recursively(

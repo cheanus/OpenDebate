@@ -1,7 +1,11 @@
 # 辩织 & OpenDebate：民主化的开放辩论平台
+ 
+[![License](https://img.shields.io/github/license/cheanus/OpenDebate)] [![Stars](https://img.shields.io/github/stars/cheanus/OpenDebate?style=social)]
 
-欢迎来到**辩织（OpenDebate）**，一款基于算法与可视化的辩论图应用。我们相信，真正的真理诞生于公开、公平的观点碰撞，而机器算法是助力理性辩论的关键。
+> **这一次，巴别塔不会倒塌。**
 
+欢迎来到**辩织（OpenDebate）** —— 一个追寻进步哲学理念的民主化开放辩论平台。通过先进的算法与直观的可视化，助力观点的理性碰撞与真理的探寻。
+>>
 ## 哲学
 
 - 观念独立于人
