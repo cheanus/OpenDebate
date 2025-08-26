@@ -1,5 +1,36 @@
 <template>
-  <div ref="cyContainer" class="cytoscape-container" @contextmenu.prevent></div>
+  <div class="cytoscape-wrapper">
+    <div ref="cyContainer" class="cytoscape-container" @contextmenu.prevent></div>
+    
+    <!-- 节点箭头覆盖层 -->
+    <div class="arrows-overlay" ref="arrowsOverlay">
+      <div 
+        v-for="node in nodesWithArrows" 
+        :key="node.id" 
+        class="node-arrows" 
+        :style="node.style"
+        :class="{ 'show-arrows': node.showArrows }"
+      >
+        <div 
+          v-if="node.hasParentsArrow" 
+          class="arrow arrow-up"
+          @click.stop="handleArrowClick(node.id, 'parents')"
+          :title="'加载更多父观点'"
+        >
+          ▲
+        </div>
+        <div 
+          v-if="node.hasChildrenArrow" 
+          class="arrow arrow-down"
+          @click.stop="handleArrowClick(node.id, 'children')"
+          :title="'加载更多子观点'"
+        >
+          ▼
+        </div>
+      </div>
+    </div>
+  </div>
+  
   <div v-if="selectedNode" class="meta-panel" :style="metaPanelStyle">
     <h3>节点元数据</h3>
     <div v-for="(v, k) in selectedNodeData" :key="k">
@@ -104,13 +135,14 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const emit = defineEmits<{
-  nodeDblClick: [nodeData: Node];
+  nodeArrowClick: [nodeId: string, direction: 'children' | 'parents'];
   viewportChanged: [
     extent: { x1: number; y1: number; x2: number; y2: number; w: number; h: number },
   ]; // cytoscape extent 对象
   nodeSelected: [nodeData: Node | null];
   edgeSelected: [edgeData: Edge | null];
   contextMenuAction: [action: string];
+  focusNode: [nodeId: string]; // 新增：请求居中某个节点
 }>();
 
 // 使用 Vuetify 主题
@@ -119,17 +151,23 @@ const theme = useTheme();
 // 获取主题颜色的计算属性
 const themeColors = computed(() => {
   const currentTheme = theme.current.value;
+  
   return {
-    andNodeColor: currentTheme.dark ? '#6C9AFF' : '#809fff',
-    orNodeColor: currentTheme.dark ? '#FFB3E6' : '#ffafe7',
-    textColor: currentTheme.dark ? '#FFFFFF' : '#222222',
+    andNodeColor: currentTheme.dark ? '#2e7d32' : '#66bb6a',
+    orNodeColor: currentTheme.dark ? '#1976d2' : '#42a5f5',
+    textColor: currentTheme.dark ? '#ffffff' : '#000000',
     borderColor: currentTheme.dark ? '#777777' : '#bbbbbb',
-    supportColor: currentTheme.colors.success,
-    opposeColor: currentTheme.colors.error,
+    supportColor: currentTheme.dark ? '#4caf50' : '#2e7d32',
+    opposeColor: currentTheme.dark ? '#f44336' : '#c62828',
+    // 新增边框颜色
+    mixedBorderColor: currentTheme.dark ? '#ff9800' : '#f57c00', // 上下都有更多节点 - 橙色
+    parentBorderColor: currentTheme.dark ? '#9c27b0' : '#7b1fa2', // 只有上面有更多节点 - 紫色
+    childBorderColor: currentTheme.dark ? '#00bcd4' : '#0097a7', // 只有下面有更多节点 - 青色
   };
 });
 
 const cyContainer = ref<HTMLElement | null>(null);
+const arrowsOverlay = ref<HTMLElement | null>(null);
 let cy: Core | null = null;
 const selectedNode = ref<NodeSingular | null>(null);
 const selectedNodeData = ref<Partial<Node>>({});
@@ -142,6 +180,85 @@ const contextMenuStyle = ref<Record<string, string>>({});
 const contextMenuType = ref('');
 // 新增延时定时器，兼容浏览器和 Node 环境
 let tapTimer: ReturnType<typeof setTimeout> | null = null;
+
+// 计算需要显示箭头的节点
+const nodesWithArrows = ref<Array<{
+  id: string;
+  hasParentsArrow: boolean;
+  hasChildrenArrow: boolean;
+  style: Record<string, string>;
+  showArrows: boolean;
+}>>([]);
+
+// 显示节点箭头
+const showNodeArrows = (nodeId: string) => {
+  const node = nodesWithArrows.value.find(n => n.id === nodeId);
+  if (node) {
+    node.showArrows = true;
+  }
+};
+
+// 隐藏节点箭头
+const hideNodeArrows = (nodeId: string) => {
+  const node = nodesWithArrows.value.find(n => n.id === nodeId);
+  if (node) {
+    node.showArrows = false;
+  }
+};
+
+// 处理箭头点击事件
+const handleArrowClick = (nodeId: string, direction: 'children' | 'parents') => {
+  emit('nodeArrowClick', nodeId, direction);
+};
+
+// 更新箭头位置
+const updateArrowsPosition = () => {
+  if (!cy || !arrowsOverlay.value) return;
+
+  const containerRect = cyContainer.value?.getBoundingClientRect();
+  if (!containerRect) return;
+
+  const zoom = cy.zoom();
+  const pan = cy.pan();
+  
+  const arrows = [];
+  
+  for (const element of props.elements) {
+    if (!element.data || !('content' in element.data)) continue;
+    
+    const nodeData = element.data as Node;
+    const cyNode = cy.getElementById(nodeData.id);
+    
+    if (!cyNode.length) continue;
+
+    const hasParentsArrow = nodeData.has_more_parents || false;
+    const hasChildrenArrow = nodeData.has_more_children || false;
+    
+    if (!hasParentsArrow && !hasChildrenArrow) continue;
+
+    const pos = cyNode.position();
+    const nodeSize = getNodeSize(cyNode);
+    
+    // 保持现有节点的showArrows状态，如果不存在则默认为false
+    const existingNode = nodesWithArrows.value.find(n => n.id === nodeData.id);
+    const showArrows = existingNode ? existingNode.showArrows : false;
+    
+    arrows.push({
+      id: nodeData.id,
+      hasParentsArrow,
+      hasChildrenArrow,
+      showArrows,
+      style: {
+        left: `${pos.x * zoom + pan.x - nodeSize / 2}px`,
+        top: `${pos.y * zoom + pan.y - nodeSize / 2}px`,
+        width: `${nodeSize}px`,
+        height: `${nodeSize}px`,
+      },
+    });
+  }
+  
+  nodesWithArrows.value = arrows;
+};
 
 function getNodeSize(node: NodeSingular) {
   // 依据正证分、反证分平均值调整节点大小
@@ -222,10 +339,30 @@ onMounted(() => {
             color: colors.textColor,
             'text-valign': 'center',
             'text-halign': 'center',
-            'border-width': (ele: NodeSingular) => (ele.data('has_more_children') ? 6 : 0),
-            'border-color': colors.borderColor,
             opacity: 0.95,
             'text-wrap': 'wrap',
+            // 默认边框样式
+            'border-width': 2,
+            'border-color': colors.borderColor,
+            'border-style': 'solid',
+          },
+        },
+        {
+          selector: 'node[?has_more_parents], node[?has_more_children]',
+          style: {
+            'border-width': 3,
+            'border-style': 'dashed',
+            'border-color': (ele: NodeSingular) => {
+              const hasParents = ele.data('has_more_parents');
+              const hasChildren = ele.data('has_more_children');
+              if (hasParents && hasChildren) {
+                return colors.mixedBorderColor; // 上下都有更多节点
+              } else if (hasParents) {
+                return colors.parentBorderColor; // 只有上面有更多节点
+              } else {
+                return colors.childBorderColor; // 只有下面有更多节点
+              }
+            },
           },
         },
         {
@@ -372,16 +509,20 @@ onMounted(() => {
       }
     });
 
-    cy.on('dbltap', 'node', (evt) => {
-      if (tapTimer) {
-        clearTimeout(tapTimer);
-        tapTimer = null;
-      }
-      hideContextMenu();
-      emit('nodeDblClick', evt.target.data());
+    // 添加节点hover事件来控制箭头显示
+    cy.on('mouseover', 'node', (evt) => {
+      const nodeId = evt.target.id();
+      showNodeArrows(nodeId);
     });
+
+    cy.on('mouseout', 'node', (evt) => {
+      const nodeId = evt.target.id();
+      hideNodeArrows(nodeId);
+    });
+
     cy.on('viewport', () => {
       hideContextMenu();
+      updateArrowsPosition();
       if (cy) {
         emit('viewportChanged', cy.extent());
       }
@@ -406,6 +547,22 @@ watch(
               ele.data('logic_type') === 'and' ? colors.andNodeColor : colors.orNodeColor,
             color: colors.textColor,
             'border-color': colors.borderColor,
+          },
+        },
+        {
+          selector: 'node[?has_more_parents], node[?has_more_children]',
+          style: {
+            'border-color': (ele: NodeSingular) => {
+              const hasParents = ele.data('has_more_parents');
+              const hasChildren = ele.data('has_more_children');
+              if (hasParents && hasChildren) {
+                return colors.mixedBorderColor;
+              } else if (hasParents) {
+                return colors.parentBorderColor;
+              } else {
+                return colors.childBorderColor;
+              }
+            },
           },
         },
         {
@@ -454,6 +611,13 @@ watch(
           }
         });
       }
+      
+      // 布局完成后更新箭头位置
+      layout.on('layoutstop', () => {
+        nextTick(() => {
+          updateArrowsPosition();
+        });
+      });
     }
   },
 );
@@ -461,10 +625,26 @@ watch(
 // 暴露cy实例供父组件使用
 defineExpose({
   cy: () => cy,
+  centerNode: (nodeId: string) => {
+    if (cy) {
+      const node = cy.getElementById(nodeId);
+      if (node.length) {
+        cy.center(node);
+        cy.fit(node, 100); // 100px padding
+        updateArrowsPosition();
+      }
+    }
+  },
 });
 </script>
 
 <style scoped>
+.cytoscape-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
 .cytoscape-container {
   width: 100%;
   height: 100%;
@@ -474,6 +654,69 @@ defineExpose({
   box-shadow: 0 4px 12px rgb(var(--v-theme-shadow));
   position: relative;
   overflow: hidden;
+}
+
+.arrows-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.node-arrows {
+  position: absolute;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.node-arrows .arrow {
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+
+.node-arrows.show-arrows .arrow {
+  opacity: 1;
+  visibility: visible;
+}
+
+.arrow {
+  pointer-events: auto;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(var(--v-theme-primary), 0.8);
+  color: rgb(var(--v-theme-on-primary));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: bold;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.arrow:hover {
+  background: rgb(var(--v-theme-primary));
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.arrow-up {
+  margin-bottom: auto;
+  margin-top: -8px;
+}
+
+.arrow-down {
+  margin-top: auto;
+  margin-bottom: -8px;
 }
 
 .meta-panel {
@@ -549,6 +792,12 @@ defineExpose({
   }
   .context-menu-item {
     padding: 8px 12px;
+  }
+  
+  .arrow {
+    width: 20px;
+    height: 20px;
+    font-size: 10px;
   }
 }
 </style>

@@ -14,6 +14,7 @@ export interface Node {
   created_at: number;
   creator: string;
   has_more_children: boolean;
+  has_more_parents: boolean;
   id: string;
   label: string;
   logic_type: LogicType;

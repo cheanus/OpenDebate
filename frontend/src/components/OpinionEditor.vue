@@ -36,7 +36,7 @@
           <div v-if="form.logic_type === 'and'" class="mb-6">
             <v-select
               v-model="form.parent_id"
-              :items="availableNodes"
+              :items="availableParentNodes"
               item-title="content"
               item-value="id"
               label="父观点"
@@ -166,9 +166,13 @@ const formErrors = ref({
 // 提交状态
 const isSubmitting = ref(false);
 
+// 计算可用的父节点（过滤出 node_type 为 'solid' 的节点）
+const availableParentNodes = computed(() => {
+  return props.availableNodes.filter((node) => node.node_type === 'solid');
+});
 // 计算可用的子节点（排除已选择的父节点，并过滤出 node_type 为 'solid' 的节点）
 const availableSonNodes = computed(() => {
-  return props.availableNodes.filter((node) => node.id !== form.value.parent_id && node.node_type === 'solid');
+  return availableParentNodes.value.filter((node) => node.id !== form.value.parent_id);
 });
 
 // 处理 positive_score 的类型转换

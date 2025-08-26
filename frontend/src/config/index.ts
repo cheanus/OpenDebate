@@ -46,8 +46,7 @@ export const APP_CONFIG = {
   defaults: {
     maxUpdatedSon: 5,
     numClickUpdatedSon: 5,
-    loadDepth: 2, // 每次双击加载的深度
-    maxLoadNodes: 10, // 每次加载的最大节点数量
+    loadDepth: 2, // 每次箭头点击加载的深度
     creator: 'user',
   },
 

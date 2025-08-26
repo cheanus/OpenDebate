@@ -16,7 +16,7 @@
                 <v-col cols="12">
                   <v-text-field
                     v-model.number="maxUpdatedSon"
-                    label="单节点初始最大加载子节点数"
+                    label="单节点单向初加载的一层节点数"
                     type="number"
                     :min="1"
                     variant="outlined"
@@ -28,7 +28,7 @@
                 <v-col cols="12">
                   <v-text-field
                     v-model.number="numClickUpdatedSon"
-                    label="双击加载的最大子节点数"
+                    label="单节点双击加载的一层节点数"
                     type="number"
                     :min="1"
                     variant="outlined"
@@ -40,14 +40,14 @@
                 <v-col cols="12">
                   <v-text-field
                     v-model.number="loadDepth"
-                    label="双击加载深度"
+                    label="单节点加载深度"
                     type="number"
                     :min="1"
                     :max="5"
                     variant="outlined"
                     prepend-inner-icon="mdi-layers"
                     :rules="[(v) => (v >= 1 && v <= 5) || '值必须在1-5之间']"
-                    hint="每次双击时向下加载的深度层级（1-5）"
+                    hint="初始或双击时向下加载的深度层级（1-5）"
                     persistent-hint
                   />
                 </v-col>

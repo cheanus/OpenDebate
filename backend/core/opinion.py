@@ -103,8 +103,11 @@ def create_and_opinion(
             if son_opinion_neo4j.node_type == "empty":
                 raise ValueError(f"Son opinion {son_id} is empty.")
             son_opinion_neo4j_list.append(son_opinion_neo4j)
-        # Create the new opinion node
+        # Then check if parent opinion are not empty
         parent_opinion_neo4j = OpinionNeo4j.nodes.get(uid=parent_id)
+        if parent_opinion_neo4j.node_type == "empty":
+            raise ValueError(f"Parent opinion {parent_id} is empty.")
+        # Create the new opinion node
         new_opinion_neo4j = OpinionNeo4j(
             uid=new_opinion_psql.id,
             content="与" if link_type == LinkType.SUPPORT else "与非",
