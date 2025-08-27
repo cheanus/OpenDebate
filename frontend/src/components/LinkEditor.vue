@@ -125,6 +125,14 @@ const availableToNodes = computed(() => {
   return props.availableNodes.filter((node) => node.id !== form.value.from_id);
 });
 
+// 清除表单错误
+const clearFormErrors = () => {
+  formErrors.value = {
+    from_id: '',
+    to_id: '',
+  };
+};
+
 // 监听编辑模式下的连接数据变化
 watch(
   () => props.link,
@@ -147,14 +155,6 @@ watch(
   },
   { immediate: true },
 );
-
-// 清除表单错误
-const clearFormErrors = () => {
-  formErrors.value = {
-    from_id: '',
-    to_id: '',
-  };
-};
 
 // 表单验证
 const validateForm = (): boolean => {

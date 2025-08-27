@@ -145,7 +145,7 @@ export function useOpinionGraph(debateId: string) {
     createLink,
     updateLink,
     deleteLink,
-  } = useGraphCRUD(debateId, loading, error, refreshView);
+  } = useGraphCRUD(debateId, loading, error, refreshView, removeNode, removeEdge, addNode, addEdge);
 
   return {
     // 状态

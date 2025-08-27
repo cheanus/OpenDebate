@@ -21,9 +21,10 @@ const { notifications, removeNotification } = useNotifications();
 </script>
 
 <style scoped>
+/* 修复通知框被顶部应用栏遮挡的问题 */
 .notifications-container {
   position: fixed;
-  top: 1rem;
+  top: calc(64px + 1rem); /* Vuetify app-bar默认高度64px + 1rem间距 */
   right: 1rem;
   z-index: 1000;
   display: flex;
@@ -38,6 +39,7 @@ const { notifications, removeNotification } = useNotifications();
 
 @media (max-width: 768px) {
   .notifications-container {
+    top: calc(56px + 1rem); /* 移动端app-bar高度通常是56px */
     left: 1rem;
     right: 1rem;
   }

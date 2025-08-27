@@ -1,11 +1,23 @@
+import { type Ref } from 'vue';
 import type { Node, Edge } from '@/types';
+
+// 右键菜单动作类型
+export type ContextMenuAction = 
+  | 'editOpinion'
+  | 'deleteOpinion'
+  | 'addOpinion'
+  | 'addLink'
+  | 'editLink'
+  | 'deleteLink'
+  | 'refreshView'
+  | 'fitToScreen';
 
 /**
  * 右键菜单动作处理
  */
 export function useContextMenuActions(
-  selectedNode: any,
-  selectedEdge: any,
+  selectedNode: Ref<Node | null>,
+  selectedEdge: Ref<Edge | null>,
   openOpinionEditor: (isEdit?: boolean) => void,
   openLinkEditor: (isEdit?: boolean) => void,
   handleOpinionDelete: (opinionId: string) => Promise<void>,
@@ -16,7 +28,18 @@ export function useContextMenuActions(
   
   // 处理右键菜单动作
   const handleContextMenuAction = async (action: string) => {
-    switch (action) {
+    // 类型检查：确保action是有效的菜单动作
+    const validActions: readonly string[] = [
+      'editOpinion', 'deleteOpinion', 'addOpinion', 'addLink', 
+      'editLink', 'deleteLink', 'refreshView', 'fitToScreen'
+    ];
+    
+    if (!validActions.includes(action)) {
+      console.warn('未知的菜单动作:', action);
+      return;
+    }
+
+    switch (action as ContextMenuAction) {
       case 'editOpinion':
         if (selectedNode.value) {
           openOpinionEditor(true);

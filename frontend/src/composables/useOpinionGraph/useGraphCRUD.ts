@@ -1,6 +1,6 @@
 import { ref } from 'vue';
 import { opinionService, linkService } from '@/services';
-import type { LogicType, LinkType } from '@/types';
+import type { LogicType, LinkType, Node as OpinionNode, Edge } from '@/types';
 
 /**
  * 图形 CRUD 操作
@@ -9,7 +9,11 @@ export function useGraphCRUD(
   debateId: string,
   loading: ReturnType<typeof ref<boolean>>,
   error: ReturnType<typeof ref<string | null>>,
-  refreshView: () => Promise<void>
+  refreshView: () => Promise<void>,
+  removeNode?: (nodeId: string) => void,
+  removeEdge?: (edgeId: string) => void,
+  addNode?: (node: OpinionNode) => Promise<void>,
+  addEdge?: (edge: Edge) => void
 ) {
   
   // 创建观点
@@ -46,9 +50,63 @@ export function useGraphCRUD(
         });
       }
 
-      if (response.is_success) {
-        await refreshView();
-        return response.data;
+      if (response.is_success && response.data) {
+        // 获取新创建的观点信息并添加到视图中，而不是刷新整个视图
+        try {
+          const newOpinionId = response.data.id;
+          const opinionInfoResponse = await opinionService.getInfo(newOpinionId, debateId);
+          
+          if (opinionInfoResponse.is_success && opinionInfoResponse.data) {
+            const newOpinion = opinionInfoResponse.data;
+            
+            // 将新观点添加到视图中
+            if (addNode) {
+              await addNode(newOpinion);
+            }
+            
+            // 如果是与观点，还需要创建相应的连接
+            if (data.logic_type === 'and' && data.parent_id && data.son_ids) {
+              // 创建父节点到新节点的连接
+              if (addEdge) {
+                const parentEdge: Edge = {
+                  id: `${data.parent_id}-${newOpinionId}`,
+                  from_id: data.parent_id,
+                  to_id: newOpinionId,
+                  link_type: data.link_type!,
+                  is_success: true,
+                  msg: null
+                };
+                addEdge(parentEdge);
+              }
+              
+              // 创建新节点到子节点的连接
+              if (addEdge) {
+                for (const sonId of data.son_ids) {
+                  const childEdge: Edge = {
+                    id: `${newOpinionId}-${sonId}`,
+                    from_id: newOpinionId,
+                    to_id: sonId,
+                    link_type: data.link_type!,
+                    is_success: true,
+                    msg: null
+                  };
+                  addEdge(childEdge);
+                }
+              }
+            }
+            
+            return response.data;
+          } else {
+            // 如果获取新观点信息失败，回退到刷新视图
+            console.warn('获取新创建观点信息失败，回退到刷新视图');
+            await refreshView();
+            return response.data;
+          }
+        } catch (err) {
+          console.error('处理新创建观点失败，回退到刷新视图:', err);
+          await refreshView();
+          return response.data;
+        }
       } else {
         error.value = response.msg || '创建观点失败';
         return null;
@@ -110,8 +168,14 @@ export function useGraphCRUD(
       console.log('[deleteOpinion] API 响应:', response);
       
       if (response.is_success) {
-        console.log('[deleteOpinion] 删除成功，刷新视图');
-        await refreshView();
+        console.log('[deleteOpinion] 删除成功，移除节点');
+        // 直接从本地状态中移除节点而不是刷新整个视图
+        if (removeNode) {
+          removeNode(opinionId);
+        } else {
+          // 回退到刷新视图
+          await refreshView();
+        }
         return true;
       } else {
         console.error('[deleteOpinion] 删除失败:', response.msg);
@@ -143,9 +207,32 @@ export function useGraphCRUD(
         link_type: data.link_type,
       });
 
-      if (response.is_success) {
-        await refreshView();
-        return response.data;
+      if (response.is_success && response.data) {
+        // 直接添加新连接到视图中，而不是刷新整个视图
+        try {
+          const newLinkId = response.data.id || `${data.from_id}-${data.to_id}`;
+          const newEdge: Edge = {
+            id: newLinkId,
+            from_id: data.from_id,
+            to_id: data.to_id,
+            link_type: data.link_type,
+            is_success: true,
+            msg: null
+          };
+          
+          if (addEdge) {
+            addEdge(newEdge);
+          } else {
+            // 回退到刷新视图
+            await refreshView();
+          }
+          
+          return response.data;
+        } catch (err) {
+          console.error('处理新创建连接失败，回退到刷新视图:', err);
+          await refreshView();
+          return response.data;
+        }
       } else {
         error.value = response.msg || '创建连接失败';
         return null;
@@ -173,6 +260,8 @@ export function useGraphCRUD(
       });
 
       if (response.is_success) {
+        // 对于连接更新，通常只是类型改变，可以直接更新本地状态
+        // 但为了简单起见，这里仍然使用刷新视图
         await refreshView();
         return true;
       } else {
@@ -197,7 +286,13 @@ export function useGraphCRUD(
         id: linkId,
       });
       if (response.is_success) {
-        await refreshView();
+        // 直接从本地状态中移除连接而不是刷新整个视图
+        if (removeEdge) {
+          removeEdge(linkId);
+        } else {
+          // 回退到刷新视图
+          await refreshView();
+        }
         return true;
       } else {
         error.value = response.msg || '删除连接失败';
