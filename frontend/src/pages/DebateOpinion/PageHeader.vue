@@ -1,0 +1,18 @@
+<template>
+  <v-card class="ma-4" elevation="1">
+    <v-card-text class="pa-4">
+      <div class="d-flex align-center mb-3">
+        <v-icon color="primary" class="mr-3" size="large">mdi-sitemap</v-icon>
+        <h2 class="text-h4">辩论观点图</h2>
+      </div>
+      
+      <p class="text-subtitle-1 text-medium-emphasis mb-0">
+        点击节点上下箭头加载相邻观点，右键进行操作
+      </p>
+    </v-card-text>
+  </v-card>
+</template>
+
+<script setup lang="ts">
+// 这个组件是纯静态的，不需要逻辑
+</script>

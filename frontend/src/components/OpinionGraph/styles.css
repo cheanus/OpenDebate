@@ -1,0 +1,176 @@
+.cytoscape-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.cytoscape-container {
+  width: 100%;
+  height: 100%;
+  background: rgb(var(--v-theme-surface));
+  border: 1px solid rgb(var(--v-theme-outline));
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgb(var(--v-theme-shadow));
+  position: relative;
+  overflow: hidden;
+}
+
+.arrows-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.node-arrows {
+  position: absolute;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.node-arrows .arrow {
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+
+.node-arrows.show-arrows .arrow {
+  opacity: 1;
+  visibility: visible;
+}
+
+.arrow {
+  pointer-events: auto;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(var(--v-theme-primary), 0.8);
+  color: rgb(var(--v-theme-on-primary));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: bold;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  flex-shrink: 0;
+}
+
+.arrow:hover {
+  background: rgb(var(--v-theme-primary));
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.arrow-up {
+  margin-bottom: auto;
+  margin-top: -6px;
+}
+
+.arrow-down {
+  margin-top: auto;
+  margin-bottom: -6px;
+}
+
+/* 根据节点大小动态调整箭头样式 */
+.node-arrows.small-arrows .arrow {
+  width: 14px;
+  height: 14px;
+  font-size: 8px;
+}
+
+.node-arrows.small-arrows .arrow-up {
+  margin-top: -3px;
+}
+
+.node-arrows.small-arrows .arrow-down {
+  margin-bottom: -3px;
+}
+
+.node-arrows.medium-arrows .arrow {
+  width: 18px;
+  height: 18px;
+  font-size: 9px;
+}
+
+.node-arrows.medium-arrows .arrow-up {
+  margin-top: -4px;
+}
+
+.node-arrows.medium-arrows .arrow-down {
+  margin-bottom: -4px;
+}
+
+.node-arrows.large-arrows .arrow {
+  width: 20px;
+  height: 20px;
+  font-size: 10px;
+}
+
+.meta-panel {
+  position: absolute;
+  min-width: 220px;
+  background: rgb(var(--v-theme-surface));
+  border: 1px solid rgb(var(--v-theme-outline));
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgb(var(--v-theme-shadow));
+  padding: 14px;
+  z-index: 10;
+  top: 80px;
+  left: 80px;
+  color: rgb(var(--v-theme-on-surface));
+}
+
+.meta-panel b {
+  color: rgb(var(--v-theme-primary));
+}
+
+/* 小屏幕或极端缩放时保证面板可读 */
+@media (max-width: 640px) {
+  .meta-panel {
+    min-width: 180px;
+    padding: 10px;
+  }
+  
+  .arrow {
+    width: 18px;
+    height: 18px;
+    font-size: 9px;
+  }
+  
+  .arrow-up {
+    margin-top: -5px;
+  }
+  
+  .arrow-down {
+    margin-bottom: -5px;
+  }
+}
+
+/* 进一步缩放时的响应式设计 */
+.node-arrows[style*="width: 30px"] .arrow,
+.node-arrows[style*="width: 25px"] .arrow,
+.node-arrows[style*="width: 20px"] .arrow {
+  width: 16px;
+  height: 16px;
+  font-size: 8px;
+}
+
+.node-arrows[style*="width: 30px"] .arrow-up,
+.node-arrows[style*="width: 25px"] .arrow-up,
+.node-arrows[style*="width: 20px"] .arrow-up {
+  margin-top: -4px;
+}
+
+.node-arrows[style*="width: 30px"] .arrow-down,
+.node-arrows[style*="width: 25px"] .arrow-down,
+.node-arrows[style*="width: 20px"] .arrow-down {
+  margin-bottom: -4px;
+}

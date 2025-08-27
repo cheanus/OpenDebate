@@ -17,7 +17,7 @@ export const APP_CONFIG = {
       nodeSep: 50,
       edgeSep: 10,
       rankSep: 80,
-      fit: true,
+      fit: false, // 加载节点时不适配屏幕
       padding: 50,
     },
 

@@ -19,6 +19,7 @@ export interface Node {
   label: string;
   logic_type: LogicType;
   node_type: string;
+  host: string;
   relationship: {
     supports: Array<string>;
     opposes: Array<string>;
