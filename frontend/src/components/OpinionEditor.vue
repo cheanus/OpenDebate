@@ -69,7 +69,7 @@
           </div>
 
           <!-- 正证分数（仅或观点） -->
-          <div v-if="form.logic_type === 'or'" class="mb-6">
+          <div v-if="form.logic_type === 'or' && !(isEdit&&!isLeafNode)" class="mb-6">
             <v-text-field
               v-model.number="form.positive_score"
               label="正证分数 (0-1)"
@@ -150,6 +150,13 @@ const isVisible = computed({
       close();
     }
   },
+});
+
+const isLeafNode = computed(() => {
+  if (props.opinion) {
+    return !props.opinion.relationship.opposed_by.length && !props.opinion.relationship.supported_by.length;
+  }
+  return false;
 });
 
 // 处理提交

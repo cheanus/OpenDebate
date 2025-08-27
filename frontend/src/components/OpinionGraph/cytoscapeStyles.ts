@@ -1,7 +1,6 @@
 /**
  * Cytoscape 图形样式配置
  */
-import type { Node } from '@/types';
 
 // Cytoscape 节点接口定义
 interface CytoscapeNode {
@@ -38,26 +37,10 @@ export function getCytoscapeStyles(themeColors: ThemeColors) {
         'text-wrap': 'wrap',
         'text-max-width': '120px',
         'width': (node: CytoscapeNode) => {
-          const nodeData = node.data('score') as Node['score'] | undefined;
-          const pos = nodeData ? nodeData.positive : null;
-          const neg = nodeData ? nodeData.negative : null;
-          let avg = null;
-          if (pos != null && neg != null) avg = (pos + neg) / 2;
-          else if (pos != null) avg = pos;
-          else if (neg != null) avg = neg;
-          if (avg == null) return 60;
-          return 60 + 120 * avg;
+          return node.data('width') || 60;
         },
         'height': (node: CytoscapeNode) => {
-          const nodeData = node.data('score') as Node['score'] | undefined;
-          const pos = nodeData ? nodeData.positive : null;
-          const neg = nodeData ? nodeData.negative : null;
-          let avg = null;
-          if (pos != null && neg != null) avg = (pos + neg) / 2;
-          else if (pos != null) avg = pos;
-          else if (neg != null) avg = neg;
-          if (avg == null) return 60;
-          return 60 + 120 * avg;
+          return node.data('width') || 60;
         },
       },
     },

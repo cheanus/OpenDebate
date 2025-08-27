@@ -1,5 +1,6 @@
 import { ref } from 'vue';
-import type { Node, Edge } from '@/types';
+import { formatDate } from '@/utils';
+import type { NodeInfo, Edge } from '@/types';
 import type { NodeSingular, EdgeSingular } from 'cytoscape';
 
 /**
@@ -10,7 +11,7 @@ export function useContextMenu() {
   const contextMenuStyle = ref<Record<string, string>>({});
   const contextMenuType = ref('');
   const selectedNode = ref<NodeSingular | null>(null);
-  const selectedNodeData = ref<Partial<Node>>({});
+  const selectedNodeData = ref<Partial<NodeInfo>>({});
   const selectedEdge = ref<EdgeSingular | null>(null);
   const selectedEdgeData = ref<Partial<Edge>>({});
   const metaPanelStyle = ref<Record<string, string>>({});
@@ -39,7 +40,7 @@ export function useContextMenu() {
       const data = node.data();
       selectedNodeData.value = {
         id: data.id,
-        created_at: data.created_at,
+        created_at: formatDate(data.created_at),
         creator: data.creator,
         content: data.content,
         host: data.host,
@@ -60,7 +61,7 @@ export function useContextMenu() {
     }
   };
 
-  // 设置选中的边
+  // 设置选中的边formatDate
   const setSelectedEdge = (edge: EdgeSingular | null, renderedPosition?: { x: number; y: number }) => {
     selectedEdge.value = edge;
     

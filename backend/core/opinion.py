@@ -450,16 +450,23 @@ def patch_opinion(
                     )
 
         # Update Neo4j
-        opinion_neo4j = OpinionNeo4j.nodes.get(uid=opinion_id)
+        op_neo4j = OpinionNeo4j.nodes.get(uid=opinion_id)
         if content is not None:
-            opinion_neo4j.content = content
+            op_neo4j.content = content
+
+        is_leaf = False
+        if not op_neo4j.supported_by.all() and not op_neo4j.opposed_by.all():
+            is_leaf = True
         if is_llm_score:
+            if not is_leaf:
+                raise RuntimeError(f"Opinion with ID {op_neo4j.uid} is not leaf node.")
             pass
         if score and "positive" in score:  # None也是信号
-            opinion_neo4j.positive_score = score["positive"]
-            opinion_neo4j.save()
+            if not is_leaf:
+                raise RuntimeError(f"Opinion with ID {op_neo4j.uid} is not leaf node.")
+            op_neo4j.positive_score = score["positive"]
+            op_neo4j.save()
             update_score.update_node_score_positively_from(opinion_id, is_refresh=True)
-        else:
-            opinion_neo4j.save()
+        op_neo4j.save()
     except Exception as e:
         raise RuntimeError(f"Failed to update opinion in Neo4j: {str(e)}")

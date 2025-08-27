@@ -1,3 +1,6 @@
+import type { Node } from '@/types';
+
+
 /**
  * 格式化时间戳为本地时间字符串
  */
@@ -12,74 +15,39 @@ export function formatDate(timestamp: number): string {
   });
 }
 
-/**
- * 防抖函数
- */
-export function debounce<T extends (...args: any[]) => any>(
-  func: T,
-  delay: number,
-): (...args: Parameters<T>) => void {
-  let timeoutId: number | null = null;
-
-  return (...args: Parameters<T>) => {
-    if (timeoutId) {
-      clearTimeout(timeoutId);
-    }
-
-    timeoutId = window.setTimeout(() => {
-      func(...args);
-      timeoutId = null;
-    }, delay);
-  };
+export function getNodeSize(node: Node)  {
+  const nodeData = node.score;
+  const pos = nodeData ? nodeData.positive : null;
+  const neg = nodeData ? nodeData.negative : null;
+  let avg = null;
+  if (pos != null && neg != null) avg = (pos + neg) / 2;
+  else if (pos != null) avg = pos;
+  else if (neg != null) avg = neg;
+  if (avg == null) return 60;
+  return 60 + 120 * avg;
 }
 
 /**
- * 节流函数
+ * 节点文本省略工具函数
  */
-export function throttle<T extends (...args: any[]) => any>(
-  func: T,
-  limit: number,
-): (...args: Parameters<T>) => void {
-  let inThrottle = false;
+export function wrapLabelText(text: string, width: number, zoomFactor = 0.05): string {
+  if (!text) return '';
+  const scaledWidth = Math.floor(width * zoomFactor);
+  if (scaledWidth < 1) return text;
 
-  return (...args: Parameters<T>) => {
-    if (!inThrottle) {
-      func(...args);
-      inThrottle = true;
-      setTimeout(() => {
-        inThrottle = false;
-      }, limit);
-    }
-  };
-}
+  // 将文本每 scaledWidth 个字符分隔成一行
+  const regex = new RegExp(`.{1,${scaledWidth}}`, 'g');
+  const lines = text.match(regex) || [];
 
-/**
- * 复制文本到剪贴板
- */
-export async function copyToClipboard(text: string): Promise<boolean> {
-  try {
-    await navigator.clipboard.writeText(text);
-    return true;
-  } catch (error) {
-    // 降级方案
-    const textArea = document.createElement('textarea');
-    textArea.value = text;
-    textArea.style.position = 'fixed';
-    textArea.style.opacity = '0';
-    document.body.appendChild(textArea);
-    textArea.select();
-
-    try {
-      document.execCommand('copy');
-      return true;
-    } catch (fallbackError) {
-      console.error('复制失败:', fallbackError);
-      return false;
-    } finally {
-      document.body.removeChild(textArea);
-    }
+  // 以最大行数限制，当行数超过时，最后一行添加省略号
+  const maxLines = 2;
+  if (lines.length > maxLines) {
+    lines[maxLines - 1] = lines[maxLines - 1] + '…';
+    return lines.slice(0, maxLines).join('\n');
   }
+  return lines.join('\n');
 }
+
 
 /**
  * 获取存储值

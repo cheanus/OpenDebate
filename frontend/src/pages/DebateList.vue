@@ -130,6 +130,7 @@
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useDebates } from '@/composables';
+import { formatDate } from '@/utils';
 import type { Debate } from '@/types';
 
 const router = useRouter();
@@ -222,11 +223,6 @@ const handleDeleteDebate = async (debate: Debate) => {
 // 查看辩论
 const viewDebate = (debateId: string) => {
   router.push(`/debate/${debateId}`);
-};
-
-// 格式化日期
-const formatDate = (timestamp: number) => {
-  return new Date(timestamp * 1000).toLocaleDateString();
 };
 
 // 初始化

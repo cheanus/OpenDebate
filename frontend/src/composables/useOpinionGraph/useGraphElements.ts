@@ -1,5 +1,6 @@
 import { computed, type Ref } from 'vue';
 import { opinionService, linkService } from '@/services';
+import { wrapLabelText, getNodeSize } from '@/utils';
 import type { Node, Element, Edge } from '@/types';
 
 /**
@@ -46,10 +47,12 @@ export function useGraphElements(
         (rel.opposes && rel.opposes.length > 0);
     }
 
+    const node_width = getNodeSize(node);
     elements.value.push({
       data: {
         ...node,
-        label: node.content.slice(0, 18) || '观点',
+        width: node_width,
+        label: wrapLabelText(node.content, node_width),
         has_more_children: finalHasMoreChildren as boolean,
         has_more_parents: finalHasMoreParents as boolean,
       },

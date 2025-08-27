@@ -20,12 +20,29 @@ export interface Node {
   logic_type: LogicType;
   node_type: string;
   host: string;
+  width?: number;
   relationship: {
     supports: Array<string>;
     opposes: Array<string>;
     supported_by: Array<string>;
     opposed_by: Array<string>;
   };
+  score: {
+    positive: number | null;
+    negative: number | null;
+  };
+}
+
+export interface NodeInfo {
+  content: string;
+  created_at: string;
+  creator: string;
+  has_more_children: boolean;
+  has_more_parents: boolean;
+  id: string;
+  logic_type: LogicType;
+  node_type: string;
+  host: string;
   score: {
     positive: number | null;
     negative: number | null;
