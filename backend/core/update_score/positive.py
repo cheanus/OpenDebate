@@ -1,6 +1,6 @@
 from schemas.db.neo4j import Opinion as OpinionNeo4j
 from schemas.opinion import ScoreType
-from core.utils.math import avg_of_list, revert_score
+from core.utils.math import avg_of_list, revert_score, is_same
 from .negative import (
     update_node_score_negatively,
     update_node_score_negatively_recursively,
@@ -97,6 +97,7 @@ def update_node_score_positively_recursively(
                 revert_score(opinion_neo4j.son_negative_score),
             ]
         )
+        old_positive_score = opinion_neo4j.positive_score
         opinion_neo4j.positive_score = next_new_score
         opinion_neo4j.save()
         # Update the related node scores
@@ -104,11 +105,17 @@ def update_node_score_positively_recursively(
             update_node_score_positively_recursively(
                 related_opinion.uid,
                 {"positive": next_new_score},
+                is_refresh=is_same(
+                    old_positive_score, related_opinion.son_positive_score
+                ),
             )
         for related_opinion in opinion_neo4j.opposes:
             update_node_score_positively_recursively(
                 related_opinion.uid,
                 {"negative": next_new_score},
+                is_refresh=is_same(
+                    old_positive_score, related_opinion.son_positive_score
+                ),
             )
         # Update score negatively
         update_node_score_negatively(opinion_id)
@@ -151,11 +158,7 @@ def refresh_son_type_score(opinion_id: str, score_type: str) -> bool:
         )
         if opinion_neo4j.son_positive_score is None and con_positive_score is None:
             return False
-        if (
-            not opinion_neo4j.son_positive_score
-            or not con_positive_score
-            or abs(opinion_neo4j.son_positive_score - con_positive_score) > 1e-6
-        ):
+        if not is_same(opinion_neo4j.son_positive_score, con_positive_score):
             # AND点要考虑已受传播的反证分需被删除
             if (
                 opinion_neo4j.logic_type == "and"
@@ -183,11 +186,7 @@ def refresh_son_type_score(opinion_id: str, score_type: str) -> bool:
         )
         if opinion_neo4j.son_negative_score is None and con_negative_score is None:
             return False
-        if (
-            not opinion_neo4j.son_negative_score
-            or not con_negative_score
-            or abs(opinion_neo4j.son_negative_score - con_negative_score) > 1e-6
-        ):
+        if not is_same(opinion_neo4j.son_negative_score, con_negative_score):
             is_updated = True
             opinion_neo4j.son_negative_score = con_negative_score
     else:

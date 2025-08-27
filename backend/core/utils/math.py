@@ -45,3 +45,20 @@ def min_of_list(numbers: list[float | None]) -> float | None:
     if not valid_numbers or len(valid_numbers) == 0:
         return None
     return min(valid_numbers)
+
+
+def is_same(a: float | None, b: float | None, tol: float = 1e-6) -> bool:
+    """
+    Check if two numbers are the same within a given tolerance.
+
+    Args:
+        a (float | None): The first number.
+        b (float | None): The second number.
+        tol (float): The tolerance for comparison.
+
+    Returns:
+        bool: True if the numbers are the same within the tolerance, False otherwise.
+    """
+    if a is None or b is None:
+        return False
+    return abs(a - b) < tol
