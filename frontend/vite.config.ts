@@ -13,6 +13,28 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // 将 Vue 和相关库分离为单独的 chunk
+          'vue-vendor': ['vue', 'vue-router'],
+          // 将 Vuetify 分离为单独的 chunk（移除 @mdi/font）
+          'vuetify-vendor': ['vuetify'],
+          // 将 Cytoscape 相关库分离（如果存在的话）
+          'graph-vendor': ['cytoscape'],
+          // 将大型 composables 分离
+          'composables': [
+            './src/composables/core/useOpinionGraph/useOpinionGraph.ts',
+            './src/composables/core/useOpinionGraph/useGraphOperations.ts',
+            './src/composables/core/useOpinionGraph/useGraphCRUD.ts'
+          ]
+        }
+      }
+    },
+    // 调整 chunk 大小警告阈值
+    chunkSizeWarningLimit: 1000
+  },
   server: {
     port: 3141,
     proxy: {

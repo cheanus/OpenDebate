@@ -1,5 +1,5 @@
 import { ref } from 'vue';
-import type { Node } from '@/types';
+import type { Node, Element } from '@/types';
 import type { Core, NodeSingular } from 'cytoscape';
 
 /**
@@ -45,7 +45,7 @@ export function useNodeArrows() {
   }
 
   // 更新箭头位置
-  const updateArrowsPosition = (cy: Core | null, elements: any[], cyContainer: HTMLElement | null) => {
+  const updateArrowsPosition = (cy: Core | null, elements: Element[], cyContainer: HTMLElement | null) => {
     if (!cy || !cyContainer) return;
 
     const containerRect = cyContainer.getBoundingClientRect();

@@ -44,10 +44,10 @@ export function useCRUDFixes(
   const ensureNodeRemoval = async (nodeId: string, maxRetries = 3) => {
     let retries = 0;
     
-    while (retries < maxRetries && loadedNodes.value.has(nodeId)) {
+    while (retries < maxRetries && (loadedNodes.value.has(nodeId) || elements.value.some(el => el.data && el.data.id === nodeId))) {
       console.log(`[ensureNodeRemoval] 尝试移除节点 ${nodeId}, 重试 ${retries + 1}/${maxRetries}`);
       
-      // 同步移除节点
+      // 统计移除前的状态
       elements.value = elements.value.filter((el) => {
         // 移除节点本身
         if (el.data && el.data.id === nodeId) {
@@ -67,20 +67,24 @@ export function useCRUDFixes(
       });
       
       loadedNodes.value.delete(nodeId);
-      
+
       // 等待一小段时间以确保 UI 更新
       await new Promise(resolve => setTimeout(resolve, 100));
       
       retries++;
     }
 
+    // 检查最终状态
+    const finalNodeInLoadedNodes = loadedNodes.value.has(nodeId);
+    const finalNodeInElements = elements.value.some(el => el.data && el.data.id === nodeId);
+    
     // 如果仍然存在，强制刷新视图
-    if (loadedNodes.value.has(nodeId)) {
+    if (finalNodeInLoadedNodes || finalNodeInElements) {
       console.warn('[ensureNodeRemoval] 节点仍存在，强制刷新视图');
       await refreshView();
     }
 
-    return !loadedNodes.value.has(nodeId);
+    return !loadedNodes.value.has(nodeId) && !elements.value.some(el => el.data && el.data.id === nodeId);
   };
 
   /**

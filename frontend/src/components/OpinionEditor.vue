@@ -115,7 +115,7 @@
 
 <script setup lang="ts">
 import { computed, watch } from 'vue';
-import { useOpinionForm } from './OpinionEditor/useOpinionForm';
+import { useOpinionForm } from '@/composables/features/opinion/useOpinionForm';
 import type { Node, OpinionFormData } from '@/types';
 
 interface Props {

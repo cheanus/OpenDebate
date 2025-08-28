@@ -98,16 +98,21 @@ export function useGraphElements(
 
   // 移除节点
   const removeNode = (nodeId: string) => {
+    const removedEdges: string[] = [];
+    
     elements.value = elements.value.filter((el) => {
       // 移除节点本身
       if (el.data && el.data.id === nodeId) {
+        console.log('[removeNode] 找到并移除节点:', nodeId);
         return false;
       }
       // 移除相关的边
       if (el.data && ('source' in el.data || 'target' in el.data)) {
         const linkData = el.data as unknown as { id: string; source: string; target: string };
         if (linkData.source === nodeId || linkData.target === nodeId) {
+          console.log('[removeNode] 移除相关边:', linkData.id, 'source:', linkData.source, 'target:', linkData.target);
           loadedEdges.value.delete(linkData.id);
+          removedEdges.push(linkData.id);
           return false;
         }
       }

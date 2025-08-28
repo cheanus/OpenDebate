@@ -20,9 +20,10 @@ def create_link_http(request: CreateLinkRequest):
     创建一个链（两个已存在观点间）
     """
     try:
-        # Check if the to_opinion is not AND opinion
+        # Check if the neighborhood opinion is not AND opinion
+        from_opinion = OpinionNeo4j.nodes.get(uid=request.from_id)
         to_opinion = OpinionNeo4j.nodes.get(uid=request.to_id)
-        if to_opinion.logic_type == "and":
+        if from_opinion.logic_type == "and" or to_opinion.logic_type == "and":
             return {
                 "is_success": False,
                 "msg": "Cannot create link to an AND opinion.",

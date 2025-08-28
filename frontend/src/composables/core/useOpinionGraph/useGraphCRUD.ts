@@ -159,16 +159,12 @@ export function useGraphCRUD(
     error.value = null;
 
     try {
-      console.log('[deleteOpinion] 调用 API 删除观点');
       const response = await opinionService.delete({
         opinion_id: opinionId,
         debate_id: debateId,
       });
       
-      console.log('[deleteOpinion] API 响应:', response);
-      
       if (response.is_success) {
-        console.log('[deleteOpinion] 删除成功，移除节点');
         // 直接从本地状态中移除节点而不是刷新整个视图
         if (removeNode) {
           removeNode(opinionId);

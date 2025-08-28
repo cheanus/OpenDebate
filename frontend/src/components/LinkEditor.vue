@@ -13,7 +13,7 @@
           <!-- 起始节点 -->
           <v-select
             v-model="form.from_id"
-            :items="availableNodes"
+            :items="availabeFromNodes"
             item-title="content"
             item-value="id"
             label="起始观点"
@@ -127,9 +127,13 @@ const formErrors = ref({
 // 提交状态
 const isSubmitting = ref(false);
 
+// 计算可用的起始节点（node_type = solid）
+const availabeFromNodes = computed(() => {
+  return props.availableNodes.filter((node) => node.node_type === 'solid');
+});
 // 计算可用的目标节点（排除已选择的起始节点）
 const availableToNodes = computed(() => {
-  return props.availableNodes.filter((node) => node.id !== form.value.from_id);
+  return availabeFromNodes.value.filter((node) => node.id !== form.value.from_id);
 });
 
 // 清除表单错误

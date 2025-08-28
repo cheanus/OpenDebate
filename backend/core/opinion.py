@@ -174,10 +174,11 @@ def delete_opinion(opinion_id: str, debate_id: str):
                 raise RuntimeError(f"Failed to delete opinion in PostgreSQL: {str(e)}")
             try:
                 opinion_neo4j = OpinionNeo4j.nodes.get(uid=opinion_id)
-                son_opinions = opinion_neo4j.supported_by + opinion_neo4j.opposed_by
+                son_opinions = opinion_neo4j.supported_by.all() + opinion_neo4j.opposed_by.all()
                 # Update positive score to None before deleting
                 opinion_neo4j.positive_score = None
-                update_score.update_node_score_positively_from(opinion_id)
+                opinion_neo4j.save()
+                update_score.update_node_score_positively_from(opinion_id, is_refresh=True)
                 # Delete the opinion in Neo4j
                 opinion_neo4j.delete()
                 # Update negative scores of son opinions

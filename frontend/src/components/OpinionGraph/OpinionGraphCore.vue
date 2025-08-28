@@ -72,8 +72,8 @@ import type { Element, GraphLayout, Node, Edge } from '@/types';
 import type { Core, StylesheetStyle } from 'cytoscape';
 
 import { getCytoscapeStyles } from './cytoscapeStyles';
-import { useNodeArrows } from './useNodeArrows';
-import { useContextMenu } from './useContextMenu';
+import { useNodeArrows } from '@/composables/features/graph/useNodeArrows';
+import { useContextMenu } from '@/composables/ui/useContextMenu';
 import { useCytoscapeManager } from './cytoscapeUtils';
 import ContextMenu from './ContextMenu.vue';
 

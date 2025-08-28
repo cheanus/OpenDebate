@@ -59,11 +59,24 @@ export function useCytoscapeManager() {
     
     // 移除不再存在的元素
     const toRemove = [...currentElementIds].filter(id => !newElementIds.has(id));
+    
     if (toRemove.length > 0) {
-      cy.remove(cy.getElementById(toRemove.join(', ')));
+      
+      // 正确的移除方式：逐个移除元素
+      toRemove.forEach(id => {
+        const element = cy.getElementById(id);
+        if (element.length > 0) {
+          element.remove();
+        } else {
+          console.warn(`[updateElements] 未找到要移除的元素: ${id}`);
+        }
+      });
     }
     
     // 添加新元素或更新现有元素
+    const addedElements: string[] = [];
+    const updatedElements: string[] = [];
+    
     newElements.forEach(element => {
       const elementId = element.data.id;
       if (!elementId) return; // 跳过没有ID的元素
@@ -72,14 +85,17 @@ export function useCytoscapeManager() {
       if (existing.length === 0) {
         // 添加新元素
         cy.add(element);
+        addedElements.push(elementId);
       } else {
         // 更新现有元素的数据
         existing.data(element.data);
         if (element.classes) {
           existing.classes(element.classes);
         }
+        updatedElements.push(elementId);
       }
     });
+
   };
 
   // 适配视图

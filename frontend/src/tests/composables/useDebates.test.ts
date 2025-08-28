@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { useDebates } from '@/composables/useDebates';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { useDebates } from '@/composables';
 import { debateService } from '@/services/debate';
 
 // Mock the service

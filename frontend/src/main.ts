@@ -7,7 +7,8 @@ import 'vuetify/styles';
 import { createVuetify } from 'vuetify';
 import * as components from 'vuetify/components';
 import * as directives from 'vuetify/directives';
-import '@mdi/font/css/materialdesignicons.css';
+// 使用 CDN 加载 MDI 图标字体，避免构建问题
+// import '@mdi/font/css/materialdesignicons.css';
 
 const vuetify = createVuetify({
   components,

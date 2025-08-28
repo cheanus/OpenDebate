@@ -62,10 +62,10 @@ import PageHeader from './DebateOpinion/PageHeader.vue';
 import SearchOverlay from './DebateOpinion/SearchOverlay.vue';
 import HelpSection from './DebateOpinion/HelpSection.vue';
 
-import { useOpinionGraph } from '@/composables/useOpinionGraph';
-import { useEditorState } from './DebateOpinion/useEditorState';
-import { useDebateSearch } from './DebateOpinion/useDebateSearch';
-import { useCRUDFixes } from './DebateOpinion/useCRUDFixes';
+import { useOpinionGraph } from '@/composables';
+import { useEditorState } from '@/composables/features/opinion/useEditorState';
+import { useDebateSearch } from '@/composables/features/debate/useDebateSearch';
+import { useCRUDFixes } from '@/composables/features/opinion/useCRUDFixes';
 
 import type { Node, Edge, OpinionFormData, LinkFormData } from '@/types';
 
@@ -195,10 +195,36 @@ const handleOpinionDelete = async (opinionId: string) => {
     return;
   }
 
+  console.log('[handleOpinionDelete] 开始删除观点:', opinionId);
+
   const operation = async () => {
-    await deleteOpinion(opinionId);
-    // 确保观点被正确移除
-    await ensureNodeRemoval(opinionId);
+    console.log('[handleOpinionDelete] 调用 deleteOpinion API');
+    const result = await deleteOpinion(opinionId);
+    console.log('[handleOpinionDelete] deleteOpinion 结果:', result);
+    
+    if (result === true) {
+      // API 删除成功后，确保前端视图同步
+      console.log('[handleOpinionDelete] API 删除成功，检查前端状态');
+      
+      // 检查节点是否仍然在 loadedNodes 中
+      if (loadedNodes.value.has(opinionId)) {
+        console.warn('[handleOpinionDelete] 节点仍在 loadedNodes 中，强制移除');
+        await ensureNodeRemoval(opinionId);
+      } else {
+        console.log('[handleOpinionDelete] 节点已正确从 loadedNodes 中移除');
+      }
+      
+      // 检查元素数组中是否还有该节点
+      const nodeStillExists = elements.value.some(el => el.data && el.data.id === opinionId);
+      if (nodeStillExists) {
+        console.warn('[handleOpinionDelete] 节点仍在 elements 数组中，强制移除');
+        await ensureNodeRemoval(opinionId);
+      } else {
+        console.log('[handleOpinionDelete] 节点已正确从 elements 中移除');
+      }
+    }
+    
+    return result;
   };
 
   const result = await wrapCRUDOperation(
