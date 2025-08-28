@@ -8,12 +8,12 @@ export interface LinkCreateData {
 }
 
 export interface LinkUpdateData {
-  id: string;
+  link_id: string;
   link_type?: LinkType;
 }
 
 export interface LinkDeleteData {
-  id: string;
+  link_id: string;
 }
 
 export interface LinkAttackData {

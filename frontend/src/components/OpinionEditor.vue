@@ -1,5 +1,5 @@
 <template>
-  <v-dialog v-model="isVisible" max-width="800px" persistent>
+  <v-dialog v-model="isVisible" max-width="800px">
     <v-card>
       <v-card-title class="text-h5">
         <v-icon left>{{ isEdit ? 'mdi-pencil' : 'mdi-plus' }}</v-icon>
@@ -36,7 +36,7 @@
           <div v-if="form.logic_type === 'and'" class="mb-6">
             <v-select
               v-model="form.parent_id"
-              :items="availableNodes"
+              :items="solidNodes"
               item-title="content"
               item-value="id"
               label="父观点"
@@ -48,7 +48,7 @@
             />
             <v-autocomplete
               v-model="form.son_ids"
-              :items="availableNodes"
+              :items="solidSonNodes"
               item-title="content"
               item-value="id"
               label="子观点"
@@ -131,6 +131,21 @@ const emit = defineEmits<{
   submit: [data: OpinionFormData];
   close: [];
 }>();
+
+// 与观点可选节点过滤
+const solidNodes = computed(() => {
+  return props.availableNodes.filter(node => node.node_type === 'solid');
+});
+
+const solidSonNodes = computed(() => {
+  return solidNodes.value.filter(node => {
+    // 排除自己
+    if (props.opinion && node.id === props.opinion.id) {
+        return false;
+    }
+    return true;
+  });
+});
 
 // 表单状态管理
 const {

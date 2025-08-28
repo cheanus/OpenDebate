@@ -65,8 +65,7 @@ import HelpSection from './DebateOpinion/HelpSection.vue';
 import { useOpinionGraph } from '@/composables/useOpinionGraph';
 import { useEditorState } from './DebateOpinion/useEditorState';
 import { useDebateSearch } from './DebateOpinion/useDebateSearch';
-import { useFormHandlers } from './DebateOpinion/useFormHandlers';
-import { useContextMenuActions } from './DebateOpinion/useContextMenuActions';
+import { useCRUDFixes } from './DebateOpinion/useCRUDFixes';
 
 import type { Node, Edge, OpinionFormData, LinkFormData } from '@/types';
 
@@ -77,16 +76,16 @@ const debateId = route.params.id as string;
 const {
   elements,
   availableNodes,
-  // error, // 移除未使用的变量
   selectedNode,
   selectedEdge,
   searchQuery,
   searchOpinions,
   searchLoading,
+  loadedNodes,
+  loadedEdges,
   handleNodeArrowClick,
   initializeGraph,
   searchAndFocusOpinion,
-  // 这些方法需要在useOpinionGraph中实现
   createOpinion,
   updateOpinion,
   deleteOpinion,
@@ -96,6 +95,14 @@ const {
   setSelectedNode,
   setSelectedEdge,
 } = useOpinionGraph(debateId);
+
+// CRUD修复工具
+const {
+  ensureNodeVisibility,
+  ensureNodeRemoval,
+  ensureEdgeRemoval,
+  wrapCRUDOperation,
+} = useCRUDFixes(elements, loadedNodes, loadedEdges, initializeGraph);
 
 // 编辑器状态管理
 const {
@@ -116,73 +123,154 @@ const {
   handleSearchSelection: handleSearchSelectionBase,
 } = useDebateSearch();
 
-// 表单处理 - 创建适配器函数以匹配 useFormHandlers 的期望签名
-const {
-  handleOpinionSubmit,
-  handleLinkSubmit,
-  handleOpinionDelete,
-  handleLinkDelete,
-} = useFormHandlers(
-  async (data: OpinionFormData) => { 
-    await createOpinion({
-      logic_type: data.logic_type,
-      content: data.content,
-      parent_id: data.parent_id,
-      son_ids: data.son_ids,
-      link_type: data.link_type,
-      positive_score: data.positive_score,
-      is_llm_score: data.is_llm_score,
-      creator: data.creator,
-    }); 
-  },
-  async (data: OpinionFormData) => { 
-    if (data.id) {
+// CRUD 操作处理函数
+const handleOpinionSubmit = async (data: OpinionFormData, isEdit: boolean) => {
+  const operation = async () => {
+    if (isEdit) {
       await updateOpinion({
-        id: data.id,
+        id: data.id!,
         content: data.content,
         positive_score: data.positive_score,
         is_llm_score: data.is_llm_score,
-      }); 
-    }
-  },
-  async (opinionId: string) => { await deleteOpinion(opinionId); },
-  async (data: LinkFormData) => { 
-    await createLink({
-      from_id: data.from_id,
-      to_id: data.to_id,
-      link_type: data.link_type,
-    }); 
-  },
-  async (data: LinkFormData) => { 
-    if (data.id) {
-      await updateLink({
-        id: data.id,
+      });
+    } else {
+      const result = await createOpinion({
+        logic_type: data.logic_type,
+        content: data.content,
+        parent_id: data.parent_id,
+        son_ids: data.son_ids,
         link_type: data.link_type,
-      }); 
+        positive_score: data.positive_score,
+        is_llm_score: data.is_llm_score,
+        creator: data.creator,
+      });
+      
+      // 确保新建的观点可见（特别是在空辩论中）
+      if (result && result.id) {
+        await ensureNodeVisibility(result.id);
+      }
     }
-  },
-  async (linkId: string) => { await deleteLink(linkId); },
-  closeOpinionEditor,
-  closeLinkEditor
-);
+  };
+
+  const result = await wrapCRUDOperation(
+    operation,
+    isEdit ? '观点更新成功' : '观点创建成功',
+    isEdit ? '观点更新失败' : '观点创建失败'
+  );
+
+  if (result !== null) {
+    closeOpinionEditor();
+  }
+};
+
+const handleLinkSubmit = async (data: LinkFormData, isEdit: boolean) => {
+  const operation = async () => {
+    if (isEdit) {
+      await updateLink({
+        id: data.id!,
+        link_type: data.link_type,
+      });
+    } else {
+      await createLink({
+        from_id: data.from_id,
+        to_id: data.to_id,
+        link_type: data.link_type,
+      });
+    }
+  };
+
+  const result = await wrapCRUDOperation(
+    operation,
+    isEdit ? '连接更新成功' : '连接创建成功',
+    isEdit ? '连接更新失败' : '连接创建失败'
+  );
+
+  if (result !== null) {
+    closeLinkEditor();
+  }
+};
+
+const handleOpinionDelete = async (opinionId: string) => {
+  if (!confirm('确定要删除这个观点吗？')) {
+    return;
+  }
+
+  const operation = async () => {
+    await deleteOpinion(opinionId);
+    // 确保观点被正确移除
+    await ensureNodeRemoval(opinionId);
+  };
+
+  const result = await wrapCRUDOperation(
+    operation,
+    '观点删除成功',
+    '删除观点失败'
+  );
+
+  if (result !== null) {
+    closeOpinionEditor();
+  }
+};
+
+const handleLinkDelete = async (linkId: string) => {
+  if (!confirm('确定要删除这个连接吗？')) {
+    return;
+  }
+
+  const operation = async () => {
+    await deleteLink(linkId);
+    // 确保连接被正确移除
+    await ensureEdgeRemoval(linkId);
+  };
+
+  const result = await wrapCRUDOperation(
+    operation,
+    '连接删除成功',
+    '删除连接失败'
+  );
+
+  if (result !== null) {
+    closeLinkEditor();
+  }
+};
 
 // 右键菜单动作
-const {
-  handleContextMenuAction,
-} = useContextMenuActions(
-  selectedNode,
-  selectedEdge,
-  openOpinionEditor,
-  openLinkEditor,
-  handleOpinionDelete,
-  handleLinkDelete,
-  async () => {
-    await initializeGraph();
-  },
-  () => {
-    opinionGraphRef.value?.fitToView();
+const handleContextMenuAction = async (action: string) => {
+  switch (action) {
+    case 'editOpinion':
+      if (selectedNode.value) {
+        openOpinionEditor(true);
+      }
+      break;
+    case 'deleteOpinion':
+      if (selectedNode.value) {
+        await handleOpinionDelete(selectedNode.value.id);
+      }
+      break;
+    case 'addOpinion':
+      openOpinionEditor(false);
+      break;
+    case 'editLink':
+      if (selectedEdge.value) {
+        openLinkEditor(true);
+      }
+      break;
+    case 'deleteLink':
+      if (selectedEdge.value) {
+        await handleLinkDelete(selectedEdge.value.id);
+      }
+      break;
+    case 'addLink':
+      openLinkEditor(false);
+      break;
+    case 'refreshView':
+      await initializeGraph();
+      break;
+    case 'fitToScreen':
+      opinionGraphRef.value?.fitToView();
+      break;
   }
-);
+};
 
 // 组件引用
 const opinionGraphRef = ref<InstanceType<typeof OpinionGraph> | null>(null);

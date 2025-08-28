@@ -335,7 +335,7 @@
 
 ```json
 {
-  "id": "xxx"
+  "link_id": "xxx"
 }
 ```
 

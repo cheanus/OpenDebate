@@ -1,5 +1,5 @@
 <template>
-  <v-dialog v-model="isVisible" max-width="600px" persistent>
+  <v-dialog v-model="isVisible" max-width="600px">
     <v-card>
       <v-card-title class="text-h5">
         <v-icon left>{{ isEdit ? 'mdi-pencil' : 'mdi-plus' }}</v-icon>
@@ -103,6 +103,13 @@ const emit = defineEmits<{
 
 // 显示控制
 const isVisible = ref(true);
+
+// 监听显示状态变化，处理点击外部关闭
+watch(isVisible, (newValue) => {
+  if (!newValue) {
+    emit('close');
+  }
+});
 
 // 表单数据
 const form = ref<LinkFormData>({

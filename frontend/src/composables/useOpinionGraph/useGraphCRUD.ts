@@ -234,10 +234,12 @@ export function useGraphCRUD(
           return response.data;
         }
       } else {
+        console.error('[createLink] 创建连接失败:', response.msg);
         error.value = response.msg || '创建连接失败';
         return null;
       }
     } catch (err) {
+      console.error('[createLink] 创建连接异常:', err);
       error.value = err instanceof Error ? err.message : '创建连接失败';
       return null;
     } finally {
@@ -255,7 +257,7 @@ export function useGraphCRUD(
 
     try {
       const response = await linkService.update({
-        id: data.id,
+        link_id: data.id,
         link_type: data.link_type,
       });
 
@@ -283,7 +285,7 @@ export function useGraphCRUD(
 
     try {
       const response = await linkService.delete({
-        id: linkId,
+        link_id: linkId,
       });
       if (response.is_success) {
         // 直接从本地状态中移除连接而不是刷新整个视图
