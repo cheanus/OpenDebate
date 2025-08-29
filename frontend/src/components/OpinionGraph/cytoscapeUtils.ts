@@ -19,13 +19,12 @@ export function wrapLabelText(text: string, width: number, zoomFactor = 0.05): s
  * Cytoscape 实例管理
  */
 export function useCytoscapeManager() {
-  
   // 初始化 Cytoscape 实例
   const initializeCytoscape = (
     container: HTMLElement,
     elements: ElementDefinition[],
     layout: LayoutOptions,
-    styles: StylesheetStyle[]
+    styles: StylesheetStyle[],
   ): Core => {
     const cyInstance = cytoscape({
       container,
@@ -38,9 +37,9 @@ export function useCytoscapeManager() {
       boxSelectionEnabled: false,
       autounselectify: false,
       // 性能优化 - 修复边消失问题
-      hideEdgesOnViewport: false,  // 关闭视口移动时隐藏边
-      textureOnViewport: false,    // 关闭纹理优化避免渲染问题  
-      motionBlur: false,           // 关闭运动模糊避免显示问题
+      hideEdgesOnViewport: false, // 关闭视口移动时隐藏边
+      textureOnViewport: false, // 关闭纹理优化避免渲染问题
+      motionBlur: false, // 关闭运动模糊避免显示问题
       motionBlurOpacity: 0.2,
       // 移除自定义wheelSensitivity，使用默认值
       // 最小和最大缩放级别
@@ -54,16 +53,17 @@ export function useCytoscapeManager() {
   // 更新元素
   const updateElements = (cy: Core, newElements: ElementDefinition[]) => {
     // 获取当前元素ID集合
-    const currentElementIds = new Set(cy.elements().map(el => el.id()));
-    const newElementIds = new Set(newElements.map(el => el.data.id).filter((id): id is string => id !== undefined));
-    
+    const currentElementIds = new Set(cy.elements().map((el) => el.id()));
+    const newElementIds = new Set(
+      newElements.map((el) => el.data.id).filter((id): id is string => id !== undefined),
+    );
+
     // 移除不再存在的元素
-    const toRemove = [...currentElementIds].filter(id => !newElementIds.has(id));
-    
+    const toRemove = [...currentElementIds].filter((id) => !newElementIds.has(id));
+
     if (toRemove.length > 0) {
-      
       // 正确的移除方式：逐个移除元素
-      toRemove.forEach(id => {
+      toRemove.forEach((id) => {
         const element = cy.getElementById(id);
         if (element.length > 0) {
           element.remove();
@@ -72,15 +72,15 @@ export function useCytoscapeManager() {
         }
       });
     }
-    
+
     // 添加新元素或更新现有元素
     const addedElements: string[] = [];
     const updatedElements: string[] = [];
-    
-    newElements.forEach(element => {
+
+    newElements.forEach((element) => {
       const elementId = element.data.id;
       if (!elementId) return; // 跳过没有ID的元素
-      
+
       const existing = cy.getElementById(elementId);
       if (existing.length === 0) {
         // 添加新元素
@@ -95,7 +95,6 @@ export function useCytoscapeManager() {
         updatedElements.push(elementId);
       }
     });
-
   };
 
   // 适配视图

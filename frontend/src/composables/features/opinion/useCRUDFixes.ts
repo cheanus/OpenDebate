@@ -10,7 +10,7 @@ export function useCRUDFixes(
   elements: Ref<Element[]>,
   loadedNodes: Ref<Set<string>>,
   loadedEdges: Ref<Set<string>>,
-  refreshView: () => Promise<void>
+  refreshView: () => Promise<void>,
 ) {
   const { notifySuccess, notifyError } = useNotifications();
   const isUpdating = ref(false);
@@ -43,10 +43,14 @@ export function useCRUDFixes(
    */
   const ensureNodeRemoval = async (nodeId: string, maxRetries = 3) => {
     let retries = 0;
-    
-    while (retries < maxRetries && (loadedNodes.value.has(nodeId) || elements.value.some(el => el.data && el.data.id === nodeId))) {
+
+    while (
+      retries < maxRetries &&
+      (loadedNodes.value.has(nodeId) ||
+        elements.value.some((el) => el.data && el.data.id === nodeId))
+    ) {
       console.log(`[ensureNodeRemoval] 尝试移除节点 ${nodeId}, 重试 ${retries + 1}/${maxRetries}`);
-      
+
       // 统计移除前的状态
       elements.value = elements.value.filter((el) => {
         // 移除节点本身
@@ -65,26 +69,29 @@ export function useCRUDFixes(
         }
         return true;
       });
-      
+
       loadedNodes.value.delete(nodeId);
 
       // 等待一小段时间以确保 UI 更新
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
       retries++;
     }
 
     // 检查最终状态
     const finalNodeInLoadedNodes = loadedNodes.value.has(nodeId);
-    const finalNodeInElements = elements.value.some(el => el.data && el.data.id === nodeId);
-    
+    const finalNodeInElements = elements.value.some((el) => el.data && el.data.id === nodeId);
+
     // 如果仍然存在，强制刷新视图
     if (finalNodeInLoadedNodes || finalNodeInElements) {
       console.warn('[ensureNodeRemoval] 节点仍存在，强制刷新视图');
       await refreshView();
     }
 
-    return !loadedNodes.value.has(nodeId) && !elements.value.some(el => el.data && el.data.id === nodeId);
+    return (
+      !loadedNodes.value.has(nodeId) &&
+      !elements.value.some((el) => el.data && el.data.id === nodeId)
+    );
   };
 
   /**
@@ -92,10 +99,10 @@ export function useCRUDFixes(
    */
   const ensureEdgeRemoval = async (edgeId: string, maxRetries = 3) => {
     let retries = 0;
-    
+
     while (retries < maxRetries && loadedEdges.value.has(edgeId)) {
       console.log(`[ensureEdgeRemoval] 尝试移除边 ${edgeId}, 重试 ${retries + 1}/${maxRetries}`);
-      
+
       elements.value = elements.value.filter((el) => {
         if (el.data && el.data.id === edgeId) {
           console.log('[ensureEdgeRemoval] 移除边:', edgeId);
@@ -103,12 +110,12 @@ export function useCRUDFixes(
         }
         return true;
       });
-      
+
       loadedEdges.value.delete(edgeId);
-      
+
       // 等待一小段时间以确保 UI 更新
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
       retries++;
     }
 
@@ -128,7 +135,7 @@ export function useCRUDFixes(
     operation: () => Promise<T>,
     successMessage: string,
     errorMessage: string,
-    postOperation?: () => Promise<void>
+    postOperation?: () => Promise<void>,
   ): Promise<T | null> => {
     if (isUpdating.value) {
       console.warn('[wrapCRUDOperation] 操作正在进行中，忽略重复请求');
@@ -136,21 +143,21 @@ export function useCRUDFixes(
     }
 
     isUpdating.value = true;
-    
+
     try {
       const result = await operation();
-      
+
       // 检查操作结果，null 或 false 表示操作失败
       if (result === null || result === false) {
         console.error('[wrapCRUDOperation] 操作返回失败结果:', result);
         notifyError(errorMessage);
         return null;
       }
-      
+
       if (postOperation) {
         await postOperation();
       }
-      
+
       notifySuccess(successMessage);
       return result;
     } catch (error) {

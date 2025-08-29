@@ -3,7 +3,7 @@ import type { Node, OpinionFormData, LogicType, LinkType } from '@/types';
 
 export function useOpinionForm() {
   const submitting = ref(false);
-  
+
   const form = reactive<OpinionFormData>({
     logic_type: 'or' as LogicType,
     content: '',
@@ -29,7 +29,7 @@ export function useOpinionForm() {
     form.positive_score = opinion.score?.positive || null;
     form.creator = opinion.creator;
     form.id = opinion.id;
-    
+
     // 清空错误
     clearErrors();
   };
@@ -45,13 +45,13 @@ export function useOpinionForm() {
     form.is_llm_score = false;
     form.creator = '';
     form.id = undefined;
-    
+
     clearErrors();
   };
 
   // 清空错误
   const clearErrors = () => {
-    Object.keys(formErrors).forEach(key => {
+    Object.keys(formErrors).forEach((key) => {
       formErrors[key] = [];
     });
   };

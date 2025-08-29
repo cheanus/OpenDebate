@@ -19,10 +19,10 @@ const sortedDebates = computed(() => {
   if (!globalDebateId.value) {
     return debates.value;
   }
-  
-  const globalDebate = debates.value.find(debate => debate.id === globalDebateId.value);
-  const otherDebates = debates.value.filter(debate => debate.id !== globalDebateId.value);
-  
+
+  const globalDebate = debates.value.find((debate) => debate.id === globalDebateId.value);
+  const otherDebates = debates.value.filter((debate) => debate.id !== globalDebateId.value);
+
   return globalDebate ? [globalDebate, ...otherDebates] : debates.value;
 });
 

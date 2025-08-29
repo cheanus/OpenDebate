@@ -1,32 +1,32 @@
 <template>
   <div class="cytoscape-wrapper">
     <div ref="cyContainer" class="cytoscape-container" @contextmenu.prevent></div>
-    
+
     <!-- 节点箭头覆盖层 -->
     <div class="arrows-overlay" ref="arrowsOverlay">
-      <div 
-        v-for="node in nodesWithArrows" 
-        :key="node.id" 
-        class="node-arrows" 
+      <div
+        v-for="node in nodesWithArrows"
+        :key="node.id"
+        class="node-arrows"
         :style="node.style"
-        :class="{ 
+        :class="{
           'show-arrows': node.showArrows,
           'small-arrows': node.style['data-size'] === 'small',
           'medium-arrows': node.style['data-size'] === 'medium',
-          'large-arrows': node.style['data-size'] === 'large'
+          'large-arrows': node.style['data-size'] === 'large',
         }"
         :data-size="node.style['data-size']"
       >
-        <div 
-          v-if="node.hasParentsArrow" 
+        <div
+          v-if="node.hasParentsArrow"
           class="arrow arrow-up"
           @click.stop="handleArrowClick(node.id, 'parents')"
           :title="'加载更多父观点'"
         >
           ▲
         </div>
-        <div 
-          v-if="node.hasChildrenArrow" 
+        <div
+          v-if="node.hasChildrenArrow"
           class="arrow arrow-down"
           @click.stop="handleArrowClick(node.id, 'children')"
           :title="'加载更多子观点'"
@@ -36,7 +36,7 @@
       </div>
     </div>
   </div>
-  
+
   <!-- 节点元数据面板 -->
   <div v-if="selectedNode" class="meta-panel" :style="metaPanelStyle">
     <h3>节点元数据</h3>
@@ -44,7 +44,7 @@
       <b>{{ k }}:</b> {{ v }}
     </div>
   </div>
-  
+
   <!-- 边元数据面板 -->
   <div v-if="selectedEdge" class="meta-panel" :style="edgeMetaPanelStyle">
     <h3>连接元数据</h3>
@@ -103,7 +103,9 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<{
   nodeArrowClick: [nodeId: string, direction: 'children' | 'parents'];
-  viewportChanged: [extent: { x1: number; y1: number; x2: number; y2: number; w: number; h: number }];
+  viewportChanged: [
+    extent: { x1: number; y1: number; x2: number; y2: number; w: number; h: number },
+  ];
   nodeSelected: [nodeData: Node | null];
   edgeSelected: [edgeData: Edge | null];
   contextMenuAction: [action: string];
@@ -116,7 +118,7 @@ const theme = useTheme();
 // 获取主题颜色的计算属性
 const themeColors = computed(() => {
   const currentTheme = theme.current.value;
-  
+
   return {
     andNodeColor: currentTheme.dark ? '#2e7d32' : '#66bb6a',
     orNodeColor: currentTheme.dark ? '#1976d2' : '#42a5f5',
@@ -138,12 +140,7 @@ const arrowsOverlay = ref<HTMLElement | null>(null);
 let cy: Core | null = null;
 
 // 使用组合函数
-const {
-  nodesWithArrows,
-  showNodeArrows,
-  hideNodeArrows,
-  updateArrowsPosition,
-} = useNodeArrows();
+const { nodesWithArrows, showNodeArrows, hideNodeArrows, updateArrowsPosition } = useNodeArrows();
 
 const {
   showContextMenu,
@@ -161,13 +158,8 @@ const {
   setSelectedEdge,
 } = useContextMenu();
 
-const {
-  initializeCytoscape,
-  updateElements,
-  fitToView,
-  centerOnNode,
-  refreshLayout,
-} = useCytoscapeManager();
+const { initializeCytoscape, updateElements, fitToView, centerOnNode, refreshLayout } =
+  useCytoscapeManager();
 
 // 处理箭头点击事件
 const handleArrowClick = (nodeId: string, direction: 'children' | 'parents') => {
@@ -185,12 +177,12 @@ const initGraph = () => {
   if (!cyContainer.value) return;
 
   const styles = getCytoscapeStyles(themeColors.value);
-  
+
   cy = initializeCytoscape(
     cyContainer.value,
     props.elements,
     props.layout,
-    styles as StylesheetStyle[] // 类型断言以避免复杂的cytoscape类型冲突
+    styles as StylesheetStyle[], // 类型断言以避免复杂的cytoscape类型冲突
   );
 
   // 事件监听
@@ -205,10 +197,10 @@ const setupEventListeners = () => {
   cy.on('tap', 'node', (evt) => {
     const node = evt.target;
     const renderedPos = node.renderedPosition();
-    
+
     setSelectedNode(node, renderedPos);
     setSelectedEdge(null);
-    
+
     emit('nodeSelected', node.data());
   });
 
@@ -216,10 +208,10 @@ const setupEventListeners = () => {
   cy.on('tap', 'edge', (evt) => {
     const edge = evt.target;
     const renderedPos = edge.renderedMidpoint();
-    
+
     setSelectedEdge(edge, renderedPos);
     setSelectedNode(null);
-    
+
     emit('edgeSelected', edge.data());
   });
 
@@ -239,14 +231,14 @@ const setupEventListeners = () => {
     evt.stopPropagation();
     const node = evt.target;
     const pos = evt.renderedPosition || evt.position;
-    
+
     // 设置选中的节点
     setSelectedNode(node, { x: pos.x, y: pos.y });
     setSelectedEdge(null);
-    
+
     // 设置右键菜单
     setContextMenu(pos.x, pos.y, 'node');
-    
+
     // 通知父组件
     emit('nodeSelected', node.data());
   });
@@ -256,14 +248,14 @@ const setupEventListeners = () => {
     evt.stopPropagation();
     const edge = evt.target;
     const pos = evt.renderedPosition || evt.position;
-    
+
     // 设置选中的边
     setSelectedEdge(edge, { x: pos.x, y: pos.y });
     setSelectedNode(null);
-    
+
     // 设置右键菜单
     setContextMenu(pos.x, pos.y, 'edge');
-    
+
     // 通知父组件
     emit('edgeSelected', edge.data());
   });
@@ -290,7 +282,7 @@ const setupEventListeners = () => {
   // 视口变化事件
   cy.on('viewport', () => {
     updateArrowsPosition(cy, props.elements, cyContainer.value);
-    
+
     const extent = cy!.extent();
     emit('viewportChanged', extent);
   });
@@ -313,7 +305,7 @@ watch(
       const currentPan = cy.pan();
 
       updateElements(cy, newElements);
-      
+
       // 运行布局
       const layout = cy.layout(props.layout);
       layout.run();
@@ -336,7 +328,7 @@ watch(
       });
     }
   },
-  { deep: true }
+  { deep: true },
 );
 
 // 监听主题变化

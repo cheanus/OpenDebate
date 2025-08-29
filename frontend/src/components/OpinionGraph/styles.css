@@ -37,7 +37,9 @@
 .node-arrows .arrow {
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.2s ease, visibility 0.2s ease;
+  transition:
+    opacity 0.2s ease,
+    visibility 0.2s ease;
 }
 
 .node-arrows.show-arrows .arrow {
@@ -138,39 +140,39 @@
     min-width: 180px;
     padding: 10px;
   }
-  
+
   .arrow {
     width: 18px;
     height: 18px;
     font-size: 9px;
   }
-  
+
   .arrow-up {
     margin-top: -5px;
   }
-  
+
   .arrow-down {
     margin-bottom: -5px;
   }
 }
 
 /* 进一步缩放时的响应式设计 */
-.node-arrows[style*="width: 30px"] .arrow,
-.node-arrows[style*="width: 25px"] .arrow,
-.node-arrows[style*="width: 20px"] .arrow {
+.node-arrows[style*='width: 30px'] .arrow,
+.node-arrows[style*='width: 25px'] .arrow,
+.node-arrows[style*='width: 20px'] .arrow {
   width: 16px;
   height: 16px;
   font-size: 8px;
 }
 
-.node-arrows[style*="width: 30px"] .arrow-up,
-.node-arrows[style*="width: 25px"] .arrow-up,
-.node-arrows[style*="width: 20px"] .arrow-up {
+.node-arrows[style*='width: 30px'] .arrow-up,
+.node-arrows[style*='width: 25px'] .arrow-up,
+.node-arrows[style*='width: 20px'] .arrow-up {
   margin-top: -4px;
 }
 
-.node-arrows[style*="width: 30px"] .arrow-down,
-.node-arrows[style*="width: 25px"] .arrow-down,
-.node-arrows[style*="width: 20px"] .arrow-down {
+.node-arrows[style*='width: 30px'] .arrow-down,
+.node-arrows[style*='width: 25px'] .arrow-down,
+.node-arrows[style*='width: 20px'] .arrow-down {
   margin-bottom: -4px;
 }

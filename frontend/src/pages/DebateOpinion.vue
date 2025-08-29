@@ -97,12 +97,8 @@ const {
 } = useOpinionGraph(debateId);
 
 // CRUD修复工具
-const {
-  ensureNodeVisibility,
-  ensureNodeRemoval,
-  ensureEdgeRemoval,
-  wrapCRUDOperation,
-} = useCRUDFixes(elements, loadedNodes, loadedEdges, initializeGraph);
+const { ensureNodeVisibility, ensureNodeRemoval, ensureEdgeRemoval, wrapCRUDOperation } =
+  useCRUDFixes(elements, loadedNodes, loadedEdges, initializeGraph);
 
 // 编辑器状态管理
 const {
@@ -144,7 +140,7 @@ const handleOpinionSubmit = async (data: OpinionFormData, isEdit: boolean) => {
         is_llm_score: data.is_llm_score,
         creator: data.creator,
       });
-      
+
       // 确保新建的观点可见（特别是在空辩论中）
       if (result && result.id) {
         await ensureNodeVisibility(result.id);
@@ -155,7 +151,7 @@ const handleOpinionSubmit = async (data: OpinionFormData, isEdit: boolean) => {
   const result = await wrapCRUDOperation(
     operation,
     isEdit ? '观点更新成功' : '观点创建成功',
-    isEdit ? '观点更新失败' : '观点创建失败'
+    isEdit ? '观点更新失败' : '观点创建失败',
   );
 
   if (result !== null) {
@@ -182,7 +178,7 @@ const handleLinkSubmit = async (data: LinkFormData, isEdit: boolean) => {
   const result = await wrapCRUDOperation(
     operation,
     isEdit ? '连接更新成功' : '连接创建成功',
-    isEdit ? '连接更新失败' : '连接创建失败'
+    isEdit ? '连接更新失败' : '连接创建失败',
   );
 
   if (result !== null) {
@@ -195,17 +191,12 @@ const handleOpinionDelete = async (opinionId: string) => {
     return;
   }
 
-  console.log('[handleOpinionDelete] 开始删除观点:', opinionId);
-
   const operation = async () => {
-    console.log('[handleOpinionDelete] 调用 deleteOpinion API');
     const result = await deleteOpinion(opinionId);
-    console.log('[handleOpinionDelete] deleteOpinion 结果:', result);
-    
+
     if (result === true) {
       // API 删除成功后，确保前端视图同步
-      console.log('[handleOpinionDelete] API 删除成功，检查前端状态');
-      
+
       // 检查节点是否仍然在 loadedNodes 中
       if (loadedNodes.value.has(opinionId)) {
         console.warn('[handleOpinionDelete] 节点仍在 loadedNodes 中，强制移除');
@@ -213,9 +204,9 @@ const handleOpinionDelete = async (opinionId: string) => {
       } else {
         console.log('[handleOpinionDelete] 节点已正确从 loadedNodes 中移除');
       }
-      
+
       // 检查元素数组中是否还有该节点
-      const nodeStillExists = elements.value.some(el => el.data && el.data.id === opinionId);
+      const nodeStillExists = elements.value.some((el) => el.data && el.data.id === opinionId);
       if (nodeStillExists) {
         console.warn('[handleOpinionDelete] 节点仍在 elements 数组中，强制移除');
         await ensureNodeRemoval(opinionId);
@@ -223,15 +214,11 @@ const handleOpinionDelete = async (opinionId: string) => {
         console.log('[handleOpinionDelete] 节点已正确从 elements 中移除');
       }
     }
-    
+
     return result;
   };
 
-  const result = await wrapCRUDOperation(
-    operation,
-    '观点删除成功',
-    '删除观点失败'
-  );
+  const result = await wrapCRUDOperation(operation, '观点删除成功', '删除观点失败');
 
   if (result !== null) {
     closeOpinionEditor();
@@ -249,11 +236,7 @@ const handleLinkDelete = async (linkId: string) => {
     await ensureEdgeRemoval(linkId);
   };
 
-  const result = await wrapCRUDOperation(
-    operation,
-    '连接删除成功',
-    '删除连接失败'
-  );
+  const result = await wrapCRUDOperation(operation, '连接删除成功', '删除连接失败');
 
   if (result !== null) {
     closeLinkEditor();
@@ -322,7 +305,7 @@ const handleSearchInput = async (searchValue: string | null) => {
 // 处理搜索选择
 const handleSearchSelection = async (opinionId: string | null) => {
   await handleSearchSelectionBase(opinionId, searchAndFocusOpinion);
-  
+
   // 居中到选中的观点
   if (opinionId && opinionGraphRef.value) {
     opinionGraphRef.value.centerOnNode(opinionId);

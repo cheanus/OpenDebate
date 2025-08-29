@@ -147,13 +147,8 @@ def patch_link(link_id: str, link_type: LinkType):
         if old_type == link_type.value:
             return
 
-        # 删除原关系
-        delete_query = """
-        MATCH (:Opinion)-[r]->(:Opinion)
-        WHERE r.uid = $uid
-        DELETE r
-        """
-        db.cypher_query(delete_query, {"uid": link_id})
+        # 删除原关系，并更新分数
+        delete_link(link_id)
 
         # 创建新类型关系，并保留原uid
         create_query = f"""

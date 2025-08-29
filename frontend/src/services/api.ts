@@ -45,8 +45,16 @@ export class ApiClient {
         );
       }
 
-      // 如果后端明确返回了 data 字段，直接返回；否则当 is_success 为 true 时，把除 is_success/msg 外的字段作为 data
-      if (data && data.is_success) {
+      if (!data.is_success) {
+        throw new ApiError(
+          (data && (data.msg as string)) || 'API error: is_success is false',
+          response.status,
+          response,
+        );
+      }
+
+      // 如果后端明确返回了 data 字段，直接返回；否则把除 is_success/msg 外的字段作为 data
+      if (data) {
         if (Object.prototype.hasOwnProperty.call(data, 'data')) {
           return data as unknown as ApiResponse<T>;
         }

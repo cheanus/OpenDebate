@@ -95,12 +95,7 @@
           {{ isEditMode ? '编辑辩论' : '创建辩论' }}
         </v-card-title>
         <v-card-text>
-          <v-text-field
-            v-model="form.title"
-            label="辩论标题"
-            variant="outlined"
-            class="mb-4"
-          />
+          <v-text-field v-model="form.title" label="辩论标题" variant="outlined" class="mb-4" />
           <v-textarea
             v-model="form.description"
             label="辩论描述"
@@ -108,11 +103,7 @@
             rows="4"
             class="mb-4"
           />
-          <v-text-field
-            v-model="form.creator"
-            label="创建者"
-            variant="outlined"
-          />
+          <v-text-field v-model="form.creator" label="创建者" variant="outlined" />
         </v-card-text>
         <v-card-actions>
           <v-spacer />
@@ -211,7 +202,7 @@ const handleDeleteDebate = async (debate: Debate) => {
   if (!confirm(`确定要删除辩论"${debate.title}"吗？`)) {
     return;
   }
-  
+
   try {
     await deleteDebate(debate.id);
     await fetchDebates();

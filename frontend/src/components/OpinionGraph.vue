@@ -1,5 +1,5 @@
 <template>
-  <OpinionGraphCore 
+  <OpinionGraphCore
     v-bind="$props"
     @nodeArrowClick="(nodeId, direction) => $emit('nodeArrowClick', nodeId, direction)"
     @viewportChanged="(extent) => $emit('viewportChanged', extent)"
@@ -38,7 +38,9 @@ withDefaults(defineProps<Props>(), {
 
 defineEmits<{
   nodeArrowClick: [nodeId: string, direction: 'children' | 'parents'];
-  viewportChanged: [extent: { x1: number; y1: number; x2: number; y2: number; w: number; h: number }];
+  viewportChanged: [
+    extent: { x1: number; y1: number; x2: number; y2: number; w: number; h: number },
+  ];
   nodeSelected: [nodeData: Node | null];
   edgeSelected: [edgeData: Edge | null];
   contextMenuAction: [action: string];

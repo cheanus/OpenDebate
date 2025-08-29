@@ -28,18 +28,18 @@ export function getCytoscapeStyles(themeColors: ThemeColors) {
         'background-color': '#ffffff',
         'border-width': 3,
         'border-color': themeColors.borderColor,
-        'label': 'data(label)',
+        label: 'data(label)',
         'text-valign': 'center',
         'text-halign': 'center',
-        'color': themeColors.textColor,
+        color: themeColors.textColor,
         'font-size': '14px',
         'font-weight': 'bold',
         'text-wrap': 'wrap',
         'text-max-width': '120px',
-        'width': (node: CytoscapeNode) => {
+        width: (node: CytoscapeNode) => {
           return node.data('width') || 60;
         },
-        'height': (node: CytoscapeNode) => {
+        height: (node: CytoscapeNode) => {
           return node.data('width') || 60;
         },
       },
@@ -94,14 +94,14 @@ export function getCytoscapeStyles(themeColors: ThemeColors) {
     {
       selector: 'edge',
       style: {
-        'width': 3,
+        width: 3,
         'line-color': themeColors.supportColor,
         'target-arrow-color': themeColors.supportColor,
         'target-arrow-shape': 'triangle',
         'curve-style': 'bezier',
-        'label': '',
+        label: '',
         'font-size': '12px',
-        'color': themeColors.textColor,
+        color: themeColors.textColor,
         'text-rotation': 'autorotate',
         'text-margin-y': -10,
       },
@@ -127,7 +127,7 @@ export function getCytoscapeStyles(themeColors: ThemeColors) {
     {
       selector: 'edge:selected',
       style: {
-        'width': 5,
+        width: 5,
         'line-color': '#ff9800',
         'target-arrow-color': '#ff9800',
         'overlay-color': '#ff9800',

@@ -27,13 +27,8 @@ export function useOpinionGraph(debateId: string) {
   } = useGraphState();
 
   // 搜索功能
-  const {
-    searchQuery,
-    searchOpinions,
-    searchLoading,
-    searchOpinionsApi,
-    clearSearch,
-  } = useGraphSearch(debateId);
+  const { searchQuery, searchOpinions, searchLoading, searchOpinionsApi, clearSearch } =
+    useGraphSearch(debateId);
 
   // 设置管理
   const {
@@ -57,19 +52,14 @@ export function useOpinionGraph(debateId: string) {
   } = useGraphElements(elements, loadedNodes, loadedEdges);
 
   // 图形操作
-  const {
-    loadChildren,
-    loadParents,
-    focusOnOpinion,
-    loadRootNodes,
-  } = useGraphOperations(
+  const { loadChildren, loadParents, focusOnOpinion, loadRootNodes } = useGraphOperations(
     debateId,
     addNode,
     addEdge,
     updateNodeHasMoreState,
     updateNodeArrowsState,
     loadedNodes,
-    numClickUpdatedSon
+    numClickUpdatedSon,
   );
 
   // 处理节点箭头点击
@@ -77,7 +67,7 @@ export function useOpinionGraph(debateId: string) {
     try {
       setLoading(true);
       setError(null);
-      
+
       if (direction === 'children') {
         await loadChildren(nodeId, numClickUpdatedSon.value, loadDepth.value);
       } else {
@@ -98,7 +88,7 @@ export function useOpinionGraph(debateId: string) {
       setError(null);
       clearState();
       loadSettings();
-      
+
       await loadRootNodes(maxUpdatedSon.value);
     } catch (err) {
       console.error('初始化图形失败:', err);
@@ -113,7 +103,7 @@ export function useOpinionGraph(debateId: string) {
     try {
       setLoading(true);
       setError(null);
-      
+
       const success = await focusOnOpinion(opinionId, maxUpdatedSon.value);
       if (!success) {
         setError('无法定位到该观点');
@@ -138,14 +128,8 @@ export function useOpinionGraph(debateId: string) {
   };
 
   // CRUD 操作
-  const {
-    createOpinion,
-    updateOpinion,
-    deleteOpinion,
-    createLink,
-    updateLink,
-    deleteLink,
-  } = useGraphCRUD(debateId, loading, error, refreshView, removeNode, removeEdge, addNode, addEdge);
+  const { createOpinion, updateOpinion, deleteOpinion, createLink, updateLink, deleteLink } =
+    useGraphCRUD(debateId, loading, error, refreshView, removeNode, removeEdge, addNode, addEdge);
 
   return {
     // 状态
@@ -156,33 +140,33 @@ export function useOpinionGraph(debateId: string) {
     error,
     selectedNode,
     selectedEdge,
-    
+
     // 搜索
     searchQuery,
     searchOpinions,
     searchLoading,
-    
+
     // 设置
     maxUpdatedSon,
     numClickUpdatedSon,
     loadDepth,
-    
+
     // 计算属性
     availableNodes,
-    
+
     // 基础操作
     addNode,
     addEdge,
     removeNode,
     removeEdge,
     updateNodeHasMoreState,
-    
+
     // 高级操作
     handleNodeArrowClick,
     initializeGraph,
     searchAndFocusOpinion,
     refreshView,
-    
+
     // CRUD 操作
     createOpinion,
     updateOpinion,
@@ -190,16 +174,16 @@ export function useOpinionGraph(debateId: string) {
     createLink,
     updateLink,
     deleteLink,
-    
+
     // 设置操作
     loadSettings,
     saveSettings,
     resetSettings,
-    
+
     // 搜索操作
     searchOpinionsApi,
     clearSearch,
-    
+
     // 状态操作
     clearState,
     setLoading,

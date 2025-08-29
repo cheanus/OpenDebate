@@ -25,14 +25,15 @@
           <template #item="{ props, item }">
             <v-list-item
               v-bind="props"
-              :title="item.raw.content.length > 50 ? item.raw.content.slice(0, 50) + '...' : item.raw.content"
+              :title="
+                item.raw.content.length > 50
+                  ? item.raw.content.slice(0, 50) + '...'
+                  : item.raw.content
+              "
               :subtitle="'ID: ' + item.raw.id"
             >
               <template #prepend>
-                <v-icon 
-                  :color="item.raw.logic_type === 'and' ? 'info' : 'secondary'" 
-                  size="small"
-                >
+                <v-icon :color="item.raw.logic_type === 'and' ? 'info' : 'secondary'" size="small">
                   {{ item.raw.logic_type === 'and' ? 'mdi-set-all' : 'mdi-set-union' }}
                 </v-icon>
               </template>

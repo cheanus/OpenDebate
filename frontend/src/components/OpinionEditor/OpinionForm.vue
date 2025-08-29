@@ -3,7 +3,11 @@
     <!-- 观点类型 -->
     <div class="mb-6">
       <h4 class="text-h6 mb-3">观点类型</h4>
-      <v-radio-group :model-value="form.logic_type" @update:model-value="updateField('logic_type', $event)" inline>
+      <v-radio-group
+        :model-value="form.logic_type"
+        @update:model-value="updateField('logic_type', $event)"
+        inline
+      >
         <v-radio label="或观点（独立观点）" value="or" />
         <v-radio label="与观点（组合观点）" value="and" />
       </v-radio-group>
@@ -53,9 +57,13 @@
         :error-messages="formErrors.son_ids"
         class="mb-4"
       />
-      
+
       <h5 class="text-subtitle-1 mb-3">连接类型</h5>
-      <v-radio-group :model-value="form.link_type" @update:model-value="updateField('link_type', $event)" inline>
+      <v-radio-group
+        :model-value="form.link_type"
+        @update:model-value="updateField('link_type', $event)"
+        inline
+      >
         <v-radio label="支持 - 子观点支持父观点" value="supports" />
         <v-radio label="反驳 - 子观点反驳父观点" value="opposes" />
       </v-radio-group>
@@ -74,10 +82,10 @@
         placeholder="可选，如0.7"
         variant="outlined"
       />
-      <v-checkbox 
-        :model-value="form.is_llm_score" 
+      <v-checkbox
+        :model-value="form.is_llm_score"
         @update:model-value="updateField('is_llm_score', $event)"
-        label="使用AI自动评分" 
+        label="使用AI自动评分"
       />
     </div>
 

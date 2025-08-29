@@ -23,10 +23,10 @@ export function useGraphSearch(debateId: string) {
       const response = await opinionService.query({
         q: searchQuery.value.trim(),
         debate_id: debateId,
-        max_num: 20
+        max_num: 20,
       });
 
-      if (response.is_success && response.data) {
+      if (response.data) {
         searchOpinions.value = response.data;
       } else {
         searchOpinions.value = [];

@@ -1,6 +1,5 @@
 import type { Node } from '@/types';
 
-
 /**
  * 格式化时间戳为本地时间字符串
  */
@@ -15,7 +14,7 @@ export function formatDate(timestamp: number): string {
   });
 }
 
-export function getNodeSize(node: Node)  {
+export function getNodeSize(node: Node) {
   const nodeData = node.score;
   const pos = nodeData ? nodeData.positive : null;
   const neg = nodeData ? nodeData.negative : null;
@@ -47,7 +46,6 @@ export function wrapLabelText(text: string, width: number, zoomFactor = 0.05): s
   }
   return lines.join('\n');
 }
-
 
 /**
  * 获取存储值

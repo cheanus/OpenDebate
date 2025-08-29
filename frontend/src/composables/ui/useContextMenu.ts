@@ -33,9 +33,12 @@ export function useContextMenu() {
   };
 
   // 设置选中的节点
-  const setSelectedNode = (node: NodeSingular | null, renderedPosition?: { x: number; y: number }) => {
+  const setSelectedNode = (
+    node: NodeSingular | null,
+    renderedPosition?: { x: number; y: number },
+  ) => {
     selectedNode.value = node;
-    
+
     if (node) {
       const data = node.data();
       selectedNodeData.value = {
@@ -46,9 +49,9 @@ export function useContextMenu() {
         host: data.host,
         logic_type: data.logic_type,
         node_type: data.node_type,
-        score: data.score
+        score: data.score,
       };
-      
+
       if (renderedPosition) {
         metaPanelStyle.value = {
           left: `${renderedPosition.x + 10}px`,
@@ -62,12 +65,15 @@ export function useContextMenu() {
   };
 
   // 设置选中的边formatDate
-  const setSelectedEdge = (edge: EdgeSingular | null, renderedPosition?: { x: number; y: number }) => {
+  const setSelectedEdge = (
+    edge: EdgeSingular | null,
+    renderedPosition?: { x: number; y: number },
+  ) => {
     selectedEdge.value = edge;
-    
+
     if (edge) {
       selectedEdgeData.value = edge.data();
-      
+
       if (renderedPosition) {
         edgeMetaPanelStyle.value = {
           left: `${renderedPosition.x + 10}px`,
@@ -81,7 +87,10 @@ export function useContextMenu() {
   };
 
   // 处理菜单动作
-  const handleMenuAction = (action: string, emit: (event: 'contextMenuAction', action: string) => void) => {
+  const handleMenuAction = (
+    action: string,
+    emit: (event: 'contextMenuAction', action: string) => void,
+  ) => {
     hideContextMenu();
     emit('contextMenuAction', action);
   };
@@ -97,7 +106,7 @@ export function useContextMenu() {
     selectedEdgeData,
     metaPanelStyle,
     edgeMetaPanelStyle,
-    
+
     // 方法
     setContextMenu,
     hideContextMenu,

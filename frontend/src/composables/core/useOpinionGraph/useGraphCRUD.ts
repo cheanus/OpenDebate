@@ -12,10 +12,9 @@ export function useGraphCRUD(
   refreshView: () => Promise<void>,
   removeNode?: (nodeId: string) => void,
   removeEdge?: (edgeId: string) => void,
-  addNode?: (node: OpinionNode) => Promise<void>,
-  addEdge?: (edge: Edge) => void
+  addNode?: (node: OpinionNode) => void,
+  addEdge?: (edge: Edge) => void,
 ) {
-  
   // 创建观点
   const createOpinion = async (data: {
     logic_type: LogicType;
@@ -55,15 +54,15 @@ export function useGraphCRUD(
         try {
           const newOpinionId = response.data.id;
           const opinionInfoResponse = await opinionService.getInfo(newOpinionId, debateId);
-          
+
           if (opinionInfoResponse.is_success && opinionInfoResponse.data) {
             const newOpinion = opinionInfoResponse.data;
-            
+
             // 将新观点添加到视图中
             if (addNode) {
-              await addNode(newOpinion);
+              addNode(newOpinion);
             }
-            
+
             // 如果是与观点，还需要创建相应的连接
             if (data.logic_type === 'and' && data.parent_id && data.son_ids) {
               // 创建父节点到新节点的连接
@@ -74,11 +73,11 @@ export function useGraphCRUD(
                   to_id: newOpinionId,
                   link_type: data.link_type!,
                   is_success: true,
-                  msg: null
+                  msg: null,
                 };
                 addEdge(parentEdge);
               }
-              
+
               // 创建新节点到子节点的连接
               if (addEdge) {
                 for (const sonId of data.son_ids) {
@@ -88,13 +87,13 @@ export function useGraphCRUD(
                     to_id: sonId,
                     link_type: data.link_type!,
                     is_success: true,
-                    msg: null
+                    msg: null,
                   };
                   addEdge(childEdge);
                 }
               }
             }
-            
+
             return response.data;
           } else {
             // 如果获取新观点信息失败，回退到刷新视图
@@ -163,7 +162,7 @@ export function useGraphCRUD(
         opinion_id: opinionId,
         debate_id: debateId,
       });
-      
+
       if (response.is_success) {
         // 直接从本地状态中移除节点而不是刷新整个视图
         if (removeNode) {
@@ -188,11 +187,7 @@ export function useGraphCRUD(
   };
 
   // 创建连接
-  const createLink = async (data: {
-    from_id: string;
-    to_id: string;
-    link_type: LinkType;
-  }) => {
+  const createLink = async (data: { from_id: string; to_id: string; link_type: LinkType }) => {
     loading.value = true;
     error.value = null;
 
@@ -213,16 +208,16 @@ export function useGraphCRUD(
             to_id: data.to_id,
             link_type: data.link_type,
             is_success: true,
-            msg: null
+            msg: null,
           };
-          
+
           if (addEdge) {
             addEdge(newEdge);
           } else {
             // 回退到刷新视图
             await refreshView();
           }
-          
+
           return response.data;
         } catch (err) {
           console.error('处理新创建连接失败，回退到刷新视图:', err);
@@ -244,10 +239,7 @@ export function useGraphCRUD(
   };
 
   // 更新连接
-  const updateLink = async (data: {
-    id: string;
-    link_type: LinkType;
-  }) => {
+  const updateLink = async (data: { id: string; link_type: LinkType }) => {
     loading.value = true;
     error.value = null;
 

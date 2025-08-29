@@ -8,11 +8,14 @@ export function useDebateSearch() {
   let searchTimer: number | null = null;
 
   // 处理搜索输入
-  const handleSearchInput = async (searchValue: string | null, searchCallback: (query: string) => Promise<void>) => {
+  const handleSearchInput = async (
+    searchValue: string | null,
+    searchCallback: (query: string) => Promise<void>,
+  ) => {
     if (searchTimer) {
       clearTimeout(searchTimer);
     }
-    
+
     // 延迟搜索，避免频繁请求
     searchTimer = window.setTimeout(async () => {
       if (searchCallback) {
@@ -22,9 +25,12 @@ export function useDebateSearch() {
   };
 
   // 处理搜索选择
-  const handleSearchSelection = async (opinionId: string | null, focusCallback?: (id: string) => Promise<void>) => {
+  const handleSearchSelection = async (
+    opinionId: string | null,
+    focusCallback?: (id: string) => Promise<void>,
+  ) => {
     selectedSearchOpinion.value = opinionId;
-    
+
     if (opinionId && focusCallback) {
       try {
         await focusCallback(opinionId);

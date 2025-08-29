@@ -24,16 +24,16 @@ export default defineConfig({
           // 将 Cytoscape 相关库分离（如果存在的话）
           'graph-vendor': ['cytoscape'],
           // 将大型 composables 分离
-          'composables': [
+          composables: [
             './src/composables/core/useOpinionGraph/useOpinionGraph.ts',
             './src/composables/core/useOpinionGraph/useGraphOperations.ts',
-            './src/composables/core/useOpinionGraph/useGraphCRUD.ts'
-          ]
-        }
-      }
+            './src/composables/core/useOpinionGraph/useGraphCRUD.ts',
+          ],
+        },
+      },
     },
     // 调整 chunk 大小警告阈值
-    chunkSizeWarningLimit: 1000
+    chunkSizeWarningLimit: 1000,
   },
   server: {
     port: 3141,

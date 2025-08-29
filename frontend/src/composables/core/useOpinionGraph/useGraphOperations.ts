@@ -7,16 +7,27 @@ import type { Ref } from 'vue';
  */
 export function useGraphOperations(
   debateId: string,
-  addNode: (node: Node, hasMoreChildren?: boolean | null, hasMoreParents?: boolean | null) => Promise<void>,
+  addNode: (
+    node: Node,
+    hasMoreChildren?: boolean | null,
+    hasMoreParents?: boolean | null,
+  ) => void,
   addEdge: (edge: Edge) => void,
-  updateNodeHasMoreState: (nodeId: string, hasMoreChildren: boolean | null, hasMoreParents: boolean | null) => void,
-  updateNodeArrowsState: (nodeId: string, debateId: string) => Promise<void>,
+  updateNodeHasMoreState: (
+    nodeId: string,
+    hasMoreChildren: boolean | null,
+    hasMoreParents: boolean | null,
+  ) => void,
+  updateNodeArrowsState: (nodeId: string) => Promise<void>,
   loadedNodes: Ref<Set<string>>,
-  numClickUpdatedSon: Ref<number>
+  numClickUpdatedSon: Ref<number>,
 ) {
-  
   // 更新节点的has_more状态的辅助函数
-  const updateNodeHasMore = (nodeId: string, direction: 'children' | 'parents', hasMore: boolean) => {
+  const updateNodeHasMore = (
+    nodeId: string,
+    direction: 'children' | 'parents',
+    hasMore: boolean,
+  ) => {
     if (direction === 'children') {
       updateNodeHasMoreState(nodeId, hasMore, null);
     } else {
@@ -30,7 +41,7 @@ export function useGraphOperations(
 
     try {
       const response = await opinionService.getInfo(parentId, debateId);
-      if (!response.is_success || !response.data) {
+      if (!response.data) {
         console.warn(`[loadChildren] 获取父节点信息失败: ${parentId}`);
         return;
       }
@@ -99,16 +110,15 @@ export function useGraphOperations(
         const childNode = pair.child;
 
         // 计算子节点的箭头状态
-        const childHasChildren = 
-          (childNode.relationship.supported_by?.length > 0) ||
-          (childNode.relationship.opposed_by?.length > 0);
-        
-        // 暂时使用简单逻辑，后续会更新
-        const childHasParents = 
-          (childNode.relationship.supports?.length > 0) ||
-          (childNode.relationship.opposes?.length > 0);
+        const childHasChildren =
+          childNode.relationship.supported_by?.length > 0 ||
+          childNode.relationship.opposed_by?.length > 0;
 
-        await addNode(childNode, childHasChildren, childHasParents);
+        // 暂时使用简单逻辑，后续会更新
+        const childHasParents =
+          childNode.relationship.supports?.length > 0 || childNode.relationship.opposes?.length > 0;
+
+        addNode(childNode, childHasChildren, childHasParents);
         addEdge(pair.link);
 
         if (wasNew) {
@@ -128,13 +138,13 @@ export function useGraphOperations(
       }
 
       updateNodeHasMore(parentId, 'children', hasMore);
-      
+
       // 加载完成后，更新所有相关节点的箭头状态
       for (const pair of pairs.slice(0, num)) {
-        await updateNodeArrowsState(pair.child.id, debateId);
+        await updateNodeArrowsState(pair.child.id);
       }
       // 也更新父节点自身的状态
-      await updateNodeArrowsState(parentId, debateId);
+      await updateNodeArrowsState(parentId);
     } catch (error) {
       console.error('加载子节点失败:', error);
       throw error; // 重新抛出错误，让上层处理
@@ -216,15 +226,15 @@ export function useGraphOperations(
         const parentNode = pair.parent;
 
         // 计算父节点的箭头状态
-        const parentHasChildren = 
-          (parentNode.relationship.supported_by?.length > 0) ||
-          (parentNode.relationship.opposed_by?.length > 0);
-        
-        const parentHasParents = 
-          (parentNode.relationship.supports?.length > 0) ||
-          (parentNode.relationship.opposes?.length > 0);
+        const parentHasChildren =
+          parentNode.relationship.supported_by?.length > 0 ||
+          parentNode.relationship.opposed_by?.length > 0;
 
-        await addNode(parentNode, parentHasChildren, parentHasParents);
+        const parentHasParents =
+          parentNode.relationship.supports?.length > 0 ||
+          parentNode.relationship.opposes?.length > 0;
+
+        addNode(parentNode, parentHasChildren, parentHasParents);
         addEdge(pair.link);
 
         if (wasNew) {
@@ -244,13 +254,13 @@ export function useGraphOperations(
       }
 
       updateNodeHasMore(childId, 'parents', hasMore);
-      
+
       // 加载完成后，更新所有相关节点的箭头状态
       for (const pair of pairs.slice(0, num)) {
-        await updateNodeArrowsState(pair.parent.id, debateId);
+        await updateNodeArrowsState(pair.parent.id);
       }
       // 也更新子节点自身的状态
-      await updateNodeArrowsState(childId, debateId);
+      await updateNodeArrowsState(childId);
     } catch (error) {
       console.error('加载父节点失败:', error);
       throw error; // 重新抛出错误，让上层处理
@@ -268,12 +278,12 @@ export function useGraphOperations(
       }
 
       const opinion = response.data;
-      await addNode(opinion);
+      addNode(opinion);
 
       // 加载父节点和子节点
       await Promise.all([
         loadParents(opinionId, maxNodes, 1),
-        loadChildren(opinionId, maxNodes, 1)
+        loadChildren(opinionId, maxNodes, 1),
       ]);
 
       return true;
@@ -291,7 +301,7 @@ export function useGraphOperations(
         debate_id: debateId,
         is_root: true,
       });
-      
+
       if (!response.is_success || !response.data?.length) {
         console.warn('无法获取根节点');
         return;
@@ -299,26 +309,26 @@ export function useGraphOperations(
 
       // 获取根节点ID列表，然后逐个获取节点信息
       const rootIds = response.data.slice(0, maxNodes);
-      
+
       for (const rootId of rootIds) {
         try {
           const nodeResponse = await opinionService.getInfo(rootId, debateId);
           if (nodeResponse.is_success && nodeResponse.data) {
             const rootNode = nodeResponse.data;
-            
-            const hasChildren = 
-              (rootNode.relationship?.supported_by?.length > 0) ||
-              (rootNode.relationship?.opposed_by?.length > 0);
 
-            await addNode(rootNode, hasChildren, false);
-            
+            const hasChildren =
+              rootNode.relationship?.supported_by?.length > 0 ||
+              rootNode.relationship?.opposed_by?.length > 0;
+
+            addNode(rootNode, hasChildren, false);
+
             // 初始化时自动加载子节点，使用默认深度2层
             if (hasChildren) {
               await loadChildren(rootNode.id, numClickUpdatedSon.value, 2);
             }
-            
+
             // 更新箭头状态
-            await updateNodeArrowsState(rootNode.id, debateId);
+            await updateNodeArrowsState(rootNode.id);
           }
         } catch (nodeError) {
           console.warn('加载根节点失败:', nodeError);

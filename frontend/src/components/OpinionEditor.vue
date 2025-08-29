@@ -60,7 +60,7 @@
               :error-messages="formErrors.son_ids"
               class="mb-4"
             />
-            
+
             <h5 class="text-subtitle-1 mb-3">连接类型</h5>
             <v-radio-group v-model="form.link_type" inline>
               <v-radio label="支持 - 子观点支持父观点" value="supports" />
@@ -69,7 +69,7 @@
           </div>
 
           <!-- 正证分数（仅或观点） -->
-          <div v-if="form.logic_type === 'or' && !(isEdit&&!isLeafNode)" class="mb-6">
+          <div v-if="form.logic_type === 'or' && !(isEdit && !isLeafNode)" class="mb-6">
             <v-text-field
               v-model.number="form.positive_score"
               label="正证分数 (0-1)"
@@ -100,12 +100,7 @@
       <v-card-actions>
         <v-spacer />
         <v-btn variant="text" @click="close"> 取消 </v-btn>
-        <v-btn
-          color="primary"
-          @click="handleSubmit"
-          :loading="submitting"
-          variant="elevated"
-        >
+        <v-btn color="primary" @click="handleSubmit" :loading="submitting" variant="elevated">
           {{ isEdit ? '更新' : '创建' }}
         </v-btn>
       </v-card-actions>
@@ -134,28 +129,21 @@ const emit = defineEmits<{
 
 // 与观点可选节点过滤
 const solidNodes = computed(() => {
-  return props.availableNodes.filter(node => node.node_type === 'solid');
+  return props.availableNodes.filter((node) => node.node_type === 'solid');
 });
 
 const solidSonNodes = computed(() => {
-  return solidNodes.value.filter(node => {
+  return solidNodes.value.filter((node) => {
     // 排除自己
     if (props.opinion && node.id === props.opinion.id) {
-        return false;
+      return false;
     }
     return true;
   });
 });
 
 // 表单状态管理
-const {
-  form,
-  formErrors,
-  submitting,
-  initializeForm,
-  validateForm,
-  resetForm,
-} = useOpinionForm();
+const { form, formErrors, submitting, initializeForm, validateForm, resetForm } = useOpinionForm();
 
 // 显示状态
 const isVisible = computed({
@@ -169,7 +157,10 @@ const isVisible = computed({
 
 const isLeafNode = computed(() => {
   if (props.opinion) {
-    return !props.opinion.relationship.opposed_by.length && !props.opinion.relationship.supported_by.length;
+    return (
+      !props.opinion.relationship.opposed_by.length &&
+      !props.opinion.relationship.supported_by.length
+    );
   }
   return false;
 });
@@ -186,7 +177,7 @@ const handleSubmit = async () => {
       ...form,
       debate_id: props.debateId,
     };
-    
+
     emit('submit', formData);
   } finally {
     submitting.value = false;
@@ -209,6 +200,6 @@ watch(
       resetForm();
     }
   },
-  { immediate: true }
+  { immediate: true },
 );
 </script>
