@@ -10,10 +10,10 @@ export function useGraphCRUD(
   loading: ReturnType<typeof ref<boolean>>,
   error: ReturnType<typeof ref<string | null>>,
   refreshView: () => Promise<void>,
-  removeNode?: (nodeId: string) => void,
-  removeEdge?: (edgeId: string) => void,
-  addNode?: (node: OpinionNode) => void,
-  addEdge?: (edge: Edge) => void,
+  removeNode: (nodeId: string) => void,
+  removeEdge: (edgeId: string) => void,
+  addNode: (node: OpinionNode) => void,
+  addEdge: (edge: Edge) => void,
 ) {
   // 创建观点
   const createOpinion = async (data: {
@@ -59,9 +59,7 @@ export function useGraphCRUD(
             const newOpinion = opinionInfoResponse.data;
 
             // 将新观点添加到视图中
-            if (addNode) {
-              addNode(newOpinion);
-            }
+            addNode(newOpinion);
 
             // 如果是与观点，还需要创建相应的连接
             if (data.logic_type === 'and' && data.parent_id && data.son_ids) {
@@ -165,12 +163,7 @@ export function useGraphCRUD(
 
       if (response.is_success) {
         // 直接从本地状态中移除节点而不是刷新整个视图
-        if (removeNode) {
-          removeNode(opinionId);
-        } else {
-          // 回退到刷新视图
-          await refreshView();
-        }
+        removeNode(opinionId);
         return true;
       } else {
         console.error('[deleteOpinion] 删除失败:', response.msg);
@@ -211,13 +204,7 @@ export function useGraphCRUD(
             msg: null,
           };
 
-          if (addEdge) {
-            addEdge(newEdge);
-          } else {
-            // 回退到刷新视图
-            await refreshView();
-          }
-
+          addEdge(newEdge);
           return response.data;
         } catch (err) {
           console.error('处理新创建连接失败，回退到刷新视图:', err);
@@ -277,12 +264,7 @@ export function useGraphCRUD(
       });
       if (response.is_success) {
         // 直接从本地状态中移除连接而不是刷新整个视图
-        if (removeEdge) {
-          removeEdge(linkId);
-        } else {
-          // 回退到刷新视图
-          await refreshView();
-        }
+        removeEdge(linkId);
         return true;
       } else {
         error.value = response.msg || '删除连接失败';

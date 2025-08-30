@@ -81,8 +81,6 @@ const {
   searchQuery,
   searchOpinions,
   searchLoading,
-  loadedNodes,
-  loadedEdges,
   handleNodeArrowClick,
   initializeGraph,
   searchAndFocusOpinion,
@@ -97,8 +95,8 @@ const {
 } = useOpinionGraph(debateId);
 
 // CRUD修复工具
-const { ensureNodeVisibility, ensureNodeRemoval, ensureEdgeRemoval, wrapCRUDOperation } =
-  useCRUDFixes(elements, loadedNodes, loadedEdges, initializeGraph);
+//TODO：有必要吗
+const { wrapCRUDOperation } = useCRUDFixes();
 
 // 编辑器状态管理
 const {
@@ -123,14 +121,14 @@ const {
 const handleOpinionSubmit = async (data: OpinionFormData, isEdit: boolean) => {
   const operation = async () => {
     if (isEdit) {
-      await updateOpinion({
+      return await updateOpinion({
         id: data.id!,
         content: data.content,
         positive_score: data.positive_score,
         is_llm_score: data.is_llm_score,
       });
     } else {
-      const result = await createOpinion({
+      return await createOpinion({
         logic_type: data.logic_type,
         content: data.content,
         parent_id: data.parent_id,
@@ -140,34 +138,27 @@ const handleOpinionSubmit = async (data: OpinionFormData, isEdit: boolean) => {
         is_llm_score: data.is_llm_score,
         creator: data.creator,
       });
-
-      // 确保新建的观点可见（特别是在空辩论中）
-      if (result && result.id) {
-        await ensureNodeVisibility(result.id);
-      }
     }
   };
 
-  const result = await wrapCRUDOperation(
+  await wrapCRUDOperation(
     operation,
     isEdit ? '观点更新成功' : '观点创建成功',
     isEdit ? '观点更新失败' : '观点创建失败',
   );
 
-  if (result !== null) {
-    closeOpinionEditor();
-  }
+  closeOpinionEditor();
 };
 
 const handleLinkSubmit = async (data: LinkFormData, isEdit: boolean) => {
   const operation = async () => {
     if (isEdit) {
-      await updateLink({
+      return await updateLink({
         id: data.id!,
         link_type: data.link_type,
       });
     } else {
-      await createLink({
+      return await createLink({
         from_id: data.from_id,
         to_id: data.to_id,
         link_type: data.link_type,
@@ -175,15 +166,13 @@ const handleLinkSubmit = async (data: LinkFormData, isEdit: boolean) => {
     }
   };
 
-  const result = await wrapCRUDOperation(
+  await wrapCRUDOperation(
     operation,
     isEdit ? '连接更新成功' : '连接创建成功',
     isEdit ? '连接更新失败' : '连接创建失败',
   );
 
-  if (result !== null) {
-    closeLinkEditor();
-  }
+  closeLinkEditor();
 };
 
 const handleOpinionDelete = async (opinionId: string) => {
@@ -192,37 +181,12 @@ const handleOpinionDelete = async (opinionId: string) => {
   }
 
   const operation = async () => {
-    const result = await deleteOpinion(opinionId);
-
-    if (result === true) {
-      // API 删除成功后，确保前端视图同步
-
-      // 检查节点是否仍然在 loadedNodes 中
-      if (loadedNodes.value.has(opinionId)) {
-        console.warn('[handleOpinionDelete] 节点仍在 loadedNodes 中，强制移除');
-        await ensureNodeRemoval(opinionId);
-      } else {
-        console.log('[handleOpinionDelete] 节点已正确从 loadedNodes 中移除');
-      }
-
-      // 检查元素数组中是否还有该节点
-      const nodeStillExists = elements.value.some((el) => el.data && el.data.id === opinionId);
-      if (nodeStillExists) {
-        console.warn('[handleOpinionDelete] 节点仍在 elements 数组中，强制移除');
-        await ensureNodeRemoval(opinionId);
-      } else {
-        console.log('[handleOpinionDelete] 节点已正确从 elements 中移除');
-      }
-    }
-
-    return result;
+    return await deleteOpinion(opinionId);
   };
 
-  const result = await wrapCRUDOperation(operation, '观点删除成功', '删除观点失败');
+  await wrapCRUDOperation(operation, '观点删除成功', '删除观点失败');
 
-  if (result !== null) {
-    closeOpinionEditor();
-  }
+  closeOpinionEditor();
 };
 
 const handleLinkDelete = async (linkId: string) => {
@@ -231,16 +195,12 @@ const handleLinkDelete = async (linkId: string) => {
   }
 
   const operation = async () => {
-    await deleteLink(linkId);
-    // 确保连接被正确移除
-    await ensureEdgeRemoval(linkId);
+    return await deleteLink(linkId);
   };
 
-  const result = await wrapCRUDOperation(operation, '连接删除成功', '删除连接失败');
+  await wrapCRUDOperation(operation, '连接删除成功', '删除连接失败');
 
-  if (result !== null) {
-    closeLinkEditor();
-  }
+  closeLinkEditor();
 };
 
 // 右键菜单动作

@@ -35,35 +35,41 @@ export function useGraphOperations(
     }
   };
 
-  // 加载子节点（支持深度加载）
-  const loadChildren = async (parentId: string, num: number, depth: number = 1) => {
+  // 通用加载节点函数（支持子节点和父节点）
+  const loadNodes = async (
+    nodeId: string,
+    direction: 'children' | 'parents',
+    num: number,
+    depth: number = 1,
+  ) => {
     if (depth <= 0) return;
 
     try {
-      const response = await opinionService.getInfo(parentId, debateId);
-      if (!response.data) {
-        console.warn(`[loadChildren] 获取父节点信息失败: ${parentId}`);
+      const response = await opinionService.getInfo(nodeId, debateId);
+      if (!response.is_success || !response.data) {
+        console.warn(`[loadNodes] 获取节点信息失败: ${nodeId}`);
         return;
       }
 
       const rel = response.data.relationship;
-      const childLinks = [...(rel.supported_by || []), ...(rel.opposed_by || [])];
+      const links = direction === 'children'
+        ? [...(rel.supported_by || []), ...(rel.opposed_by || [])]
+        : [...(rel.supports || []), ...(rel.opposes || [])];
 
-      // 如果没有子链接，直接更新has_more状态为false
-      if (childLinks.length === 0) {
-        updateNodeHasMore(parentId, 'children', false);
+      // 如果没有链接，直接更新has_more状态为false
+      if (links.length === 0) {
+        updateNodeHasMore(nodeId, direction, false);
         return;
       }
 
-      const pairs: Array<{ child: Node; link: Edge }> = [];
+      const pairs: Array<{ node: Node; link: Edge }> = [];
 
-      // 收集所有子节点信息
-      for (const linkId of childLinks) {
+      // 收集所有节点信息
+      for (const linkId of links) {
         try {
           const linkResponse = await linkService.getInfo(linkId);
 
           if (linkResponse.is_success) {
-            // 根据实际API响应格式提取链接数据
             const linkData = {
               id: (linkResponse.id || linkId) as string,
               from_id: (linkResponse.from_id || '') as string,
@@ -73,28 +79,29 @@ export function useGraphOperations(
               msg: null,
             };
 
-            const childResponse = await opinionService.getInfo(linkData.from_id, debateId);
+            const targetId = direction === 'children' ? linkData.from_id : linkData.to_id;
+            const nodeResponse = await opinionService.getInfo(targetId, debateId);
 
-            if (childResponse.is_success && childResponse.data) {
+            if (nodeResponse.is_success && nodeResponse.data) {
               pairs.push({
-                child: childResponse.data,
+                node: nodeResponse.data,
                 link: linkData as Edge,
               });
             } else {
-              console.log(`[loadChildren] 获取子节点失败: ${linkData.from_id}`);
+              console.log(`[loadNodes] 获取${direction === 'children' ? '子' : '父'}节点失败: ${targetId}`);
             }
           } else {
-            console.log(`[loadChildren] 获取链接失败: ${linkId}`);
+            console.log(`[loadNodes] 获取链接失败: ${linkId}`);
           }
         } catch (error) {
-          console.warn(`[loadChildren] 处理链接 ${linkId} 时出错:`, error);
+          console.warn(`[loadNodes] 处理链接 ${linkId} 时出错:`, error);
         }
       }
 
       // 按分数排序
       pairs.sort((a, b) => {
-        const sa = (a.child.score.positive ?? 0) + (a.child.score.negative ?? 0);
-        const sb = (b.child.score.positive ?? 0) + (b.child.score.negative ?? 0);
+        const sa = (a.node.score.positive ?? 0) + (a.node.score.negative ?? 0);
+        const sb = (b.node.score.positive ?? 0) + (b.node.score.negative ?? 0);
         return sb - sa;
       });
 
@@ -102,169 +109,62 @@ export function useGraphOperations(
       let addedCount = 0;
       const nodesToRecurse: string[] = [];
 
-      // 首先添加当前层级的节点
+      // 添加当前层级的节点
       for (const pair of pairs) {
         if (addedCount >= num) break;
 
-        const wasNew = !loadedNodes.value.has(pair.child.id);
-        const childNode = pair.child;
+        const wasNew = !loadedNodes.value.has(pair.node.id);
+        const currentNode = pair.node;
 
-        // 计算子节点的箭头状态
-        const childHasChildren =
-          childNode.relationship.supported_by?.length > 0 ||
-          childNode.relationship.opposed_by?.length > 0;
+        // 计算节点的箭头状态
+        const hasChildren =
+          currentNode.relationship.supported_by?.length > 0 ||
+          currentNode.relationship.opposed_by?.length > 0;
+        const hasParents =
+          currentNode.relationship.supports?.length > 0 ||
+          currentNode.relationship.opposes?.length > 0;
 
-        // 暂时使用简单逻辑，后续会更新
-        const childHasParents =
-          childNode.relationship.supports?.length > 0 || childNode.relationship.opposes?.length > 0;
-
-        addNode(childNode, childHasChildren, childHasParents);
+        addNode(currentNode, hasChildren, hasParents);
         addEdge(pair.link);
 
         if (wasNew) {
           addedCount++;
           // 记录需要递归加载的节点
           if (depth > 1) {
-            nodesToRecurse.push(pair.child.id);
+            nodesToRecurse.push(pair.node.id);
           }
         }
       }
 
-      // 然后递归加载更深层次的节点
+      // 递归加载更深层次的节点
       if (depth > 1 && nodesToRecurse.length > 0) {
-        for (const nodeId of nodesToRecurse) {
-          await loadChildren(nodeId, numClickUpdatedSon.value, depth - 1);
+        for (const recurseNodeId of nodesToRecurse) {
+          await loadNodes(recurseNodeId, direction, numClickUpdatedSon.value, depth - 1);
         }
       }
 
-      updateNodeHasMore(parentId, 'children', hasMore);
+      updateNodeHasMore(nodeId, direction, hasMore);
 
       // 加载完成后，更新所有相关节点的箭头状态
       for (const pair of pairs.slice(0, num)) {
-        await updateNodeArrowsState(pair.child.id);
+        await updateNodeArrowsState(pair.node.id);
       }
-      // 也更新父节点自身的状态
-      await updateNodeArrowsState(parentId);
+      // 也更新当前节点自身的状态
+      await updateNodeArrowsState(nodeId);
     } catch (error) {
-      console.error('加载子节点失败:', error);
-      throw error; // 重新抛出错误，让上层处理
+      console.error(`加载${direction === 'children' ? '子' : '父'}节点失败:`, error);
+      throw error;
     }
+  };
+
+  // 加载子节点（支持深度加载）
+  const loadChildren = async (parentId: string, num: number, depth: number = 1) => {
+    return loadNodes(parentId, 'children', num, depth);
   };
 
   // 加载父节点（支持深度加载）
   const loadParents = async (childId: string, num: number, depth: number = 1) => {
-    if (depth <= 0) return;
-
-    try {
-      const response = await opinionService.getInfo(childId, debateId);
-      if (!response.is_success || !response.data) {
-        console.warn(`[loadParents] 获取子节点信息失败: ${childId}`);
-        return;
-      }
-
-      const rel = response.data.relationship;
-      const parentLinks = [...(rel.supports || []), ...(rel.opposes || [])];
-
-      // 如果没有父链接，直接更新has_more状态为false
-      if (parentLinks.length === 0) {
-        updateNodeHasMore(childId, 'parents', false);
-        return;
-      }
-
-      const pairs: Array<{ parent: Node; link: Edge }> = [];
-
-      // 收集所有父节点信息
-      for (const linkId of parentLinks) {
-        try {
-          const linkResponse = await linkService.getInfo(linkId);
-
-          if (linkResponse.is_success) {
-            // 根据实际API响应格式提取链接数据
-            const linkData = {
-              id: (linkResponse.id || linkId) as string,
-              from_id: (linkResponse.from_id || '') as string,
-              to_id: (linkResponse.to_id || '') as string,
-              link_type: (linkResponse.link_type || 'supports') as import('@/types').LinkType,
-              is_success: true,
-              msg: null,
-            };
-
-            const parentResponse = await opinionService.getInfo(linkData.to_id, debateId);
-
-            if (parentResponse.is_success && parentResponse.data) {
-              pairs.push({
-                parent: parentResponse.data,
-                link: linkData as Edge,
-              });
-            } else {
-              console.log(`[loadParents] 获取父节点失败: ${linkData.to_id}`);
-            }
-          } else {
-            console.log(`[loadParents] 获取链接失败: ${linkId}`);
-          }
-        } catch (error) {
-          console.warn(`[loadParents] 处理链接 ${linkId} 时出错:`, error);
-        }
-      }
-
-      // 按分数排序
-      pairs.sort((a, b) => {
-        const sa = (a.parent.score.positive ?? 0) + (a.parent.score.negative ?? 0);
-        const sb = (b.parent.score.positive ?? 0) + (b.parent.score.negative ?? 0);
-        return sb - sa;
-      });
-
-      const hasMore = pairs.length > num;
-      let addedCount = 0;
-      const nodesToRecurse: string[] = [];
-
-      // 首先添加当前层级的节点
-      for (const pair of pairs) {
-        if (addedCount >= num) break;
-
-        const wasNew = !loadedNodes.value.has(pair.parent.id);
-        const parentNode = pair.parent;
-
-        // 计算父节点的箭头状态
-        const parentHasChildren =
-          parentNode.relationship.supported_by?.length > 0 ||
-          parentNode.relationship.opposed_by?.length > 0;
-
-        const parentHasParents =
-          parentNode.relationship.supports?.length > 0 ||
-          parentNode.relationship.opposes?.length > 0;
-
-        addNode(parentNode, parentHasChildren, parentHasParents);
-        addEdge(pair.link);
-
-        if (wasNew) {
-          addedCount++;
-          // 记录需要递归加载的节点
-          if (depth > 1) {
-            nodesToRecurse.push(pair.parent.id);
-          }
-        }
-      }
-
-      // 然后递归加载更深层次的节点
-      if (depth > 1 && nodesToRecurse.length > 0) {
-        for (const nodeId of nodesToRecurse) {
-          await loadParents(nodeId, numClickUpdatedSon.value, depth - 1);
-        }
-      }
-
-      updateNodeHasMore(childId, 'parents', hasMore);
-
-      // 加载完成后，更新所有相关节点的箭头状态
-      for (const pair of pairs.slice(0, num)) {
-        await updateNodeArrowsState(pair.parent.id);
-      }
-      // 也更新子节点自身的状态
-      await updateNodeArrowsState(childId);
-    } catch (error) {
-      console.error('加载父节点失败:', error);
-      throw error; // 重新抛出错误，让上层处理
-    }
+    return loadNodes(childId, 'parents', num, depth);
   };
 
   // 搜索并居中到指定观点
