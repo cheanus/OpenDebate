@@ -59,9 +59,7 @@ def create_or_opinion(
         if global_debate_id and debate_id != global_debate_id:
             cited_in_debate(global_debate_id, str(new_opinion_psql.id))
     except Exception as e:
-        raise RuntimeError(
-            f"Failed to link opinion to debate in PostgreSQL: {str(e)}"
-        )
+        raise RuntimeError(f"Failed to link opinion to debate in PostgreSQL: {str(e)}")
 
     return str(new_opinion_psql.id)
 
@@ -73,7 +71,7 @@ def create_and_opinion(
     creator: str,
     debate_id: str,
     host: str = "local",
-) -> str:
+) -> tuple[str, dict[str, float | None]]:
     """
     Create a new AND opinion with the given parameters.
 
@@ -83,7 +81,7 @@ def create_and_opinion(
     :param creator: The ID of the user creating the opinion.
     :param debate_id: ID of the debate this opinion belongs to.
     :param host: The ID of the host (local or external) associated with the opinion.
-    :return: The ID of the created opinion or a success message.
+    :return: The ID of the created opinion or a success message, and a dictionary of updated IDs and their new scores.
     """
     with get_psql_session() as psql_session:
         try:
@@ -126,12 +124,17 @@ def create_and_opinion(
         # Link the new AND opinion to the child opinions
         for son_opinion_neo4j in son_opinion_neo4j_list:
             son_opinion_neo4j.supports.connect(new_opinion_neo4j)  # type: ignore
+        updated_nodes = dict()
         # Update score
-        update_score.refresh_son_type_score(str(new_opinion_neo4j.uid), "positive")
+        update_score.refresh_son_type_score(
+            str(new_opinion_neo4j.uid), "positive", updated_nodes
+        )
         new_opinion_neo4j = OpinionNeo4j.nodes.get(uid=new_opinion_neo4j.uid)
         new_opinion_neo4j.positive_score = new_opinion_neo4j.son_positive_score
         new_opinion_neo4j.save()
-        update_score.update_node_score_positively_from(str(new_opinion_psql.id))
+        update_score.update_node_score_positively_from(
+            str(new_opinion_psql.id), updated_nodes
+        )
         ## No need to update negative score here, as it will be updated in update_node_score_positively_from above
         ## And here new_opinion_neo4j.negative_score is None by default
     except Exception as e:
@@ -145,20 +148,20 @@ def create_and_opinion(
         if global_debate_id and debate_id != global_debate_id:
             cited_in_debate(global_debate_id, str(new_opinion_psql.id))
     except Exception as e:
-        raise RuntimeError(
-            f"Failed to link opinion to debate in PostgreSQL: {str(e)}"
-        )
+        raise RuntimeError(f"Failed to link opinion to debate in PostgreSQL: {str(e)}")
 
-    return str(new_opinion_psql.id)
+    return str(new_opinion_psql.id), updated_nodes
 
 
-def delete_opinion(opinion_id: str, debate_id: str):
+def delete_opinion(opinion_id: str, debate_id: str) -> dict[str, float | None]:
     """
     Delete an opinion by its ID.
 
     :param opinion_id: The ID of the opinion to delete.
     :param debate_id: ID of the debate this opinion belongs to.
+    :return: A dictionary of updated IDs and their new scores.
     """
+    updated_nodes = dict()
     with get_psql_session() as psql_session:
         opinion = psql_session.query(OpinionPsql).filter_by(id=opinion_id).first()
         if not opinion:
@@ -174,17 +177,21 @@ def delete_opinion(opinion_id: str, debate_id: str):
                 raise RuntimeError(f"Failed to delete opinion in PostgreSQL: {str(e)}")
             try:
                 opinion_neo4j = OpinionNeo4j.nodes.get(uid=opinion_id)
-                son_opinions = opinion_neo4j.supported_by.all() + opinion_neo4j.opposed_by.all()
+                son_opinions = (
+                    opinion_neo4j.supported_by.all() + opinion_neo4j.opposed_by.all()
+                )
                 # Update positive score to None before deleting
                 opinion_neo4j.positive_score = None
                 opinion_neo4j.save()
-                update_score.update_node_score_positively_from(opinion_id, is_refresh=True)
+                update_score.update_node_score_positively_from(
+                    opinion_id, updated_nodes, is_refresh=True
+                )
                 # Delete the opinion in Neo4j
                 opinion_neo4j.delete()
                 # Update negative scores of son opinions
                 for son_opinion in son_opinions:
                     update_score.update_node_score_negatively_recursively(
-                        son_opinion.uid, None
+                        son_opinion.uid, updated_nodes, None
                     )
             except Exception as e:
                 raise RuntimeError(f"Failed to delete opinion in Neo4j: {str(e)}")
@@ -204,6 +211,9 @@ def delete_opinion(opinion_id: str, debate_id: str):
                 raise RuntimeError(
                     f"Failed to remove opinion from debate in PostgreSQL: {str(e)}"
                 )
+    if opinion_id in updated_nodes:
+        del updated_nodes[opinion_id]
+    return updated_nodes
 
 
 def info_opinion(
@@ -418,7 +428,7 @@ def patch_opinion(
     score: dict[str, float | None] | None = None,
     is_llm_score: bool = False,
     creator: str | None = None,
-):
+) -> dict[str, float | None]:
     """
     Patch an existing opinion with new values.
 
@@ -428,6 +438,7 @@ def patch_opinion(
         It can only contain "positive" key with its score.
     :param is_llm_score: Whether the score is generated by an LLM.
     :param creator: The ID of the user creating the opinion.
+    :return: A dictionary of updated IDs and their new scores.
     """
     try:
         # Update PostgreSQL
@@ -462,12 +473,16 @@ def patch_opinion(
             if not is_leaf:
                 raise RuntimeError(f"Opinion with ID {op_neo4j.uid} is not leaf node.")
             pass
+
+        updated_nodes = dict()
         if score and "positive" in score:  # None也是信号
             if not is_leaf:
                 raise RuntimeError(f"Opinion with ID {op_neo4j.uid} is not leaf node.")
             op_neo4j.positive_score = score["positive"]
             op_neo4j.save()
-            update_score.update_node_score_positively_from(opinion_id, is_refresh=True)
+            updated_nodes.setdefault(opinion_id, {})["positive"] = score["positive"]
+            update_score.update_node_score_positively_from(opinion_id, updated_nodes, is_refresh=True)
         op_neo4j.save()
+        return updated_nodes
     except Exception as e:
         raise RuntimeError(f"Failed to update opinion in Neo4j: {str(e)}")

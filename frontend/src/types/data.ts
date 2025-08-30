@@ -130,3 +130,10 @@ export interface GraphLayout {
   fit?: boolean;
   padding?: number;
 }
+
+export interface UpdatedNodes {
+  [nodeId: string]: {
+    positive: number | null;
+    negative: number | null;
+  };
+}

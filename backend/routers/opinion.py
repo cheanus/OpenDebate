@@ -41,7 +41,7 @@ def create_or_opinion_http(request: CreateOrOpinionRequest):
 @router.post("/create_and", response_model=CreateOpinionResponse)
 def create_and_opinion_http(request: CreateAndOpinionRequest):
     try:
-        id = create_and_opinion(
+        id, updated_nodes = create_and_opinion(
             parent_id=request.parent_id,
             son_ids=request.son_ids,
             link_type=request.link_type,
@@ -49,21 +49,23 @@ def create_and_opinion_http(request: CreateAndOpinionRequest):
             host="local",
             debate_id=request.debate_id,
         )
-        result = {"is_success": True, "id": id}
+        need_updated_nodes = {k: updated_nodes[k] for k in request.loaded_ids if k in updated_nodes}
+        result = {"is_success": True, "id": id, "updated_nodes": need_updated_nodes}
     except Exception as e:
         result = {"is_success": False, "msg": str(e)}
 
     return result
 
 
-@router.post("/delete", response_model=MsgResponse)
+@router.post("/delete", response_model=DeleteOpinionResponse)
 def delete_opinion_http(request: DeleteOpinionRequest):
     try:
-        delete_opinion(
+        updated_nodes = delete_opinion(
             opinion_id=request.opinion_id,
             debate_id=request.debate_id,
         )
-        result = {"is_success": True}
+        need_updated_nodes = {k: updated_nodes[k] for k in request.loaded_ids if k in updated_nodes}
+        result = {"is_success": True, "updated_nodes": need_updated_nodes}
     except Exception as e:
         result = {"is_success": False, "msg": str(e)}
 
@@ -128,16 +130,17 @@ def head_opinion_http(request: HeadOpinionRequest):
         }
 
 
-@router.post("/patch", response_model=MsgResponse)
+@router.post("/patch", response_model=PatchOpinionResponse)
 def patch_opinion_http(request: PatchOpinionRequest):
     try:
-        patch_opinion(
+        updated_nodes = patch_opinion(
             opinion_id=request.id,
             content=request.content,
             score=request.score,
             is_llm_score=request.is_llm_score,
             creator=request.creator,
         )
-        return {"is_success": True}
+        need_updated_nodes = {k: updated_nodes[k] for k in request.loaded_ids if k in updated_nodes}
+        return {"is_success": True, "updated_nodes": need_updated_nodes}
     except Exception as e:
         return {"is_success": False, "msg": str(e)}

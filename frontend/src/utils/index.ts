@@ -14,8 +14,8 @@ export function formatDate(timestamp: number): string {
   });
 }
 
-export function getNodeSize(node: Node) {
-  const nodeData = node.score;
+export function getNodeSize(score: Node['score']) {
+  const nodeData = score;
   const pos = nodeData ? nodeData.positive : null;
   const neg = nodeData ? nodeData.negative : null;
   let avg = null;

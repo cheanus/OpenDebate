@@ -1,6 +1,6 @@
 import { ref } from 'vue';
 import { opinionService, linkService } from '@/services';
-import type { LogicType, LinkType, Node as OpinionNode, Edge } from '@/types';
+import type { LogicType, LinkType, Node as OpinionNode, Edge, UpdatedNodes } from '@/types';
 
 /**
  * 图形 CRUD 操作
@@ -14,6 +14,8 @@ export function useGraphCRUD(
   removeEdge: (edgeId: string) => void,
   addNode: (node: OpinionNode) => void,
   addEdge: (edge: Edge) => void,
+  refreshOpinions: (updatedNodes: UpdatedNodes) => void,
+  loadedNodes: ReturnType<typeof ref<Set<string>>>,
 ) {
   // 创建观点
   const createOpinion = async (data: {
@@ -30,7 +32,7 @@ export function useGraphCRUD(
     error.value = null;
 
     try {
-      let response;
+      let response, updatedNodes;
       if (data.logic_type === 'and') {
         response = await opinionService.createAnd({
           parent_id: data.parent_id!,
@@ -38,7 +40,9 @@ export function useGraphCRUD(
           link_type: data.link_type!,
           creator: data.creator,
           debate_id: debateId,
+          loaded_ids: Array.from(loadedNodes.value!),
         });
+        updatedNodes = response.data?.updated_nodes;
       } else {
         response = await opinionService.createOr({
           content: data.content!,
@@ -50,7 +54,7 @@ export function useGraphCRUD(
       }
 
       if (response.is_success && response.data) {
-        // 获取新创建的观点信息并添加到视图中，而不是刷新整个视图
+        // 获取新创建的观点信息并添加到视图中
         try {
           const newOpinionId = response.data.id;
           const opinionInfoResponse = await opinionService.getInfo(newOpinionId, debateId);
@@ -90,6 +94,9 @@ export function useGraphCRUD(
                   addEdge(childEdge);
                 }
               }
+
+              // 更新受影响的点分数
+              refreshOpinions(updatedNodes!);
             }
 
             return response.data;
@@ -132,10 +139,11 @@ export function useGraphCRUD(
         content: data.content,
         score: data.positive_score !== undefined ? { positive: data.positive_score } : undefined,
         is_llm_score: data.is_llm_score,
+        loaded_ids: Array.from(loadedNodes.value!),
       });
 
       if (response.is_success) {
-        await refreshView();
+        refreshOpinions(response.data?.updated_nodes || {});
         return true;
       } else {
         error.value = response.msg || '更新观点失败';
@@ -159,11 +167,13 @@ export function useGraphCRUD(
       const response = await opinionService.delete({
         opinion_id: opinionId,
         debate_id: debateId,
+        loaded_ids: Array.from(loadedNodes.value!),
       });
 
       if (response.is_success) {
-        // 直接从本地状态中移除节点而不是刷新整个视图
+        // 从本地状态中移除节点
         removeNode(opinionId);
+        refreshOpinions(response.data?.updated_nodes || {});
         return true;
       } else {
         console.error('[deleteOpinion] 删除失败:', response.msg);
@@ -189,10 +199,11 @@ export function useGraphCRUD(
         from_id: data.from_id,
         to_id: data.to_id,
         link_type: data.link_type,
+        loaded_ids: Array.from(loadedNodes.value!),
       });
 
       if (response.is_success && response.data) {
-        // 直接添加新连接到视图中，而不是刷新整个视图
+        // 添加新连接到视图中
         try {
           const newLinkId = response.data.id || `${data.from_id}-${data.to_id}`;
           const newEdge: Edge = {
@@ -205,6 +216,7 @@ export function useGraphCRUD(
           };
 
           addEdge(newEdge);
+          refreshOpinions(response.data?.updated_nodes);
           return response.data;
         } catch (err) {
           console.error('处理新创建连接失败，回退到刷新视图:', err);
@@ -234,12 +246,12 @@ export function useGraphCRUD(
       const response = await linkService.update({
         link_id: data.id,
         link_type: data.link_type,
+        loaded_ids: Array.from(loadedNodes.value!),
       });
 
       if (response.is_success) {
-        // 对于连接更新，通常只是类型改变，可以直接更新本地状态
-        // 但为了简单起见，这里仍然使用刷新视图
-        await refreshView();
+        // 更新受影响的节点分数
+        refreshOpinions(response.data?.updated_nodes || {});
         return true;
       } else {
         error.value = response.msg || '更新连接失败';
@@ -261,10 +273,12 @@ export function useGraphCRUD(
     try {
       const response = await linkService.delete({
         link_id: linkId,
+        loaded_ids: Array.from(loadedNodes.value!),
       });
       if (response.is_success) {
-        // 直接从本地状态中移除连接而不是刷新整个视图
+        // 从本地状态中移除连接
         removeEdge(linkId);
+        refreshOpinions(response.data?.updated_nodes || {});
         return true;
       } else {
         error.value = response.msg || '删除连接失败';

@@ -1,6 +1,6 @@
 import { computed, type Ref } from 'vue';
 import { wrapLabelText, getNodeSize } from '@/utils';
-import type { Node, Element, Edge } from '@/types';
+import type { Node, Element, Edge, UpdatedNodes } from '@/types';
 
 /**
  * 图形元素管理 (节点和边的增删查改)
@@ -16,6 +16,26 @@ export function useGraphElements(
       .filter((el) => el.data && 'content' in el.data)
       .map((el) => el.data as Node);
   });
+
+  // 刷新部分观点的分
+  const refreshOpinions = (updateNodes: UpdatedNodes) => {
+    console.log('[refreshOpinions] 准备更新节点分数:', updateNodes);
+    elements.value = elements.value.map((el) => {
+      if (el.data && 'content' in el.data) {
+        const nodeData = el.data as Node;
+        if (updateNodes[nodeData.id]) {
+          const updatedData = updateNodes[nodeData.id];
+          // 只更新分数相关字段
+          nodeData.score.positive =
+            updatedData.positive !== undefined ? updatedData.positive : nodeData.score.positive;
+          nodeData.score.negative =
+            updatedData.negative !== undefined ? updatedData.negative : nodeData.score.negative;
+        }
+      }
+      return el;
+    });
+    console.log('[refreshOpinions] 元素更新完成:', elements.value);
+  };
 
   // 添加节点
   // 兼顾更新 has_more 状态
@@ -50,7 +70,7 @@ export function useGraphElements(
         (rel.supports && rel.supports.length > 0) || (rel.opposes && rel.opposes.length > 0);
     }
 
-    const node_width = getNodeSize(node);
+    const node_width = getNodeSize(node.score);
     elements.value.push({
       data: {
         ...node,
@@ -108,12 +128,12 @@ export function useGraphElements(
     elements.value = elements.value.filter((el) => {
       // 移除节点本身
       if (el.data) {
-        if ("classes" in el && el.data.id === nodeId) {
+        if ('classes' in el && el.data.id === nodeId) {
           console.log('[removeNode] 找到并移除节点:', nodeId);
           return false;
         }
         // 移除相关的边
-        if (!("classes" in el)) {
+        if (!('classes' in el)) {
           const linkData = el.data;
           if (linkData.source === nodeId || linkData.target === nodeId) {
             console.log(
@@ -138,7 +158,7 @@ export function useGraphElements(
   // 移除边
   const removeEdge = (edgeId: string) => {
     elements.value = elements.value.filter((el) => {
-      if (!("classes" in el) && el.data.id === edgeId) {
+      if (!('classes' in el) && el.data.id === edgeId) {
         return false;
       }
       return true;
@@ -150,7 +170,8 @@ export function useGraphElements(
   // 更新节点箭头状态 - 检查已加载的相邻节点
   const updateNodeArrowsState = async (nodeId: string) => {
     // 不需要debate_id，这些元素本身就是debate_id内的
-    const focusNode = elements.value.filter((el) => "classes" in el && el.data.id === nodeId)[0].data as Node;
+    const focusNode = elements.value.filter((el) => 'classes' in el && el.data.id === nodeId)[0]
+      .data as Node;
     const rel = focusNode.relationship;
 
     // 检查父节点：如果所有父节点都已加载，则不显示上箭头
@@ -158,7 +179,7 @@ export function useGraphElements(
     let hasUnloadedParents = false;
 
     for (const linkId of parentLinks) {
-      if (!("classes" in focusNode) && !loadedEdges.value.has(linkId)) {
+      if (!('classes' in focusNode) && !loadedEdges.value.has(linkId)) {
         hasUnloadedParents = true;
         break;
       }
@@ -169,7 +190,7 @@ export function useGraphElements(
     let hasUnloadedChildren = false;
 
     for (const linkId of childLinks) {
-      if (!("classes" in focusNode) && !loadedEdges.value.has(linkId)) {
+      if (!('classes' in focusNode) && !loadedEdges.value.has(linkId)) {
         hasUnloadedChildren = true;
         break;
       }
@@ -189,5 +210,6 @@ export function useGraphElements(
     removeEdge,
     updateNodeHasMoreState,
     updateNodeArrowsState,
+    refreshOpinions,
   };
 }

@@ -7,11 +7,7 @@ import type { Ref } from 'vue';
  */
 export function useGraphOperations(
   debateId: string,
-  addNode: (
-    node: Node,
-    hasMoreChildren?: boolean | null,
-    hasMoreParents?: boolean | null,
-  ) => void,
+  addNode: (node: Node, hasMoreChildren?: boolean | null, hasMoreParents?: boolean | null) => void,
   addEdge: (edge: Edge) => void,
   updateNodeHasMoreState: (
     nodeId: string,
@@ -52,9 +48,10 @@ export function useGraphOperations(
       }
 
       const rel = response.data.relationship;
-      const links = direction === 'children'
-        ? [...(rel.supported_by || []), ...(rel.opposed_by || [])]
-        : [...(rel.supports || []), ...(rel.opposes || [])];
+      const links =
+        direction === 'children'
+          ? [...(rel.supported_by || []), ...(rel.opposed_by || [])]
+          : [...(rel.supports || []), ...(rel.opposes || [])];
 
       // 如果没有链接，直接更新has_more状态为false
       if (links.length === 0) {
@@ -88,7 +85,9 @@ export function useGraphOperations(
                 link: linkData as Edge,
               });
             } else {
-              console.log(`[loadNodes] 获取${direction === 'children' ? '子' : '父'}节点失败: ${targetId}`);
+              console.log(
+                `[loadNodes] 获取${direction === 'children' ? '子' : '父'}节点失败: ${targetId}`,
+              );
             }
           } else {
             console.log(`[loadNodes] 获取链接失败: ${linkId}`);

@@ -65,7 +65,7 @@ import HelpSection from './DebateOpinion/HelpSection.vue';
 import { useOpinionGraph } from '@/composables';
 import { useEditorState } from '@/composables/features/opinion/useEditorState';
 import { useDebateSearch } from '@/composables/features/debate/useDebateSearch';
-import { useCRUDFixes } from '@/composables/features/opinion/useCRUDFixes';
+import { useCRUDWrapper } from '@/composables/features/opinion/useCRUDFixes';
 
 import type { Node, Edge, OpinionFormData, LinkFormData } from '@/types';
 
@@ -96,7 +96,7 @@ const {
 
 // CRUD修复工具
 //TODO：有必要吗
-const { wrapCRUDOperation } = useCRUDFixes();
+const { wrapCRUDOperation } = useCRUDWrapper();
 
 // 编辑器状态管理
 const {

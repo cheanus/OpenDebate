@@ -14,6 +14,6 @@ export { useContextMenu } from './ui/useContextMenu';
 // 功能特性逻辑
 export { useOpinionForm } from './features/opinion/useOpinionForm';
 export { useEditorState } from './features/opinion/useEditorState';
-export { useCRUDFixes } from './features/opinion/useCRUDFixes';
+export { useCRUDWrapper as useCRUDFixes } from './features/opinion/useCRUDFixes';
 export { useDebateSearch } from './features/debate/useDebateSearch';
 export { useNodeArrows } from './features/graph/useNodeArrows';

@@ -49,6 +49,7 @@ export function useOpinionGraph(debateId: string) {
     removeEdge,
     updateNodeHasMoreState,
     updateNodeArrowsState,
+    refreshOpinions,
   } = useGraphElements(elements, loadedNodes, loadedEdges);
 
   // 图形操作
@@ -129,7 +130,18 @@ export function useOpinionGraph(debateId: string) {
 
   // CRUD 操作
   const { createOpinion, updateOpinion, deleteOpinion, createLink, updateLink, deleteLink } =
-    useGraphCRUD(debateId, loading, error, refreshView, removeNode, removeEdge, addNode, addEdge);
+    useGraphCRUD(
+      debateId,
+      loading,
+      error,
+      refreshView,
+      removeNode,
+      removeEdge,
+      addNode,
+      addEdge,
+      refreshOpinions,
+      loadedNodes,
+    );
 
   return {
     // 状态

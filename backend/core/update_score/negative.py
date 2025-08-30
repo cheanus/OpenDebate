@@ -2,26 +2,32 @@ from schemas.db.neo4j import Opinion as OpinionNeo4j
 from core.utils.math import min_of_list, revert_score
 
 
-def update_node_score_negatively_from(opinion_id: str):
+def update_node_score_negatively_from(
+    opinion_id: str, updated_nodes: dict[str, dict[str, float | None]]
+):
     """
     Update the scores of related nodes negatively.
 
     Args:
         opinion_id (str): The ID of the root node to update.
+        updated_nodes (dict[str, dict[str, float | None]]): A dictionary to keep track of updated node IDs and their new scores.
     """
     opinion_neo4j = OpinionNeo4j.nodes.get(uid=opinion_id)
     for related_opinion in opinion_neo4j.supports:
-        update_node_score_negatively(related_opinion.uid)
+        update_node_score_negatively(related_opinion.uid, updated_nodes)
     for related_opinion in opinion_neo4j.opposes:
-        update_node_score_negatively(related_opinion.uid)
+        update_node_score_negatively(related_opinion.uid, updated_nodes)
 
 
-def update_node_score_negatively(opinion_id: str):
+def update_node_score_negatively(
+    opinion_id: str, updated_nodes: dict[str, dict[str, float | None]]
+):
     """
     Update the negative scores of all related node negatively.
 
     Args:
         opinion_id (str): The ID of the son node to update negatively.
+        updated_nodes (dict[str, dict[str, float | None]]): A dictionary to keep track of updated node IDs and their new scores.
     """
     opinion_neo4j = OpinionNeo4j.nodes.get(uid=opinion_id)
 
@@ -30,6 +36,7 @@ def update_node_score_negatively(opinion_id: str):
         for related_opinion in opinion_neo4j.supported_by:
             update_node_score_negatively_recursively(
                 related_opinion.uid,
+                updated_nodes,
                 revert_score(opinion_neo4j.son_negative_score),
             )
     elif opinion_neo4j.logic_type == "and" and opinion_neo4j.son_positive_score:
@@ -40,21 +47,29 @@ def update_node_score_negatively(opinion_id: str):
         for min_opinion in min_opinions:
             update_node_score_negatively_recursively(
                 min_opinion.uid,
+                updated_nodes,
                 revert_score(opinion_neo4j.son_negative_score),
             )
     # Update the opposed_by nodes
     for related_opinion in opinion_neo4j.opposed_by:
         update_node_score_negatively_recursively(
-            related_opinion.uid, revert_score(opinion_neo4j.son_positive_score)
+            related_opinion.uid,
+            updated_nodes,
+            revert_score(opinion_neo4j.son_positive_score),
         )
 
 
-def update_node_score_negatively_recursively(opinion_id: str, new_score: float | None):
+def update_node_score_negatively_recursively(
+    opinion_id: str,
+    updated_nodes: dict[str, dict[str, float | None]],
+    new_score: float | None,
+):
     """
     Recursively update the scores of a node negatively.
 
     Args:
         opinion_id (str): The ID of the node to update.
+        updated_nodes (dict[str, dict[str, float | None]]): A dictionary to keep track of updated node IDs and their new scores.
         new_score (float | None): The new score to set.
     """
     opinion_neo4j = OpinionNeo4j.nodes.get(uid=opinion_id)
@@ -90,6 +105,7 @@ def update_node_score_negatively_recursively(opinion_id: str, new_score: float |
     ):
         opinion_neo4j.negative_score = new_score
         opinion_neo4j.save()
+        updated_nodes.setdefault(opinion_id, {})["negative"] = new_score  # 记录被更新的节点
         # Update related opinions
         # Update the supported_by nodes
         for related_opinion in opinion_neo4j.supported_by:
@@ -101,11 +117,14 @@ def update_node_score_negatively_recursively(opinion_id: str, new_score: float |
                 and related_opinion.positive_score <= opinion_neo4j.son_positive_score
             ):
                 update_node_score_negatively_recursively(
-                    related_opinion.uid, opinion_neo4j.negative_score
+                    related_opinion.uid,
+                    updated_nodes,
+                    opinion_neo4j.negative_score,
                 )
         # Update the opposed_by nodes
         for related_opinion in opinion_neo4j.opposed_by:
             update_node_score_negatively_recursively(
                 related_opinion.uid,
+                updated_nodes,
                 revert_score(opinion_neo4j.negative_score),
             )

@@ -1,19 +1,22 @@
 import { apiClient } from './api';
-import type { ApiResponse, LinkType, Edge } from '@/types';
+import type { ApiResponse, LinkType, Edge, UpdatedNodes } from '@/types';
 
 export interface LinkCreateData {
   from_id: string;
   to_id: string;
   link_type: LinkType;
+  loaded_ids: string[];
 }
 
 export interface LinkUpdateData {
   link_id: string;
   link_type?: LinkType;
+  loaded_ids: string[];
 }
 
 export interface LinkDeleteData {
   link_id: string;
+  loaded_ids: string[];
 }
 
 export interface LinkAttackData {
@@ -22,11 +25,13 @@ export interface LinkAttackData {
 }
 
 export class LinkService {
-  async create(data: LinkCreateData): Promise<ApiResponse<{ id: string }>> {
+  async create(
+    data: LinkCreateData,
+  ): Promise<ApiResponse<{ id: string; updated_nodes: UpdatedNodes }>> {
     return apiClient.post('/link/create', data);
   }
 
-  async delete(data: LinkDeleteData): Promise<ApiResponse<void>> {
+  async delete(data: LinkDeleteData): Promise<ApiResponse<{ updated_nodes: UpdatedNodes }>> {
     return apiClient.post('/link/delete', data);
   }
 
@@ -35,7 +40,7 @@ export class LinkService {
     return apiClient.get('/link/info', params);
   }
 
-  async update(data: LinkUpdateData): Promise<ApiResponse<void>> {
+  async update(data: LinkUpdateData): Promise<ApiResponse<{ updated_nodes: UpdatedNodes }>> {
     return apiClient.post('/link/patch', data);
   }
 

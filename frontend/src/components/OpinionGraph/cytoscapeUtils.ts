@@ -1,19 +1,6 @@
 import cytoscape from 'cytoscape';
+import { getNodeSize, wrapLabelText } from '@/utils';
 import type { Core, ElementDefinition, LayoutOptions, StylesheetStyle } from 'cytoscape';
-
-/**
- * 文本换行工具函数
- */
-export function wrapLabelText(text: string, width: number, zoomFactor = 0.05): string {
-  if (!text) return '';
-  const scaledWidth = Math.floor(width * zoomFactor);
-  if (scaledWidth < 1) return text;
-
-  // 将文本每 scaledWidth 个字符分隔成一行
-  const regex = new RegExp(`.{1,${scaledWidth}}`, 'g');
-  const matches = text.match(regex);
-  return matches ? matches.join('\n') : text;
-}
 
 /**
  * Cytoscape 实例管理
@@ -68,7 +55,8 @@ export function useCytoscapeManager() {
         if (element.length > 0) {
           element.remove();
         } else {
-          console.warn(`[updateElements] 未找到要移除的元素: ${id}`);
+          // console.warn(`[updateElements] 未找到要移除的元素: ${id}`);
+          // 有时先删除点后，边会被cy自动删除，无需警告
         }
       });
     }
@@ -88,6 +76,10 @@ export function useCytoscapeManager() {
         addedElements.push(elementId);
       } else {
         // 更新现有元素的数据
+        // 先更新宽度、标签
+        const node_width = getNodeSize(element.data.score);
+        existing.data('width', node_width);
+        existing.data('label', wrapLabelText(element.data.content, node_width));
         existing.data(element.data);
         if (element.classes) {
           existing.classes(element.classes);

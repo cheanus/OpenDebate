@@ -74,7 +74,7 @@ def positive_test(debate_id: str, op_root: str):
         positive_score=0.4,
         debate_id=debate_id,
     )
-    rel_1pos2pos2 = create_link(
+    rel_1pos2pos2, _ = create_link(
         from_id=op_1pos2pos2,
         to_id=op_1pos2,
         link_type=LinkType.SUPPORT,
@@ -95,7 +95,7 @@ def negative_test(debate_id: str, op_root: str):
         debate_id=debate_id,
         positive_score=0.6,
     )
-    op_1neg1 = create_and_opinion(
+    op_1neg1, _ = create_and_opinion(
         parent_id=op_root,
         son_ids=[op_1neg1pos1, op_1neg1pos2],
         link_type=LinkType.OPPOSE,
@@ -119,7 +119,7 @@ def negative_test(debate_id: str, op_root: str):
         debate_id=debate_id,
         positive_score=0.8,
     )
-    op_1neg2 = create_and_opinion(
+    op_1neg2, _ = create_and_opinion(
         parent_id=op_root,
         son_ids=[op_1neg2pos1, op_1neg2pos2],
         link_type=LinkType.OPPOSE,

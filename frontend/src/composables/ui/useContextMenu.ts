@@ -49,7 +49,12 @@ export function useContextMenu() {
         host: data.host,
         logic_type: data.logic_type,
         node_type: data.node_type,
-        score: data.score,
+        score: {
+          positive:
+            data.score?.positive != null ? parseFloat(data.score.positive.toFixed(2)) : null,
+          negative:
+            data.score?.negative != null ? parseFloat(data.score.negative.toFixed(2)) : null,
+        },
       };
 
       if (renderedPosition) {

@@ -5,7 +5,7 @@ import { useNotifications } from '@/composables';
  * CRUD 操作修复和优化
  * 解决空辩论新建观点后不显示和删除观点后仍显示的问题
  */
-export function useCRUDFixes() {
+export function useCRUDWrapper() {
   const { notifySuccess, notifyError } = useNotifications();
   const isUpdating = ref(false);
 

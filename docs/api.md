@@ -165,18 +165,20 @@
   "link_type": "supports",
   "creator": "user1",
   "host": "local",
-  "debate_id": "xxx"
+  "debate_id": "xxx",
+  "loaded_ids": ["aaa", "bbb", "ccc"]
 }
 ```
 
-`parent_id`是父观点，`son_ids`是子观点列表。
+`parent_id`是父观点，`son_ids`是子观点列表，`loaded_ids`是前端显示的观点（下同）。
 `debate_id`必选，代表新观点放在哪个辩论里。
 
-返回示例：
+返回与观点id和前端受影响节点及其新分数：
 
 ```json
 {
-  "id": "xxx"
+  "id": "xxx",
+  "updated_nodes": ["yyy": 0.5, "zzz": null]
 }
 ```
 
@@ -188,11 +190,23 @@
 ```json
 {
   "opinion_id": "xxx",
-  "debate_id": "xxx"
+  "debate_id": "xxx",
+  "loaded_ids": ["aaa", "bbb", "ccc"]
 }
 ```
 
 `debate_id`若为全辩论ID，则删除全部辩论中的该观点。
+
+返回前端受影响的节点及其新分数，示例：
+
+```json
+{
+  "updated_nodes": [
+    "xxx": 0.5,
+    "yyy": null
+  ]
+}
+```
 
 ### 🔍 查询观点信息及其链
 
@@ -294,13 +308,25 @@
     "positive": 0.8
   },
   "is_llm_score": false,
-  "creator": "user1"
+  "creator": "user1",
+  "loaded_ids": ["aaa", "bbb", "ccc"]
 }
 ```
 
 `id`必选，其他可选。
 `score`可选，只能包含`positive`键，表示新的正证分数，其值为浮点数或`None`（表示不提供分数）。
 `is_llm_score`默认false，若true则`score`无效，后端会自己调用LLM生成分数。
+
+返回前端受影响的节点及其新分数，示例：
+
+```json
+{
+  "updated_nodes": [
+    "xxx": 0.5,
+    "yyy": null
+  ]
+}
+```
 
 ---
 
@@ -315,15 +341,17 @@
 {
   "from_id": "xxx",
   "to_id": "yyy",
-  "link_type": "supports"
+  "link_type": "supports",
+  "loaded_ids": ["aaa", "bbb", "ccc"]
 }
 ```
 
-返回示例：
+返回链id和前端受影响的节点及其新分数：
 
 ```json
 {
-  "id": "link_id"
+  "id": "link_id",
+  "updated_nodes": ["yyy": 0.5, "zzz": null]
 }
 ```
 
@@ -335,7 +363,19 @@
 
 ```json
 {
-  "link_id": "xxx"
+  "link_id": "xxx",
+  "loaded_ids": ["aaa", "bbb", "ccc"]
+}
+```
+
+返回前端受影响的节点及其新分数，示例：
+
+```json
+{
+  "updated_nodes": [
+    "xxx": 0.5,
+    "yyy": null
+  ]
 }
 ```
 
@@ -362,7 +402,19 @@
 ```json
 {
   "id": "xxx",
-  "link_type": "supports"
+  "link_type": "supports",
+  "loaded_ids": ["aaa", "bbb", "ccc"]
+}
+```
+
+返回前端受影响的节点及其新分数，示例：
+
+```json
+{
+  "updated_nodes": [
+    "xxx": 0.5,
+    "yyy": null
+  ]
 }
 ```
 

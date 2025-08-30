@@ -28,15 +28,16 @@ def create_link_http(request: CreateLinkRequest):
                 "is_success": False,
                 "msg": "Cannot create link to an AND opinion.",
             }
-        link_id = create_link(
+        link_id, updated_nodes = create_link(
             from_id=request.from_id, to_id=request.to_id, link_type=request.link_type
         )
-        return {"is_success": True, "id": link_id}
+        need_updated_nodes = {k: updated_nodes[k] for k in updated_nodes if updated_nodes[k] is not None}
+        return {"is_success": True, "id": link_id, "updated_nodes": need_updated_nodes}
     except Exception as e:
         return {"is_success": False, "msg": str(e)}
 
 
-@router.post("/delete", response_model=MsgResponse)
+@router.post("/delete", response_model=DeleteLinkResponse)
 def delete_link_http(request: LinkRequest):
     """
     删除一个链（两个已存在观点间）
@@ -49,8 +50,9 @@ def delete_link_http(request: LinkRequest):
                 "is_success": False,
                 "msg": "Cannot delete link to an AND opinion.",
             }
-        delete_link_by_info(link_info=link_info)
-        return {"is_success": True}
+        updated_nodes = delete_link_by_info(link_info=link_info)
+        need_updated_nodes = {k: updated_nodes[k] for k in request.loaded_ids if k in updated_nodes}
+        return {"is_success": True, "updated_nodes": need_updated_nodes}
     except Exception as e:
         return {"is_success": False, "msg": str(e)}
 
@@ -79,8 +81,9 @@ def patch_link_http(request: PatchLinkRequest):
     修改一个链（两个已存在观点间）
     """
     try:
-        patch_link(link_id=request.link_id, link_type=request.link_type)
-        return {"is_success": True}
+        updated_nodes = patch_link(link_id=request.link_id, link_type=request.link_type)
+        need_updated_nodes = {k: updated_nodes[k] for k in request.loaded_ids if k in updated_nodes}
+        return {"is_success": True, "updated_nodes": need_updated_nodes}
     except Exception as e:
         return {"is_success": False, "msg": str(e)}
 

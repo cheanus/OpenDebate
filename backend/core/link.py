@@ -9,14 +9,14 @@ def create_link(
     from_id: str,
     to_id: str,
     link_type: LinkType,
-) -> str:
+) -> tuple[str, dict[str, float | None]]:
     """
     Create a link in the Neo4j database.
 
     :param from_id: The ID of the source node.
     :param to_id: The ID of the target node.
     :param link_type: The type of the link (support or oppose).
-    :return: Link ID
+    :return: Link ID, and a dictionary of updated node IDs with their new scores.
     """
     try:
         if from_id == to_id:
@@ -34,19 +34,20 @@ def create_link(
 
         from_opinion = OpinionNeo4j.nodes.get(uid=from_id)
         to_opinion = OpinionNeo4j.nodes.get(uid=to_id)
+        updated_nodes = dict()
 
         if link_type == LinkType.SUPPORT:
             if not from_opinion.supports.is_connected(to_opinion):
                 relationship = from_opinion.supports.connect(to_opinion)
                 link_id = relationship.uid
-                update_score.update_node_score_positively_from(from_id)
+                update_score.update_node_score_positively_from(from_id, updated_nodes)
             else:
                 link_id = from_opinion.supports.relationship(to_opinion).uid
         elif link_type == LinkType.OPPOSE:
             if not from_opinion.opposes.is_connected(to_opinion):
                 relationship = from_opinion.opposes.connect(to_opinion)
                 link_id = relationship.uid
-                update_score.update_node_score_positively_from(from_id)
+                update_score.update_node_score_positively_from(from_id, updated_nodes)
             else:
                 link_id = from_opinion.opposes.relationship(to_opinion).uid
         else:
@@ -54,47 +55,53 @@ def create_link(
     except Exception as e:
         raise RuntimeError(f"Failed to create link in Neo4j: {str(e)}")
 
-    return link_id
+    return link_id, updated_nodes
 
 
-def delete_link_by_info(link_info: dict[str, str]):
+def delete_link_by_info(link_info: dict[str, str]) -> dict[str, dict[str, float | None]]:
     """
     Delete a link in the Neo4j database.
 
     :param link_id: The ID of the link to delete.
+    :return: A dictionary of updated node IDs with their new scores.
     """
     try:
         # After deletion, update the scores of the related nodes
         from_opinion = OpinionNeo4j.nodes.get(uid=link_info["from_id"])
         to_opinion = OpinionNeo4j.nodes.get(uid=link_info["to_id"])
+        updated_nodes = dict()
+
         if link_info["link_type"] == LinkType.SUPPORT.value:
             from_opinion.supports.disconnect(to_opinion)
             update_score.update_node_score_positively_recursively(
-                link_info["to_id"], {"positive": None}
+                link_info["to_id"], {"positive": None}, updated_nodes
             )
         elif link_info["link_type"] == LinkType.OPPOSE.value:
             from_opinion.opposes.disconnect(to_opinion)
             update_score.update_node_score_positively_recursively(
-                link_info["to_id"], {"negative": None}
+                link_info["to_id"], {"negative": None}, updated_nodes
             )
         update_score.update_node_score_negatively_recursively(
-            link_info["from_id"], new_score=None
+            link_info["from_id"], updated_nodes=updated_nodes, new_score=None
         )
+        return updated_nodes
     except Exception as e:
         raise RuntimeError(f"Failed to delete link in Neo4j: {str(e)}")
 
 
-def delete_link(link_id: str):
+def delete_link(link_id: str) -> dict[str, dict[str, float | None]]:
     """
     Delete a link in the Neo4j database.
 
     :param link_id: The ID of the link to delete.
+    :return: A dictionary of updated node IDs with their new scores.
     """
     try:
         info = info_link(link_id)
     except Exception as e:
         raise RuntimeError(f"Failed to find link info in Neo4j: {str(e)}")
-    delete_link_by_info(info)
+    updated_nodes = delete_link_by_info(info)
+    return updated_nodes
 
 
 def info_link(link_id: str) -> dict[str, str]:
@@ -124,12 +131,13 @@ def info_link(link_id: str) -> dict[str, str]:
         raise RuntimeError(f"Failed to retrieve link info from Neo4j: {str(e)}")
 
 
-def patch_link(link_id: str, link_type: LinkType):
+def patch_link(link_id: str, link_type: LinkType) -> dict[str, dict[str, float | None]]:
     """
     Patch a link in the Neo4j database.
 
     :param link_id: The ID of the link to patch.
     :param link_type: The new type of the link (support or oppose).
+    :return: A dictionary of updated node IDs with their new scores.
     """
     try:
         # 查询原关系及其两端节点
@@ -145,10 +153,10 @@ def patch_link(link_id: str, link_type: LinkType):
 
         # 如果类型未变，直接返回
         if old_type == link_type.value:
-            return
+            return {}
 
         # 删除原关系，并更新分数
-        delete_link(link_id)
+        updated_nodes = delete_link(link_id)
 
         # 创建新类型关系，并保留原uid
         create_query = f"""
@@ -160,7 +168,9 @@ def patch_link(link_id: str, link_type: LinkType):
         )
 
         # 更新相关节点的分数
-        update_score.update_node_score_positively_from(from_id, is_refresh=True)
+        update_score.update_node_score_positively_from(from_id, updated_nodes, is_refresh=True)
+
+        return updated_nodes
 
     except Exception as e:
         raise RuntimeError(f"Failed to patch link in Neo4j: {str(e)}")
@@ -194,7 +204,7 @@ def attack_link(link_id: str, debate_id: str) -> tuple[str, str]:
             debate_id=debate_id,
         )
         # Create an AND opinion from the original link
-        new_and_opinion_id = create_and_opinion(
+        new_and_opinion_id, _ = create_and_opinion(
             parent_id=to_opinion.uid,
             son_ids=[new_or_opinion_id, from_opinion.uid],
             link_type=LinkType.SUPPORT,

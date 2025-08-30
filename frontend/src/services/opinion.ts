@@ -1,5 +1,5 @@
 import { apiClient } from './api';
-import type { Node, ApiResponse, LogicType, LinkType } from '@/types';
+import type { Node, ApiResponse, LogicType, LinkType, UpdatedNodes } from '@/types';
 
 export interface OpinionCreateOrData {
   content: string;
@@ -17,6 +17,7 @@ export interface OpinionCreateAndData {
   creator: string;
   host?: string;
   debate_id?: string;
+  loaded_ids: string[];
 }
 
 export interface OpinionUpdateData {
@@ -27,6 +28,7 @@ export interface OpinionUpdateData {
   };
   is_llm_score?: boolean;
   creator?: string;
+  loaded_ids: string[];
 }
 
 export interface OpinionQueryParams {
@@ -46,6 +48,7 @@ export interface OpinionHeadParams {
 export interface OpinionDeleteData {
   opinion_id: string;
   debate_id?: string;
+  loaded_ids: string[];
 }
 
 export class OpinionService {
@@ -53,11 +56,13 @@ export class OpinionService {
     return apiClient.post('/opinion/create_or', data);
   }
 
-  async createAnd(data: OpinionCreateAndData): Promise<ApiResponse<{ id: string }>> {
+  async createAnd(
+    data: OpinionCreateAndData,
+  ): Promise<ApiResponse<{ id: string; updated_nodes: UpdatedNodes }>> {
     return apiClient.post('/opinion/create_and', data);
   }
 
-  async delete(data: OpinionDeleteData): Promise<ApiResponse<void>> {
+  async delete(data: OpinionDeleteData): Promise<ApiResponse<{ updated_nodes: UpdatedNodes }>> {
     return apiClient.post('/opinion/delete', data);
   }
 
@@ -85,7 +90,7 @@ export class OpinionService {
     return apiClient.post('/opinion/head', params);
   }
 
-  async update(data: OpinionUpdateData): Promise<ApiResponse<void>> {
+  async update(data: OpinionUpdateData): Promise<ApiResponse<{ updated_nodes: UpdatedNodes }>> {
     return apiClient.post('/opinion/patch', data);
   }
 }
