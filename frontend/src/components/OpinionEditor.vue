@@ -34,37 +34,39 @@
 
           <!-- 与观点的父节点和子节点选择 -->
           <div v-if="form.logic_type === 'and'" class="mb-6">
-            <v-select
+            <v-autocomplete
               v-model="form.parent_id"
-              :items="solidNodes"
-              item-title="content"
-              item-value="id"
+              :items="solidNodesForSelect"
+              item-title="title"
+              item-value="value"
               label="父观点"
-              placeholder="请选择父观点"
+              placeholder="搜索或选择父观点"
               variant="outlined"
               required
               :error-messages="formErrors.parent_id"
               class="mb-4"
+              clearable
             />
             <v-autocomplete
               v-model="form.son_ids"
-              :items="solidSonNodes"
-              item-title="content"
-              item-value="id"
+              :items="solidSonNodesForSelect"
+              item-title="title"
+              item-value="value"
               label="子观点"
-              placeholder="请选择子观点"
+              placeholder="搜索或选择子观点"
               variant="outlined"
               multiple
               chips
               closable-chips
               :error-messages="formErrors.son_ids"
               class="mb-4"
+              clearable
             />
 
             <h5 class="text-subtitle-1 mb-3">连接类型</h5>
             <v-radio-group v-model="form.link_type" inline>
-              <v-radio label="支持 - 子观点支持父观点" value="supports" />
-              <v-radio label="反驳 - 子观点反驳父观点" value="opposes" />
+              <v-radio label="支持 - 与观点支持父观点" value="supports" />
+              <v-radio label="反驳 - 与观点反驳父观点" value="opposes" />
             </v-radio-group>
           </div>
 
@@ -140,6 +142,21 @@ const solidSonNodes = computed(() => {
     }
     return true;
   });
+});
+
+// 为 v-autocomplete 转换数据格式
+const solidNodesForSelect = computed(() => {
+  return solidNodes.value.map((node) => ({
+    title: node.content,
+    value: node.id,
+  }));
+});
+
+const solidSonNodesForSelect = computed(() => {
+  return solidSonNodes.value.map((node) => ({
+    title: node.content,
+    value: node.id,
+  }));
 });
 
 // 表单状态管理

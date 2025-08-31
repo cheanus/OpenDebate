@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Query
 from typing import Annotated
 from schemas.opinion import *
-from schemas.msg import MsgResponse
 from core.opinion import (
     create_or_opinion,
     create_and_opinion,
