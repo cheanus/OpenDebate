@@ -38,7 +38,7 @@
   </div>
 
   <!-- 节点元数据面板 -->
-  <div v-if="selectedNode" class="meta-panel" :style="metaPanelStyle">
+  <div v-if="isShowNodePanel" class="meta-panel" :style="metaPanelStyle">
     <h3>节点元数据</h3>
     <div v-for="(v, k) in selectedNodeData" :key="k">
       <b>{{ k }}:</b> {{ v }}
@@ -46,7 +46,7 @@
   </div>
 
   <!-- 边元数据面板 -->
-  <div v-if="selectedEdge" class="meta-panel" :style="edgeMetaPanelStyle">
+  <div v-if="isShowEdgePanel" class="meta-panel" :style="edgeMetaPanelStyle">
     <h3>连接元数据</h3>
     <div v-for="(v, k) in selectedEdgeData" :key="k">
       <b>{{ k }}:</b> {{ v }}
@@ -138,6 +138,9 @@ const arrowsOverlay = ref<HTMLElement | null>(null);
 
 // Cytoscape 实例
 let cy: Core | null = null;
+// 元数据面板显示变量
+const isShowNodePanel = ref(false);
+const isShowEdgePanel = ref(false);
 
 // 使用组合函数
 const { nodesWithArrows, showNodeArrows, hideNodeArrows, updateArrowsPosition } = useNodeArrows();
@@ -146,9 +149,7 @@ const {
   showContextMenu,
   contextMenuStyle,
   contextMenuType,
-  selectedNode,
   selectedNodeData,
-  selectedEdge,
   selectedEdgeData,
   metaPanelStyle,
   edgeMetaPanelStyle,
@@ -201,6 +202,10 @@ const setupEventListeners = () => {
     setSelectedNode(node, renderedPos);
     setSelectedEdge(null);
 
+    isShowNodePanel.value = true;
+    isShowEdgePanel.value = false;
+    hideContextMenu();
+
     emit('nodeSelected', node.data());
   });
 
@@ -212,6 +217,10 @@ const setupEventListeners = () => {
     setSelectedEdge(edge, renderedPos);
     setSelectedNode(null);
 
+    isShowEdgePanel.value = true;
+    isShowNodePanel.value = false;
+    hideContextMenu();
+
     emit('edgeSelected', edge.data());
   });
 
@@ -220,6 +229,8 @@ const setupEventListeners = () => {
     if (evt.target === cy) {
       setSelectedNode(null);
       setSelectedEdge(null);
+      isShowNodePanel.value = false;
+      isShowEdgePanel.value = false;
       hideContextMenu();
       emit('nodeSelected', null);
       emit('edgeSelected', null);
@@ -235,6 +246,10 @@ const setupEventListeners = () => {
     // 设置选中的节点
     setSelectedNode(node, { x: pos.x, y: pos.y });
     setSelectedEdge(null);
+
+    // 取消元数据面板
+    isShowNodePanel.value = false;
+    isShowEdgePanel.value = false;
 
     // 设置右键菜单
     setContextMenu(pos.x, pos.y, 'node');
@@ -253,6 +268,10 @@ const setupEventListeners = () => {
     setSelectedEdge(edge, { x: pos.x, y: pos.y });
     setSelectedNode(null);
 
+    // 取消元数据面板
+    isShowNodePanel.value = false;
+    isShowEdgePanel.value = false;
+
     // 设置右键菜单
     setContextMenu(pos.x, pos.y, 'edge');
 
@@ -262,6 +281,9 @@ const setupEventListeners = () => {
 
   // 空白区域右键菜单
   cy.on('cxttap', (evt) => {
+    // 取消元数据面板
+    isShowNodePanel.value = false;
+    isShowEdgePanel.value = false;
     if (evt.target === cy) {
       const pos = evt.renderedPosition || evt.position;
       setContextMenu(pos.x, pos.y, 'canvas');
@@ -305,6 +327,11 @@ watch(
       const currentPan = cy.pan();
 
       updateElements(cy, newElements);
+
+      // 取消元数据面板和右键菜单
+      setSelectedNode(null);
+      setSelectedEdge(null);
+      hideContextMenu();
 
       // 运行布局
       const layout = cy.layout(props.layout);

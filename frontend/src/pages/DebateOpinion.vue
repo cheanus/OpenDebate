@@ -26,9 +26,6 @@
       />
     </div>
 
-    <!-- 操作提示 -->
-    <HelpSection />
-
     <!-- 观点编辑器 -->
     <OpinionEditor
       v-if="showOpinionEditor"
@@ -60,7 +57,6 @@ import OpinionEditor from '../components/OpinionEditor.vue';
 import LinkEditor from '../components/LinkEditor.vue';
 import PageHeader from './DebateOpinion/PageHeader.vue';
 import SearchOverlay from './DebateOpinion/SearchOverlay.vue';
-import HelpSection from './DebateOpinion/HelpSection.vue';
 
 import { useOpinionGraph } from '@/composables';
 import { useEditorState } from '@/composables/features/opinion/useEditorState';
@@ -305,7 +301,7 @@ onMounted(async () => {
 }
 
 .graph-container {
-  height: 60vh;
+  height: 77vh;
   min-height: 500px;
 }
 </style>

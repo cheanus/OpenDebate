@@ -5,10 +5,6 @@
         <v-icon color="primary" class="mr-3" size="large">mdi-sitemap</v-icon>
         <h2 class="text-h4">辩论观点图</h2>
       </div>
-
-      <p class="text-subtitle-1 text-medium-emphasis mb-0">
-        点击节点上下箭头加载相邻观点，右键进行操作
-      </p>
     </v-card-text>
   </v-card>
 </template>
