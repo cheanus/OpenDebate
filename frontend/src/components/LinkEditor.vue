@@ -10,41 +10,35 @@
 
       <v-card-text class="pa-6">
         <v-form @submit.prevent="handleSubmit">
-          <!-- 起始节点 -->
-          <v-select
-            v-model="form.from_id"
-            :items="availabeFromNodes"
-            item-title="content"
-            item-value="id"
-            label="起始观点"
-            placeholder="请选择起始观点"
-            variant="outlined"
-            required
-            :error-messages="formErrors.from_id"
-            class="mb-4"
-          >
-            <template v-slot:item="{ props, item }">
-              <v-list-item v-bind="props" :title="item.raw.content?.slice(0, 60) + '...'" />
-            </template>
-          </v-select>
-
           <!-- 目标节点 -->
-          <v-select
+          <v-autocomplete
             v-model="form.to_id"
-            :items="availableToNodes"
-            item-title="content"
-            item-value="id"
+            :items="availableToNodesForSelect"
+            item-title="title"
+            item-value="value"
             label="目标观点"
-            placeholder="请选择目标观点"
+            placeholder="搜索或选择目标观点"
             variant="outlined"
             required
             :error-messages="formErrors.to_id"
             class="mb-4"
-          >
-            <template v-slot:item="{ props, item }">
-              <v-list-item v-bind="props" :title="item.raw.content?.slice(0, 60) + '...'" />
-            </template>
-          </v-select>
+            clearable
+          />
+
+          <!-- 起始节点 -->
+          <v-autocomplete
+            v-model="form.from_id"
+            :items="availableFromNodesForSelect"
+            item-title="title"
+            item-value="value"
+            label="起始观点"
+            placeholder="搜索或选择起始观点"
+            variant="outlined"
+            required
+            :error-messages="formErrors.from_id"
+            class="mb-4"
+            clearable
+          />
 
           <!-- 连接类型 -->
           <div class="mb-6">
@@ -131,9 +125,26 @@ const isSubmitting = ref(false);
 const availabeFromNodes = computed(() => {
   return props.availableNodes.filter((node) => node.node_type === 'solid');
 });
+
 // 计算可用的目标节点（排除已选择的起始节点）
 const availableToNodes = computed(() => {
   return availabeFromNodes.value.filter((node) => node.id !== form.value.from_id);
+});
+
+// 为 v-autocomplete 转换起始节点数据格式
+const availableFromNodesForSelect = computed(() => {
+  return availabeFromNodes.value.map((node) => ({
+    title: node.content,
+    value: node.id,
+  }));
+});
+
+// 为 v-autocomplete 转换目标节点数据格式
+const availableToNodesForSelect = computed(() => {
+  return availableToNodes.value.map((node) => ({
+    title: node.content,
+    value: node.id,
+  }));
 });
 
 // 清除表单错误
