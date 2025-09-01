@@ -14,7 +14,7 @@ from core.opinion import (
 router = APIRouter()
 
 
-@router.post("/create_or", response_model=CreateOpinionResponse)
+@router.post("/create_or", response_model=CreateOROpinionResponse)
 def create_or_opinion_http(request: CreateOrOpinionRequest):
     if request.is_llm_score:
         try:
@@ -22,7 +22,7 @@ def create_or_opinion_http(request: CreateOrOpinionRequest):
         except Exception as e:
             return {"is_success": False, "msg": str(e)}
     try:
-        id = create_or_opinion(
+        node_id = create_or_opinion(
             content=request.content,
             creator=request.creator,
             host="local",
@@ -30,17 +30,17 @@ def create_or_opinion_http(request: CreateOrOpinionRequest):
             positive_score=request.positive_score,
             debate_id=request.debate_id,
         )
-        result = {"is_success": True, "id": id}
+        result = {"is_success": True, "node_id": node_id}
     except Exception as e:
         result = {"is_success": False, "msg": str(e)}
 
     return result
 
 
-@router.post("/create_and", response_model=CreateOpinionResponse)
+@router.post("/create_and", response_model=CreateANDOpinionResponse)
 def create_and_opinion_http(request: CreateAndOpinionRequest):
     try:
-        id, updated_nodes = create_and_opinion(
+        node_id, link_ids, updated_nodes = create_and_opinion(
             parent_id=request.parent_id,
             son_ids=request.son_ids,
             link_type=request.link_type,
@@ -48,8 +48,15 @@ def create_and_opinion_http(request: CreateAndOpinionRequest):
             host="local",
             debate_id=request.debate_id,
         )
-        need_updated_nodes = {k: updated_nodes[k] for k in request.loaded_ids if k in updated_nodes}
-        result = {"is_success": True, "id": id, "updated_nodes": need_updated_nodes}
+        need_updated_nodes = {
+            k: updated_nodes[k] for k in request.loaded_ids if k in updated_nodes
+        }
+        result = {
+            "is_success": True,
+            "node_id": node_id,
+            "link_ids": link_ids,
+            "updated_nodes": need_updated_nodes,
+        }
     except Exception as e:
         result = {"is_success": False, "msg": str(e)}
 
@@ -63,7 +70,9 @@ def delete_opinion_http(request: DeleteOpinionRequest):
             opinion_id=request.opinion_id,
             debate_id=request.debate_id,
         )
-        need_updated_nodes = {k: updated_nodes[k] for k in request.loaded_ids if k in updated_nodes}
+        need_updated_nodes = {
+            k: updated_nodes[k] for k in request.loaded_ids if k in updated_nodes
+        }
         result = {"is_success": True, "updated_nodes": need_updated_nodes}
     except Exception as e:
         result = {"is_success": False, "msg": str(e)}
@@ -139,7 +148,9 @@ def patch_opinion_http(request: PatchOpinionRequest):
             is_llm_score=request.is_llm_score,
             creator=request.creator,
         )
-        need_updated_nodes = {k: updated_nodes[k] for k in request.loaded_ids if k in updated_nodes}
+        need_updated_nodes = {
+            k: updated_nodes[k] for k in request.loaded_ids if k in updated_nodes
+        }
         return {"is_success": True, "updated_nodes": need_updated_nodes}
     except Exception as e:
         return {"is_success": False, "msg": str(e)}

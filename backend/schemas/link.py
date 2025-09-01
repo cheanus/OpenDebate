@@ -66,3 +66,4 @@ class AttackLinkRequest(BaseModel):
 class AttackLinkResponse(MsgResponse):
     or_id: str | None = None
     and_id: str | None = None
+    link_ids: list[str] | None = None

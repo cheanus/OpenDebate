@@ -129,7 +129,7 @@ export function useOpinionGraph(debateId: string) {
   };
 
   // CRUD 操作
-  const { createOpinion, updateOpinion, deleteOpinion, createLink, updateLink, deleteLink } =
+  const { createOpinion, updateOpinion, deleteOpinion, createLink, updateLink, deleteLink, attackLink } =
     useGraphCRUD(
       debateId,
       loading,
@@ -186,6 +186,7 @@ export function useOpinionGraph(debateId: string) {
     createLink,
     updateLink,
     deleteLink,
+    attackLink,
 
     // 设置操作
     loadSettings,

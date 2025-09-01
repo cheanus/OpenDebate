@@ -58,7 +58,9 @@ def create_link(
     return link_id, updated_nodes
 
 
-def delete_link_by_info(link_info: dict[str, str]) -> dict[str, dict[str, float | None]]:
+def delete_link_by_info(
+    link_info: dict[str, str],
+) -> dict[str, dict[str, float | None]]:
     """
     Delete a link in the Neo4j database.
 
@@ -168,7 +170,9 @@ def patch_link(link_id: str, link_type: LinkType) -> dict[str, dict[str, float |
         )
 
         # 更新相关节点的分数
-        update_score.update_node_score_positively_from(from_id, updated_nodes, is_refresh=True)
+        update_score.update_node_score_positively_from(
+            from_id, updated_nodes, is_refresh=True
+        )
 
         return updated_nodes
 
@@ -176,7 +180,7 @@ def patch_link(link_id: str, link_type: LinkType) -> dict[str, dict[str, float |
         raise RuntimeError(f"Failed to patch link in Neo4j: {str(e)}")
 
 
-def attack_link(link_id: str, debate_id: str) -> tuple[str, str]:
+def attack_link(link_id: str, debate_id: str) -> tuple[str, str, list[str]]:
     """
     Split a link into an AND opinion, and create another OR opinion to attack it.
 
@@ -204,9 +208,9 @@ def attack_link(link_id: str, debate_id: str) -> tuple[str, str]:
             debate_id=debate_id,
         )
         # Create an AND opinion from the original link
-        new_and_opinion_id, _ = create_and_opinion(
+        new_and_opinion_id, link_ids, _ = create_and_opinion(
             parent_id=to_opinion.uid,
-            son_ids=[new_or_opinion_id, from_opinion.uid],
+            son_ids=[from_opinion.uid, new_or_opinion_id],
             link_type=LinkType.SUPPORT,
             creator="system",
             host=from_opinion.host,
@@ -218,6 +222,10 @@ def attack_link(link_id: str, debate_id: str) -> tuple[str, str]:
         new_and_opinion.son_positive_score = from_opinion.positive_score
         new_and_opinion.negative_score = from_opinion.negative_score
         new_and_opinion.save()
-        return new_or_opinion_id, new_and_opinion_id
+        return (
+            new_or_opinion_id,
+            new_and_opinion_id,
+            link_ids,
+        )
     except Exception as e:
         raise RuntimeError(f"Failed to attack link in Neo4j: {str(e)}")

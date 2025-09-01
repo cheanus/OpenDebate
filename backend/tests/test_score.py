@@ -95,7 +95,7 @@ def negative_test(debate_id: str, op_root: str):
         debate_id=debate_id,
         positive_score=0.6,
     )
-    op_1neg1, _ = create_and_opinion(
+    op_1neg1, _, _ = create_and_opinion(
         parent_id=op_root,
         son_ids=[op_1neg1pos1, op_1neg1pos2],
         link_type=LinkType.OPPOSE,
@@ -119,7 +119,7 @@ def negative_test(debate_id: str, op_root: str):
         debate_id=debate_id,
         positive_score=0.8,
     )
-    op_1neg2, _ = create_and_opinion(
+    op_1neg2, _, _ = create_and_opinion(
         parent_id=op_root,
         son_ids=[op_1neg2pos1, op_1neg2pos2],
         link_type=LinkType.OPPOSE,

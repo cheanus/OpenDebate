@@ -7,7 +7,7 @@ export interface OpinionCreateOrData {
   logic_type?: LogicType;
   is_llm_score?: boolean;
   creator: string;
-  debate_id?: string;
+  debate_id: string;
 }
 
 export interface OpinionCreateAndData {
@@ -16,7 +16,7 @@ export interface OpinionCreateAndData {
   link_type: LinkType;
   creator: string;
   host?: string;
-  debate_id?: string;
+  debate_id: string;
   loaded_ids: string[];
 }
 
@@ -47,18 +47,18 @@ export interface OpinionHeadParams {
 
 export interface OpinionDeleteData {
   opinion_id: string;
-  debate_id?: string;
+  debate_id: string;
   loaded_ids: string[];
 }
 
 export class OpinionService {
-  async createOr(data: OpinionCreateOrData): Promise<ApiResponse<{ id: string }>> {
+  async createOr(data: OpinionCreateOrData): Promise<ApiResponse<{ node_id: string }>> {
     return apiClient.post('/opinion/create_or', data);
   }
 
   async createAnd(
     data: OpinionCreateAndData,
-  ): Promise<ApiResponse<{ id: string; updated_nodes: UpdatedNodes }>> {
+  ): Promise<ApiResponse<{ node_id: string; link_ids: string[]; updated_nodes: UpdatedNodes }>> {
     return apiClient.post('/opinion/create_and', data);
   }
 

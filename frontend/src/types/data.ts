@@ -68,9 +68,9 @@ export type Element =
 export interface Edge {
   from_id: string;
   id: string;
-  is_success: boolean;
+  is_success?: boolean;
   link_type: LinkType;
-  msg: null;
+  msg?: string | null;
   to_id: string;
 }
 

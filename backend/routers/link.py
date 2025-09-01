@@ -31,7 +31,9 @@ def create_link_http(request: CreateLinkRequest):
         link_id, updated_nodes = create_link(
             from_id=request.from_id, to_id=request.to_id, link_type=request.link_type
         )
-        need_updated_nodes = {k: updated_nodes[k] for k in updated_nodes if updated_nodes[k] is not None}
+        need_updated_nodes = {
+            k: updated_nodes[k] for k in updated_nodes if updated_nodes[k] is not None
+        }
         return {"is_success": True, "id": link_id, "updated_nodes": need_updated_nodes}
     except Exception as e:
         return {"is_success": False, "msg": str(e)}
@@ -51,7 +53,9 @@ def delete_link_http(request: LinkRequest):
                 "msg": "Cannot delete link to an AND opinion.",
             }
         updated_nodes = delete_link_by_info(link_info=link_info)
-        need_updated_nodes = {k: updated_nodes[k] for k in request.loaded_ids if k in updated_nodes}
+        need_updated_nodes = {
+            k: updated_nodes[k] for k in request.loaded_ids if k in updated_nodes
+        }
         return {"is_success": True, "updated_nodes": need_updated_nodes}
     except Exception as e:
         return {"is_success": False, "msg": str(e)}
@@ -82,7 +86,9 @@ def patch_link_http(request: PatchLinkRequest):
     """
     try:
         updated_nodes = patch_link(link_id=request.link_id, link_type=request.link_type)
-        need_updated_nodes = {k: updated_nodes[k] for k in request.loaded_ids if k in updated_nodes}
+        need_updated_nodes = {
+            k: updated_nodes[k] for k in request.loaded_ids if k in updated_nodes
+        }
         return {"is_success": True, "updated_nodes": need_updated_nodes}
     except Exception as e:
         return {"is_success": False, "msg": str(e)}
@@ -94,7 +100,14 @@ def attack_link_http(request: AttackLinkRequest):
     对链辩论，即对链进行攻击，返回OR和AND观点的ID
     """
     try:
-        or_id, and_id = attack_link(link_id=request.link_id, debate_id=request.debate_id)
-        return {"is_success": True, "or_id": or_id, "and_id": and_id}
+        or_id, and_id, link_ids = attack_link(
+            link_id=request.link_id, debate_id=request.debate_id
+        )
+        return {
+            "is_success": True,
+            "or_id": or_id,
+            "and_id": and_id,
+            "link_ids": link_ids,
+        }
     except Exception as e:
         return {"is_success": False, "msg": str(e)}

@@ -44,8 +44,15 @@ class CreateAndOpinionRequest(BaseModel):
     )
 
 
-class CreateOpinionResponse(MsgResponse):
-    id: str = Field(..., description="ID of the created opinion")
+class CreateOROpinionResponse(MsgResponse):
+    node_id: str = Field(..., description="ID of the created opinion")
+
+
+class CreateANDOpinionResponse(MsgResponse):
+    node_id: str = Field(..., description="ID of the created opinion")
+    link_ids: list[str] | None = Field(
+        None, description="IDs of the created links if any"
+    )
     updated_nodes: dict[str, dict[str, float | None]] | None = Field(
         None, description="IDs of nodes with updated scores and their new scores"
     )

@@ -71,7 +71,7 @@ def create_and_opinion(
     creator: str,
     debate_id: str,
     host: str = "local",
-) -> tuple[str, dict[str, float | None]]:
+) -> tuple[str, list[str], dict[str, dict[str, float | None]]]:
     """
     Create a new AND opinion with the given parameters.
 
@@ -93,6 +93,7 @@ def create_and_opinion(
             psql_session.rollback()
             raise RuntimeError(f"Failed to create opinion in PostgreSQL: {str(e)}")
 
+    links_ids: list[str] = []
     try:
         # Firstly check if son opinions are not empty
         son_opinion_neo4j_list = []
@@ -117,14 +118,19 @@ def create_and_opinion(
         # Link the new AND opinion to the parent opinion
         if link_type == LinkType.SUPPORT:
             new_opinion_neo4j.supports.connect(parent_opinion_neo4j)  # type: ignore
+            rel = new_opinion_neo4j.supports.relationship(parent_opinion_neo4j)  # type: ignore
         elif link_type == LinkType.OPPOSE:
             new_opinion_neo4j.opposes.connect(parent_opinion_neo4j)  # type: ignore
+            rel = new_opinion_neo4j.opposes.relationship(parent_opinion_neo4j)  # type: ignore
         else:
             raise ValueError(f"Unsupported link type: {link_type}")
+        links_ids.append(rel.uid)
         # Link the new AND opinion to the child opinions
         for son_opinion_neo4j in son_opinion_neo4j_list:
-            son_opinion_neo4j.supports.connect(new_opinion_neo4j)  # type: ignore
-        updated_nodes = dict()
+            son_opinion_neo4j.supports.connect(new_opinion_neo4j)
+            rel_son = son_opinion_neo4j.supports.relationship(new_opinion_neo4j)
+            links_ids.append(rel_son.uid)
+        updated_nodes: dict[str, dict[str, float | None]] = {}
         # Update score
         update_score.refresh_son_type_score(
             str(new_opinion_neo4j.uid), "positive", updated_nodes
@@ -150,7 +156,7 @@ def create_and_opinion(
     except Exception as e:
         raise RuntimeError(f"Failed to link opinion to debate in PostgreSQL: {str(e)}")
 
-    return str(new_opinion_psql.id), updated_nodes
+    return str(new_opinion_psql.id), links_ids, updated_nodes
 
 
 def delete_opinion(opinion_id: str, debate_id: str) -> dict[str, float | None]:
@@ -481,7 +487,9 @@ def patch_opinion(
             op_neo4j.positive_score = score["positive"]
             op_neo4j.save()
             updated_nodes.setdefault(opinion_id, {})["positive"] = score["positive"]
-            update_score.update_node_score_positively_from(opinion_id, updated_nodes, is_refresh=True)
+            update_score.update_node_score_positively_from(
+                opinion_id, updated_nodes, is_refresh=True
+            )
         op_neo4j.save()
         return updated_nodes
     except Exception as e:

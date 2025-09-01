@@ -86,12 +86,12 @@ const {
   createLink,
   updateLink,
   deleteLink,
+  attackLink,
   setSelectedNode,
   setSelectedEdge,
 } = useOpinionGraph(debateId);
 
 // CRUD修复工具
-//TODO：有必要吗
 const { wrapCRUDOperation } = useCRUDWrapper();
 
 // 编辑器状态管理
@@ -139,8 +139,8 @@ const handleOpinionSubmit = async (data: OpinionFormData, isEdit: boolean) => {
 
   await wrapCRUDOperation(
     operation,
-    isEdit ? '观点更新成功' : '观点创建成功',
-    isEdit ? '观点更新失败' : '观点创建失败',
+    isEdit ? '更新观点成功' : '创建观点成功',
+    isEdit ? '更新观点失败' : '创建观点失败',
   );
 
   closeOpinionEditor();
@@ -164,8 +164,8 @@ const handleLinkSubmit = async (data: LinkFormData, isEdit: boolean) => {
 
   await wrapCRUDOperation(
     operation,
-    isEdit ? '连接更新成功' : '连接创建成功',
-    isEdit ? '连接更新失败' : '连接创建失败',
+    isEdit ? '更新连接成功' : '创建连接成功',
+    isEdit ? '更新连接失败' : '创建连接失败',
   );
 
   closeLinkEditor();
@@ -180,7 +180,7 @@ const handleOpinionDelete = async (opinionId: string) => {
     return await deleteOpinion(opinionId);
   };
 
-  await wrapCRUDOperation(operation, '观点删除成功', '删除观点失败');
+  await wrapCRUDOperation(operation, '删除观点成功', '删除观点失败');
 
   closeOpinionEditor();
 };
@@ -194,7 +194,21 @@ const handleLinkDelete = async (linkId: string) => {
     return await deleteLink(linkId);
   };
 
-  await wrapCRUDOperation(operation, '连接删除成功', '删除连接失败');
+  await wrapCRUDOperation(operation, '删除连接成功', '删除连接失败');
+
+  closeLinkEditor();
+};
+
+const handleLinkAttack = async (linkId: string) => {
+  if (!confirm('确定要质疑这个连接吗？')) {
+    return;
+  }
+
+  const operation = async () => {
+    return await attackLink(linkId);
+  };
+
+  await wrapCRUDOperation(operation, '质疑连接成功', '质疑连接失败');
 
   closeLinkEditor();
 };
@@ -223,6 +237,11 @@ const handleContextMenuAction = async (action: string) => {
     case 'deleteLink':
       if (selectedEdge.value) {
         await handleLinkDelete(selectedEdge.value.id);
+      }
+      break;
+    case 'attackLink':
+      if (selectedEdge.value) {
+        await handleLinkAttack(selectedEdge.value.id);
       }
       break;
     case 'addLink':

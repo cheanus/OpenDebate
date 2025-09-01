@@ -31,6 +31,10 @@
         <span class="menu-icon">×</span>
         删除连接
       </div>
+      <div class="context-menu-item" @click="handleAction('attackLink')">
+        <span class="menu-icon">？</span>
+        质疑连接
+      </div>
     </div>
 
     <!-- 空白区域右键菜单 -->

@@ -12,7 +12,7 @@ export function useGraphCRUD(
   refreshView: () => Promise<void>,
   removeNode: (nodeId: string) => void,
   removeEdge: (edgeId: string) => void,
-  addNode: (node: OpinionNode) => void,
+  addNode: (node: OpinionNode, hasMoreChildren?: boolean | null, hasMoreParents?: boolean | null) => void,
   addEdge: (edge: Edge) => void,
   refreshOpinions: (updatedNodes: UpdatedNodes) => void,
   loadedNodes: ReturnType<typeof ref<Set<string>>>,
@@ -32,7 +32,7 @@ export function useGraphCRUD(
     error.value = null;
 
     try {
-      let response, updatedNodes;
+      let response, ANDNodeData;
       if (data.logic_type === 'and') {
         response = await opinionService.createAnd({
           parent_id: data.parent_id!,
@@ -42,7 +42,7 @@ export function useGraphCRUD(
           debate_id: debateId,
           loaded_ids: Array.from(loadedNodes.value!),
         });
-        updatedNodes = response.data?.updated_nodes;
+        ANDNodeData = response.data;
       } else {
         response = await opinionService.createOr({
           content: data.content!,
@@ -56,7 +56,7 @@ export function useGraphCRUD(
       if (response.is_success && response.data) {
         // 获取新创建的观点信息并添加到视图中
         try {
-          const newOpinionId = response.data.id;
+          const newOpinionId = response.data.node_id;
           const opinionInfoResponse = await opinionService.getInfo(newOpinionId, debateId);
 
           if (opinionInfoResponse.is_success && opinionInfoResponse.data) {
@@ -67,36 +67,35 @@ export function useGraphCRUD(
 
             // 如果是与观点，还需要创建相应的连接
             if (data.logic_type === 'and' && data.parent_id && data.son_ids) {
+              if (!ANDNodeData) {
+                throw new Error('缺少 AND 节点数据');
+              }
               // 创建父节点到新节点的连接
               if (addEdge) {
                 const parentEdge: Edge = {
-                  id: `${data.parent_id}-${newOpinionId}`,
+                  id: ANDNodeData.link_ids[0],
                   from_id: data.parent_id,
                   to_id: newOpinionId,
                   link_type: data.link_type!,
-                  is_success: true,
-                  msg: null,
                 };
                 addEdge(parentEdge);
               }
 
               // 创建新节点到子节点的连接
               if (addEdge) {
-                for (const sonId of data.son_ids) {
+                for (let i = 0; i < data.son_ids.length; i++) {
                   const childEdge: Edge = {
-                    id: `${newOpinionId}-${sonId}`,
+                    id: ANDNodeData.link_ids[i],
                     from_id: newOpinionId,
-                    to_id: sonId,
+                    to_id: data.son_ids[i],
                     link_type: data.link_type!,
-                    is_success: true,
-                    msg: null,
                   };
                   addEdge(childEdge);
                 }
               }
 
               // 更新受影响的点分数
-              refreshOpinions(updatedNodes!);
+              refreshOpinions(ANDNodeData.updated_nodes);
             }
 
             return response.data;
@@ -211,8 +210,6 @@ export function useGraphCRUD(
             from_id: data.from_id,
             to_id: data.to_id,
             link_type: data.link_type,
-            is_success: true,
-            msg: null,
           };
 
           addEdge(newEdge);
@@ -292,6 +289,61 @@ export function useGraphCRUD(
     }
   };
 
+  // 质疑连接
+  const attackLink = async (linkId: string) => {
+    loading.value = true;
+    error.value = null;
+
+    try {
+      // 提前获取 from_node、to_node
+      const old_link = (await linkService.getInfo(linkId)).data
+      const from_node_id = old_link?.from_id;
+      const to_node_id = old_link?.to_id;
+      const response = await linkService.attack({
+        link_id: linkId,
+        debate_id: debateId,
+      });
+      if (!response.is_success || !response.data) {
+        throw new Error(response.msg || '质疑连接失败');
+      }
+      // 添加2个新点
+      const or_node = (await opinionService.getInfo(response.data.or_id, debateId)).data;
+      const and_node = (await opinionService.getInfo(response.data.and_id, debateId)).data;
+      // 删除原链
+      removeEdge(linkId);
+      if (!or_node || !and_node || !from_node_id || !to_node_id) {
+        throw new Error('获取质疑产生的新观点失败');
+      }
+      addNode(or_node, false, false);
+      addNode(and_node, false, false);
+      // 添加3个新链
+      addEdge({
+        id: response.data.link_ids[0],
+        from_id: and_node.id,
+        to_id: to_node_id,
+        link_type: 'supports',
+      });
+      addEdge({
+        id: response.data.link_ids[1],
+        from_id: from_node_id,
+        to_id: and_node.id,
+        link_type: 'supports',
+      });
+      addEdge({
+        id: response.data.link_ids[2],
+        from_id: or_node.id,
+        to_id: and_node.id,
+        link_type: 'supports',
+      });
+      return true;
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : '质疑连接失败';
+      return false;
+    } finally {
+      loading.value = false;
+    }
+  };
+
   return {
     createOpinion,
     updateOpinion,
@@ -299,5 +351,6 @@ export function useGraphCRUD(
     createLink,
     updateLink,
     deleteLink,
+    attackLink,
   };
 }
