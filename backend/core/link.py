@@ -194,6 +194,8 @@ def attack_link(link_id: str, debate_id: str) -> tuple[str, str, list[str]]:
         to_opinion = OpinionNeo4j.nodes.get(uid=link_info["to_id"])
         if to_opinion.logic_type == "and":
             raise ValueError("Cannot attack an AND opinion.")
+        if from_opinion.intermediate:
+            raise ValueError("Cannot attack an intermediate opinion.")
         # Delete the original link
         if link_info["link_type"] == LinkType.SUPPORT.value:
             from_opinion.supports.disconnect(to_opinion)
@@ -215,6 +217,7 @@ def attack_link(link_id: str, debate_id: str) -> tuple[str, str, list[str]]:
             creator="system",
             host=from_opinion.host,
             debate_id=debate_id,
+            intermediate=True,
         )
         # Update scores
         new_and_opinion = OpinionNeo4j.nodes.get(uid=new_and_opinion_id)

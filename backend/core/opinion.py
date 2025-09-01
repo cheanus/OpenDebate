@@ -70,6 +70,7 @@ def create_and_opinion(
     link_type: LinkType,
     creator: str,
     debate_id: str,
+    intermediate: bool = False,
     host: str = "local",
 ) -> tuple[str, list[str], dict[str, dict[str, float | None]]]:
     """
@@ -80,6 +81,7 @@ def create_and_opinion(
     :param link_type: The type of link to create between the opinion and the parent opinion.
     :param creator: The ID of the user creating the opinion.
     :param debate_id: ID of the debate this opinion belongs to.
+    :param intermediate: Whether the opinion is an intermediate node.
     :param host: The ID of the host (local or external) associated with the opinion.
     :return: The ID of the created opinion or a success message, and a dictionary of updated IDs and their new scores.
     """
@@ -113,6 +115,7 @@ def create_and_opinion(
             host=host,
             node_type="empty",
             logic_type=LogicType.AND.value,
+            intermediate=intermediate,
         )
         new_opinion_neo4j.save()
         # Link the new AND opinion to the parent opinion

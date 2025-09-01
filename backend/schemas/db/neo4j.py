@@ -1,6 +1,7 @@
 from neomodel import (
     StructuredNode,
     StringProperty,
+    BooleanProperty,
     FloatProperty,
     RelationshipTo,
     RelationshipFrom,
@@ -21,6 +22,7 @@ class Opinion(StructuredNode):
     node_type = StringProperty(
         choices={"solid": "solid", "empty": "empty"}, required=True
     )
+    intermediate = BooleanProperty(default=False)
     positive_score = FloatProperty(min_value=0, max_value=1)  #type: ignore
     negative_score = FloatProperty(min_value=0, max_value=1)  #type: ignore
     son_positive_score = FloatProperty(min_value=0, max_value=1)  #type: ignore
