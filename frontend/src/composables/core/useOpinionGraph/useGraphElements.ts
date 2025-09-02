@@ -56,18 +56,17 @@ export function useGraphElements(
     let finalHasMoreParents = hasMoreParents;
 
     if (hasMoreChildren === null) {
-      // 检查节点是否有子节点
+      // 检查节点是否有未加载的子节点
       const rel = node.relationship;
-      finalHasMoreChildren =
-        (rel.supported_by && rel.supported_by.length > 0) ||
-        (rel.opposed_by && rel.opposed_by.length > 0);
+      const childLinks = [...(rel.supported_by || []), ...(rel.opposed_by || [])];
+      finalHasMoreChildren = childLinks.some(linkId => !loadedEdges.value.has(linkId));
     }
 
     if (hasMoreParents === null) {
-      // 检查节点是否有父节点
+      // 检查节点是否有未加载的父节点
       const rel = node.relationship;
-      finalHasMoreParents =
-        (rel.supports && rel.supports.length > 0) || (rel.opposes && rel.opposes.length > 0);
+      const parentLinks = [...(rel.supports || []), ...(rel.opposes || [])];
+      finalHasMoreParents = parentLinks.some(linkId => !loadedEdges.value.has(linkId));
     }
 
     const node_width = getNodeSize(node.score);
@@ -121,6 +120,10 @@ export function useGraphElements(
     } as Element);
 
     loadedEdges.value.add(edge.id);
+
+    // 更新两个节点的箭头状态
+    updateNodeArrowsState(edge.from_id);
+    updateNodeArrowsState(edge.to_id);
   };
 
   // 移除节点
@@ -179,7 +182,7 @@ export function useGraphElements(
     let hasUnloadedParents = false;
 
     for (const linkId of parentLinks) {
-      if (!('classes' in focusNode) && !loadedEdges.value.has(linkId)) {
+      if (!loadedEdges.value.has(linkId)) {
         hasUnloadedParents = true;
         break;
       }
@@ -190,7 +193,7 @@ export function useGraphElements(
     let hasUnloadedChildren = false;
 
     for (const linkId of childLinks) {
-      if (!('classes' in focusNode) && !loadedEdges.value.has(linkId)) {
+      if (!loadedEdges.value.has(linkId)) {
         hasUnloadedChildren = true;
         break;
       }

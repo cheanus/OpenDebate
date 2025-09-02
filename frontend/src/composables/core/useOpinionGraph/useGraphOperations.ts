@@ -104,7 +104,6 @@ export function useGraphOperations(
         return sb - sa;
       });
 
-      const hasMore = pairs.length > num;
       let addedCount = 0;
       const nodesToRecurse: string[] = [];
 
@@ -115,15 +114,7 @@ export function useGraphOperations(
         const wasNew = !loadedNodes.value.has(pair.node.id);
         const currentNode = pair.node;
 
-        // 计算节点的箭头状态
-        const hasChildren =
-          currentNode.relationship.supported_by?.length > 0 ||
-          currentNode.relationship.opposed_by?.length > 0;
-        const hasParents =
-          currentNode.relationship.supports?.length > 0 ||
-          currentNode.relationship.opposes?.length > 0;
-
-        addNode(currentNode, hasChildren, hasParents);
+        addNode(currentNode);
         addEdge(pair.link);
 
         if (wasNew) {
@@ -141,15 +132,6 @@ export function useGraphOperations(
           await loadNodes(recurseNodeId, direction, numClickUpdatedSon.value, depth - 1);
         }
       }
-
-      updateNodeHasMore(nodeId, direction, hasMore);
-
-      // 加载完成后，更新所有相关节点的箭头状态
-      for (const pair of pairs.slice(0, num)) {
-        await updateNodeArrowsState(pair.node.id);
-      }
-      // 也更新当前节点自身的状态
-      await updateNodeArrowsState(nodeId);
     } catch (error) {
       console.error(`加载${direction === 'children' ? '子' : '父'}节点失败:`, error);
       throw error;
@@ -225,9 +207,6 @@ export function useGraphOperations(
             if (hasChildren) {
               await loadChildren(rootNode.id, numClickUpdatedSon.value, 2);
             }
-
-            // 更新箭头状态
-            await updateNodeArrowsState(rootNode.id);
           }
         } catch (nodeError) {
           console.warn('加载根节点失败:', nodeError);
