@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, Depends
 from typing import Annotated
 from schemas.opinion import *
 from core.opinion import (
@@ -10,12 +10,13 @@ from core.opinion import (
     head_opinion,
     patch_opinion,
 )
+from core.authentication.role import require_role
 
 router = APIRouter()
 
 
 @router.post("/create_or", response_model=CreateOROpinionResponse)
-def create_or_opinion_http(request: CreateOrOpinionRequest):
+def create_or_opinion_http(request: CreateOrOpinionRequest, user=Depends(require_role("user"))):
     try:
         node_id = create_or_opinion(
             content=request.content,
@@ -33,7 +34,7 @@ def create_or_opinion_http(request: CreateOrOpinionRequest):
 
 
 @router.post("/create_and", response_model=CreateANDOpinionResponse)
-def create_and_opinion_http(request: CreateAndOpinionRequest):
+def create_and_opinion_http(request: CreateAndOpinionRequest, user=Depends(require_role("user"))):
     try:
         node_id, link_ids, updated_nodes = create_and_opinion(
             parent_id=request.parent_id,
@@ -60,7 +61,7 @@ def create_and_opinion_http(request: CreateAndOpinionRequest):
 
 
 @router.post("/delete", response_model=DeleteOpinionResponse)
-def delete_opinion_http(request: DeleteOpinionRequest):
+def delete_opinion_http(request: DeleteOpinionRequest, user=Depends(require_role("admin"))):
     try:
         updated_nodes = delete_opinion(
             opinion_id=request.opinion_id,
@@ -135,7 +136,7 @@ def head_opinion_http(request: HeadOpinionRequest):
 
 
 @router.post("/patch", response_model=PatchOpinionResponse)
-def patch_opinion_http(request: PatchOpinionRequest):
+def patch_opinion_http(request: PatchOpinionRequest, user=Depends(require_role("admin"))):
     try:
         updated_nodes = patch_opinion(
             opinion_id=request.id,

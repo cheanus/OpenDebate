@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, Depends
 from typing import Annotated
 from core.link import (
     create_link,
@@ -10,12 +10,13 @@ from core.link import (
 from schemas.link import *
 from schemas.msg import MsgResponse
 from schemas.db.neo4j import Opinion as OpinionNeo4j
+from core.authentication.role import require_role
 
 router = APIRouter()
 
 
 @router.post("/create", response_model=CreateLinkResponse)
-def create_link_http(request: CreateLinkRequest):
+def create_link_http(request: CreateLinkRequest, user=Depends(require_role("user"))):
     """
     创建一个链（两个已存在观点间）
     """
@@ -43,7 +44,7 @@ def create_link_http(request: CreateLinkRequest):
 
 
 @router.post("/delete", response_model=DeleteLinkResponse)
-def delete_link_http(request: LinkRequest):
+def delete_link_http(request: LinkRequest, user=Depends(require_role("admin"))):
     """
     删除一个链（两个已存在观点间）
     """
@@ -83,7 +84,7 @@ def info_link_http(filter_query: Annotated[LinkRequest, Query()]):
 
 
 @router.post("/patch", response_model=MsgResponse)
-def patch_link_http(request: PatchLinkRequest):
+def patch_link_http(request: PatchLinkRequest, user=Depends(require_role("admin"))):
     """
     修改一个链（两个已存在观点间）
     """
@@ -98,7 +99,7 @@ def patch_link_http(request: PatchLinkRequest):
 
 
 @router.post("/attack", response_model=AttackLinkResponse)
-def attack_link_http(request: AttackLinkRequest):
+def attack_link_http(request: AttackLinkRequest, user=Depends(require_role("user"))):
     """
     对链辩论，即对链进行攻击，返回OR和AND观点的ID
     """

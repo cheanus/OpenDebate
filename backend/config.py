@@ -34,3 +34,6 @@ CORS_ALLOW_ORIGIN = [
     FRONTEND_BASEURL,
     BACKEND_BASEURL,
 ]
+
+# 认证密钥
+SECRET_KEY = "your_secret"

@@ -6,11 +6,13 @@ from sqlalchemy import (
     Table,
     Boolean,
     Index,
+    Enum,
 )
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
+from fastapi_users.db import SQLAlchemyBaseUserTableUUID
 import uuid
 
 # 创建基类
@@ -93,3 +95,13 @@ def model2dict(model) -> dict:
             value = int(value.timestamp() * 1000)
         result[column.name] = value
     return result
+
+
+# ================== 认证 ==================
+class User(SQLAlchemyBaseUserTableUUID, DbBase):
+    role = Column(
+        Enum("user", "admin", name="role_enum"),
+        nullable=False,
+        default="user"
+    )
+    username = Column(Text, unique=True, nullable=False)  #TODO: 先得添加system和ai用户

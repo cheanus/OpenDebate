@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, Depends
 from typing import Annotated
 from schemas.db.neo4j import Opinion as OpinionNeo4j
 from schemas.debate import *
@@ -9,14 +9,15 @@ from core.debate import (
     query_debate,
     patch_debate,
     cited_in_debate,
-    get_global_debate
+    get_global_debate,
 )
+from core.authentication.role import require_role
 
 router = APIRouter()
 
 
 @router.post("/create", response_model=CreateDebateResponse)
-def create_debate_http(request: CreateDebateRequest):
+def create_debate_http(request: CreateDebateRequest, user=Depends(require_role("user"))):
     title = request.title
     creator = request.creator
     description = request.description
@@ -32,7 +33,7 @@ def create_debate_http(request: CreateDebateRequest):
 
 
 @router.post("/delete", response_model=MsgResponse)
-def delete_debate_http(request: DeleteDebateRequest):
+def delete_debate_http(request: DeleteDebateRequest, user=Depends(require_role("admin"))):
     debate_id = request.id
 
     # 调用核心函数实现逻辑
@@ -68,7 +69,7 @@ def query_debate_http(filter_query: Annotated[QueryDebateRequest, Query()]):
 
 
 @router.post("/patch", response_model=MsgResponse)
-def patch_debate_http(request: PatchDebateRequest):
+def patch_debate_http(request: PatchDebateRequest, user=Depends(require_role("admin"))):
     debate_id = request.id
     title = request.title
     description = request.description
@@ -84,7 +85,7 @@ def patch_debate_http(request: PatchDebateRequest):
 
 
 @router.post("/cite", response_model=MsgResponse)
-def cited_in_debate_http(request: CiteDebateRequest):
+def cited_in_debate_http(request: CiteDebateRequest, user=Depends(require_role("user"))):
     debate_id = request.debate_id
     opinion_id = request.opinion_id
 

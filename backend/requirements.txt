@@ -7,3 +7,8 @@ neomodel>=4.0
 pytest
 openai
 httpx
+
+## 认证
+fastapi-users[sqlalchemy]
+asyncpg
+fastapi-users-db-sqlalchemy

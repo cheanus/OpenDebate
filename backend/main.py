@@ -5,6 +5,8 @@ from routers import debate, opinion, link, ai_maker
 from config_private import CORS_ALLOW_ORIGIN, LOG_LEVEL
 from core.db_life import init_db, close_db
 from core.utils.debate import init_global_debate
+from core.authentication.user_manager import fastapi_users, auth_backend
+from schemas.authentication import UserRead, UserCreate, UserUpdate
 import uvicorn.config
 import uvicorn
 
@@ -34,6 +36,23 @@ app.add_middleware(
 )
 
 # 分发路由
+## Authentication
+app.include_router(
+    fastapi_users.get_auth_router(auth_backend),
+    prefix="/api/auth/jwt",
+    tags=["auth"],
+)
+app.include_router(
+    fastapi_users.get_register_router(UserRead, UserCreate),
+    prefix="/api/auth",
+    tags=["auth"],
+)
+app.include_router(
+    fastapi_users.get_users_router(UserRead, UserUpdate),
+    prefix="/api/users",
+    tags=["users"],
+)
+## 核心业务
 app.include_router(opinion.router, prefix="/api/opinion", tags=["opinion"])
 app.include_router(link.router, prefix="/api/link", tags=["link"])
 app.include_router(debate.router, prefix="/api/debate", tags=["debate"])
