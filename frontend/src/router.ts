@@ -4,6 +4,7 @@ import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 const DebateList = () => import('./pages/DebateList.vue');
 const DebateOpinion = () => import('./pages/DebateOpinion.vue');
 const Settings = () => import('./pages/Settings.vue');
+const AiMaker = () => import('./pages/AiMaker.vue');
 
 const routes: RouteRecordRaw[] = [
   {
@@ -34,6 +35,15 @@ const routes: RouteRecordRaw[] = [
       if (!id || id.trim() === '') {
         return { name: 'debates' };
       }
+    },
+  },
+  {
+    path: '/ai-maker',
+    name: 'ai-maker',
+    component: AiMaker,
+    meta: {
+      title: 'AI 辩论生成器',
+      description: '使用 AI 生成辩论图',
     },
   },
   {

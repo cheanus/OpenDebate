@@ -12,7 +12,7 @@ def init_db():
     global psql_sessioner
     # Configure Neomodel
     config.DATABASE_URL = (
-        f"bolt://{NEO4J_USER}:{NEO4J_PASSWORD}@{NEO4J_URI.split('//')[1]}"
+        f"bolt://{NEO4J_USER}:{NEO4J_PASSWORD}@{NEO4J_URI}"
     )
 
     # Initialize PostgreSQL

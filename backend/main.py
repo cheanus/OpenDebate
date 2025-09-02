@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
-from routers import debate, opinion, link
+from routers import debate, opinion, link, ai_maker
 from config_private import CORS_ALLOW_ORIGIN, LOG_LEVEL
 from core.db_life import init_db, close_db
 from core.utils.debate import init_global_debate
@@ -37,6 +37,7 @@ app.add_middleware(
 app.include_router(opinion.router, prefix="/api/opinion", tags=["opinion"])
 app.include_router(link.router, prefix="/api/link", tags=["link"])
 app.include_router(debate.router, prefix="/api/debate", tags=["debate"])
+app.include_router(ai_maker.router, prefix="/api/ai", tags=["ai"])
 
 
 @app.get("/api/")

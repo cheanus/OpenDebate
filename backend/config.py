@@ -8,7 +8,7 @@ BACKEND_API_BASEURL = BACKEND_BASEURL + "/api"
 LOG_LEVEL = "info"
 
 # neo4j 数据库配置
-NEO4J_URI = "bolt://localhost:3145"
+NEO4J_URI = "localhost:3145"
 NEO4J_USER = "neo4j"
 NEO4J_PASSWORD = "neo4jpass"
 
