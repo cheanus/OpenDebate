@@ -167,36 +167,70 @@ def _create_and_groups(
     return and_ids
 
 
-def _score_leaves_and_patch(debate_id: str) -> Dict[str, Optional[float]]:
-    """Score all leaf nodes via LLM and patch their positive score."""
+def _score_leaves_and_patch(debate_id: str, root_opinion: str) -> Dict[str, Optional[float]]:
+    """Score all leaf nodes via LLM in a single call and patch their positive score."""
     leaf_ids = head_opinion(debate_id, is_root=False)
-    scores: Dict[str, Optional[float]] = {}
+    if not leaf_ids:
+        return {}
 
+    # Collect all leaf contents
+    leaf_contents = []
     for lid in leaf_ids:
         try:
             opinfo = info_opinion(lid, debate_id)
-            prompt = (
-                "请给以下观点内容打分，范围0-1的浮点数，如0.50，将结果输出在<answer></answer>两个tag中，"
-                "如果无法判断，请输出<answer>None</answer>。内容如下：\n"
-                f"{opinfo.get('content')}\n"
-            )
-            resp = llm_chat(prompt)
-            m = re.search(r"<answer>(.*?)</answer>", resp, re.S)
-            if m:
-                try:
-                    val = float(m.group(1).strip())
-                    if 0 <= val <= 1:
-                        scores[lid] = val
-                        patch_opinion(opinion_id=lid, score={"positive": val})
+            content = opinfo.get('content', '')
+            leaf_contents.append((lid, content))
+        except Exception as e:
+            print(f"Failed to get info for leaf {lid}: {e}")
+            leaf_contents.append((lid, ''))
+
+    # Build prompt for batch scoring
+    prompt_parts = [
+        f"目前的辩论主题是：“{root_opinion}”是否正确",
+        "请为下列观点内容打分，每个观点的评分范围为0-1的浮点数，如0.50。如果无法判断，请输出None。",
+        "输出格式为严格的JSON对象，键为观点编号（从1开始），值为评分。",
+        "例如：{\"1\": 0.8, \"2\": None, \"3\": 0.65}："
+    ]
+    for i, (lid, content) in enumerate(leaf_contents, 1):
+        prompt_parts.append(f"观点{i}: {content}")
+    prompt = "\n".join(prompt_parts)
+
+    scores: Dict[str, Optional[float]] = {}
+    try:
+        resp = llm_chat(prompt)
+        # Try to extract JSON from response
+        match = re.search(r"\{.*\}", resp, re.DOTALL)
+        if match:
+            json_str = match.group(0)
+            try:
+                parsed_scores = json.loads(json_str)
+                for i, (lid, _) in enumerate(leaf_contents, 1):
+                    score_str = parsed_scores.get(str(i))
+                    if score_str is not None:
+                        try:
+                            val = float(score_str)
+                            if 0 <= val <= 1:
+                                scores[lid] = val
+                                patch_opinion(opinion_id=lid, score={"positive": val})
+                            else:
+                                scores[lid] = None
+                        except (ValueError, TypeError):
+                            scores[lid] = None
                     else:
                         scores[lid] = None
-                except Exception:
+            except json.JSONDecodeError:
+                print("Failed to parse JSON from LLM response.")
+                for lid, _ in leaf_contents:
                     scores[lid] = None
-            else:
+        else:
+            print("No JSON found in LLM response.")
+            for lid, _ in leaf_contents:
                 scores[lid] = None
-        except Exception as e:
-            print(f"Failed to score leaf {lid}: {e}")
+    except Exception as e:
+        print(f"Failed to score leaves: {e}")
+        for lid, _ in leaf_contents:
             scores[lid] = None
+
     return scores
 
 
@@ -324,6 +358,6 @@ def ai_build_debate_from_opinion(
             queue = [l for l in current_leafs() if l not in no_debate_set]
 
     # After expansion, score all leaf nodes via helper
-    scores = _score_leaves_and_patch(debate_id)
+    _score_leaves_and_patch(debate_id, root_opinion)
 
     return debate_id

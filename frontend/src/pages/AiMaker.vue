@@ -17,7 +17,7 @@
             <v-textarea
               v-model="content"
               label="话题描述"
-              placeholder="例如：人工智能的发展对社会的影响、气候变化的应对策略、在线教育的优势与劣势..."
+              placeholder="例如：人工智能的无限制发展、气候变化与代际正义、在线教育的优势与劣势..."
               variant="outlined"
               rows="6"
               counter
@@ -54,7 +54,7 @@
                 />
                 <div>
                   <div class="font-weight-medium">AI 正在生成辩论图...</div>
-                  <div class="text-caption">这可能需要1-2分钟，请耐心等待</div>
+                  <div class="text-caption">这可能需要半分钟，请耐心等待</div>
                 </div>
               </div>
             </v-alert>

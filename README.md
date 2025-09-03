@@ -62,7 +62,10 @@
 ```bash
 # 克隆项目
 git clone https://github.com/cheanus/OpenDebate.git
-cd OpenDebate/docker
+cd OpenDebate/backend
+# 复制配置文件
+cp config.py config_private.py  # 请根据需要修改 config_private.py 中的配置
+cd ../docker
 # 构建并启动容器
 docker-compose up -d
 ```
