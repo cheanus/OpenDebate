@@ -71,7 +71,7 @@
           </div>
 
           <!-- 正证分数（仅或观点） -->
-          <div v-if="form.logic_type === 'or' && !(isEdit && !isLeafNode)" class="mb-6">
+          <div v-if="form.logic_type === 'or' && isEdit && isLeafNode" class="mb-6">
             <v-text-field
               v-model.number="form.positive_score"
               label="正证分数 (0-1)"
@@ -82,7 +82,6 @@
               placeholder="可选，如0.7"
               variant="outlined"
             />
-            <v-checkbox v-model="form.is_llm_score" label="使用AI自动评分" />
           </div>
 
           <!-- 创建者 -->
@@ -125,7 +124,7 @@ interface Props {
 const props = defineProps<Props>();
 
 const emit = defineEmits<{
-  submit: [data: OpinionFormData];
+  submit: [data: OpinionFormData, callback: () => void];
   close: [];
 }>();
 
@@ -183,22 +182,20 @@ const isLeafNode = computed(() => {
 });
 
 // 处理提交
-const handleSubmit = async () => {
+const handleSubmit = () => {
   if (!validateForm()) {
     return;
   }
 
   submitting.value = true;
-  try {
-    const formData = {
-      ...form,
-      debate_id: props.debateId,
-    };
+  const formData = {
+    ...form,
+    debate_id: props.debateId,
+  };
 
-    emit('submit', formData);
-  } finally {
+  emit('submit', formData, () => {
     submitting.value = false;
-  }
+  });
 };
 
 // 关闭对话框

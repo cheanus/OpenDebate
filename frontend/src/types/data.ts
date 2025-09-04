@@ -80,14 +80,10 @@ export interface OpinionFormData {
   parent_id: string;
   son_ids: Array<string>;
   link_type: LinkType;
-  positive_score: number | null;
-  is_llm_score: boolean;
+  positive_score?: number | null;
   creator: string;
   id?: string;
   debate_id?: string;
-  score?: {
-    positive: number | null;
-  };
 }
 
 export interface LinkFormData {

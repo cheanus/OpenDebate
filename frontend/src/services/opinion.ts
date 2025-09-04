@@ -3,9 +3,7 @@ import type { Node, ApiResponse, LogicType, LinkType, UpdatedNodes } from '@/typ
 
 export interface OpinionCreateOrData {
   content: string;
-  positive_score?: number | null;
   logic_type?: LogicType;
-  is_llm_score?: boolean;
   creator: string;
   debate_id: string;
 }

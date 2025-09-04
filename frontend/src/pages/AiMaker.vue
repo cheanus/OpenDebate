@@ -6,9 +6,7 @@
         <div class="text-center mb-8">
           <v-icon size="64" color="primary" class="mb-4">mdi-robot</v-icon>
           <h1 class="text-h3 font-weight-bold mb-2">AI 辩论生成器</h1>
-          <p class="text-h6 text-medium-emphasis">
-            输入一段话题描述，AI 将为您生成完整的辩论图
-          </p>
+          <p class="text-h6 text-medium-emphasis">输入一段话题描述，AI 将为您生成完整的辩论图</p>
         </div>
 
         <!-- 输入表单 -->
@@ -40,18 +38,9 @@
             />
 
             <!-- 生成状态 -->
-            <v-alert
-              v-if="isCreating"
-              type="warning"
-              variant="tonal"
-              class="mb-4"
-            >
+            <v-alert v-if="isCreating" type="warning" variant="tonal" class="mb-4">
               <div class="d-flex align-center">
-                <v-progress-circular
-                  indeterminate
-                  size="20"
-                  class="mr-3"
-                />
+                <v-progress-circular indeterminate size="20" class="mr-3" />
                 <div>
                   <div class="font-weight-medium">AI 正在生成辩论图...</div>
                   <div class="text-caption">这可能需要半分钟，请耐心等待</div>
@@ -124,7 +113,7 @@
                     <v-list-item-title>您可以继续编辑和完善生成的辩论图</v-list-item-title>
                   </v-list-item>
                 </v-list>
-                
+
                 <h4 class="mt-4 mb-2">最佳实践：</h4>
                 <ul class="pl-4">
                   <li>使用具体、明确的话题描述</li>
@@ -158,8 +147,8 @@ const error = ref('');
 // 表单验证规则
 const contentRules = [
   (v: string) => !!v?.trim() || '请输入话题描述',
-  (v: string) => (v?.trim().length >= 10) || '话题描述至少需要10个字符',
-  (v: string) => (v?.trim().length <= 500) || '话题描述不能超过500个字符',
+  (v: string) => v?.trim().length >= 10 || '话题描述至少需要10个字符',
+  (v: string) => v?.trim().length <= 500 || '话题描述不能超过500个字符',
 ];
 
 // 创建辩论
@@ -174,16 +163,16 @@ const handleCreateDebate = async () => {
 
   try {
     const response = await aiDebateService.create({
-      content: content.value.trim()
+      content: content.value.trim(),
     });
 
     if (response.is_success && response.id) {
       notifySuccess('AI 辩论图生成成功！正在跳转到辩论观点页面...');
 
       // 跳转到生成的辩论页面
-      await router.push({ 
-        name: 'debate-opinion', 
-        params: { id: response.id as string } 
+      await router.push({
+        name: 'debate-opinion',
+        params: { id: response.id as string },
       });
     } else {
       error.value = response.msg || '生成失败，请重试';

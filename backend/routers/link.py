@@ -29,7 +29,10 @@ def create_link_http(request: CreateLinkRequest):
                 "msg": "Cannot create link to an AND opinion.",
             }
         link_id, updated_nodes = create_link(
-            from_id=request.from_id, to_id=request.to_id, link_type=request.link_type
+            from_id=request.from_id,
+            to_id=request.to_id,
+            link_type=request.link_type,
+            is_llm_evalate=True,
         )
         need_updated_nodes = {
             k: updated_nodes[k] for k in updated_nodes if updated_nodes[k] is not None
@@ -101,7 +104,9 @@ def attack_link_http(request: AttackLinkRequest):
     """
     try:
         or_id, and_id, link_ids = attack_link(
-            link_id=request.link_id, debate_id=request.debate_id
+            link_id=request.link_id,
+            debate_id=request.debate_id,
+            is_llm_score=True,
         )
         return {
             "is_success": True,

@@ -1,5 +1,4 @@
 import { ref } from 'vue';
-import type { Node, Edge } from '@/types';
 
 /**
  * 编辑器状态管理
@@ -14,7 +13,7 @@ export function useEditorState() {
   const isEditingLink = ref(false);
 
   // 打开观点编辑器
-  const openOpinionEditor = (isEdit = false, node?: Node) => {
+  const openOpinionEditor = (isEdit = false) => {
     isEditingOpinion.value = isEdit;
     showOpinionEditor.value = true;
   };
@@ -26,7 +25,7 @@ export function useEditorState() {
   };
 
   // 打开连接编辑器
-  const openLinkEditor = (isEdit = false, edge?: Edge) => {
+  const openLinkEditor = (isEdit = false) => {
     isEditingLink.value = isEdit;
     showLinkEditor.value = true;
   };

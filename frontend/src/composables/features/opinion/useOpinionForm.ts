@@ -11,7 +11,6 @@ export function useOpinionForm() {
     son_ids: [],
     link_type: 'supports' as LinkType,
     positive_score: null,
-    is_llm_score: false,
     creator: '',
   });
 
@@ -42,7 +41,6 @@ export function useOpinionForm() {
     form.son_ids = [];
     form.link_type = 'supports';
     form.positive_score = null;
-    form.is_llm_score = false;
     form.creator = '';
     form.id = undefined;
 

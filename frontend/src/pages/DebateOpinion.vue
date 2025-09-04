@@ -33,7 +33,7 @@
       :opinion="selectedNode"
       :debate-id="debateId"
       :available-nodes="availableNodes"
-      @submit="(data) => handleOpinionSubmit(data, isEditingOpinion)"
+      @submit="(data, callback) => handleOpinionSubmit(data, isEditingOpinion, callback)"
       @close="closeOpinionEditor"
     />
 
@@ -114,14 +114,17 @@ const {
 } = useDebateSearch();
 
 // CRUD 操作处理函数
-const handleOpinionSubmit = async (data: OpinionFormData, isEdit: boolean) => {
+const handleOpinionSubmit = async (
+  data: OpinionFormData,
+  isEdit: boolean,
+  callback: CallableFunction,
+) => {
   const operation = async () => {
     if (isEdit) {
       return await updateOpinion({
         id: data.id!,
         content: data.content,
         positive_score: data.positive_score,
-        is_llm_score: data.is_llm_score,
       });
     } else {
       return await createOpinion({
@@ -130,8 +133,6 @@ const handleOpinionSubmit = async (data: OpinionFormData, isEdit: boolean) => {
         parent_id: data.parent_id,
         son_ids: data.son_ids,
         link_type: data.link_type,
-        positive_score: data.positive_score,
-        is_llm_score: data.is_llm_score,
         creator: data.creator,
       });
     }
@@ -143,6 +144,7 @@ const handleOpinionSubmit = async (data: OpinionFormData, isEdit: boolean) => {
     isEdit ? '更新观点失败' : '创建观点失败',
   );
 
+  callback();
   closeOpinionEditor();
 };
 

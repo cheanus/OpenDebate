@@ -3,12 +3,14 @@ from core.opinion import create_or_opinion, create_and_opinion
 from schemas.db.neo4j import Opinion as OpinionNeo4j
 from schemas.link import LinkType
 from . import update_score
+from .utils.llm import is_OR_link_reasonable, llm_score
 
 
 def create_link(
     from_id: str,
     to_id: str,
     link_type: LinkType,
+    is_llm_evalate: bool = False,
 ) -> tuple[str, dict[str, float | None]]:
     """
     Create a link in the Neo4j database.
@@ -16,6 +18,7 @@ def create_link(
     :param from_id: The ID of the source node.
     :param to_id: The ID of the target node.
     :param link_type: The type of the link (support or oppose).
+    :param is_llm_evalate: Whether to use AI to evaluate the reasonableness of the link.
     :return: Link ID, and a dictionary of updated node IDs with their new scores.
     """
     try:
@@ -34,6 +37,11 @@ def create_link(
 
         from_opinion = OpinionNeo4j.nodes.get(uid=from_id)
         to_opinion = OpinionNeo4j.nodes.get(uid=to_id)
+
+        # 使用AI判断合理性
+        if is_llm_evalate and not is_OR_link_reasonable(from_opinion.content, to_opinion.content, link_type.value):
+            raise ValueError("The proposed link is not considered reasonable by the AI.")
+
         updated_nodes = dict()
 
         if link_type == LinkType.SUPPORT:
@@ -180,12 +188,13 @@ def patch_link(link_id: str, link_type: LinkType) -> dict[str, dict[str, float |
         raise RuntimeError(f"Failed to patch link in Neo4j: {str(e)}")
 
 
-def attack_link(link_id: str, debate_id: str) -> tuple[str, str, list[str]]:
+def attack_link(link_id: str, debate_id: str, is_llm_score: bool = False) -> tuple[str, str, list[str]]:
     """
     Split a link into an AND opinion, and create another OR opinion to attack it.
 
     :param link_id: The ID of the link to delete.
     :param debate_id: The debate ID where the new opinions will be created.
+    :param is_llm_score: Whether to use AI to score the new OR opinion.
     :return: The ID of the new OR and AND opinions created.
     """
     try:
@@ -202,11 +211,17 @@ def attack_link(link_id: str, debate_id: str) -> tuple[str, str, list[str]]:
         elif link_info["link_type"] == LinkType.OPPOSE.value:
             from_opinion.opposes.disconnect(to_opinion)
         # Create a new OR opinion
+        if is_llm_score:
+            # 使用AI评分
+            or_content = f"{from_opinion.content} ->（蕴含） {to_opinion.content}"
+            positive_score = llm_score(or_content)
+        else:
+            positive_score = 1.0
         new_or_opinion_id = create_or_opinion(
             content=f"{from_opinion.content} -> {to_opinion.content}",
             creator="system",
             host=from_opinion.host,
-            positive_score=1.0,
+            positive_score=positive_score,
             debate_id=debate_id,
         )
         # Create an AND opinion from the original link

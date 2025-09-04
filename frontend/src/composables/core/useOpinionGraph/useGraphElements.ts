@@ -59,14 +59,14 @@ export function useGraphElements(
       // 检查节点是否有未加载的子节点
       const rel = node.relationship;
       const childLinks = [...(rel.supported_by || []), ...(rel.opposed_by || [])];
-      finalHasMoreChildren = childLinks.some(linkId => !loadedEdges.value.has(linkId));
+      finalHasMoreChildren = childLinks.some((linkId) => !loadedEdges.value.has(linkId));
     }
 
     if (hasMoreParents === null) {
       // 检查节点是否有未加载的父节点
       const rel = node.relationship;
       const parentLinks = [...(rel.supports || []), ...(rel.opposes || [])];
-      finalHasMoreParents = parentLinks.some(linkId => !loadedEdges.value.has(linkId));
+      finalHasMoreParents = parentLinks.some((linkId) => !loadedEdges.value.has(linkId));
     }
 
     const node_width = getNodeSize(node.score);

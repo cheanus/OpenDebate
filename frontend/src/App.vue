@@ -18,12 +18,7 @@
         辩论总览
       </v-btn>
 
-      <v-btn
-        :to="{ name: 'ai-maker' }"
-        variant="text"
-        prepend-icon="mdi-robot"
-        class="mr-2"
-      >
+      <v-btn :to="{ name: 'ai-maker' }" variant="text" prepend-icon="mdi-robot" class="mr-2">
         AI 生成
       </v-btn>
 

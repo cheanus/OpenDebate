@@ -76,14 +76,14 @@ export function useContextMenu() {
   ) => {
     selectedEdge.value = edge;
 
-    const data = edge?.data()
+    const data = edge?.data();
     if (edge) {
       selectedEdgeData.value = {
         id: data.id,
         link_type: data.link_type,
         from_id: data.from_id,
-        to_id: data.to_id
-      }
+        to_id: data.to_id,
+      };
 
       if (renderedPosition) {
         edgeMetaPanelStyle.value = {

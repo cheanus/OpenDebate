@@ -16,18 +16,13 @@ router = APIRouter()
 
 @router.post("/create_or", response_model=CreateOROpinionResponse)
 def create_or_opinion_http(request: CreateOrOpinionRequest):
-    if request.is_llm_score:
-        try:
-            pass
-        except Exception as e:
-            return {"is_success": False, "msg": str(e)}
     try:
         node_id = create_or_opinion(
             content=request.content,
             creator=request.creator,
             host="local",
             node_type="solid",
-            positive_score=request.positive_score,
+            is_llm_score=True,
             debate_id=request.debate_id,
         )
         result = {"is_success": True, "node_id": node_id}
@@ -47,6 +42,7 @@ def create_and_opinion_http(request: CreateAndOpinionRequest):
             creator=request.creator,
             host="local",
             debate_id=request.debate_id,
+            is_llm_evaluate=True,
         )
         need_updated_nodes = {
             k: updated_nodes[k] for k in request.loaded_ids if k in updated_nodes

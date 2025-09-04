@@ -44,7 +44,9 @@ export class LinkService {
     return apiClient.post('/link/patch', data);
   }
 
-  async attack(data: LinkAttackData): Promise<ApiResponse<{ or_id: string; and_id: string; link_ids: string[] }>> {
+  async attack(
+    data: LinkAttackData,
+  ): Promise<ApiResponse<{ or_id: string; and_id: string; link_ids: string[] }>> {
     return apiClient.post('/link/attack', data);
   }
 }

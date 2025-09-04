@@ -12,7 +12,11 @@ export function useGraphCRUD(
   refreshView: () => Promise<void>,
   removeNode: (nodeId: string) => void,
   removeEdge: (edgeId: string) => void,
-  addNode: (node: OpinionNode, hasMoreChildren?: boolean | null, hasMoreParents?: boolean | null) => void,
+  addNode: (
+    node: OpinionNode,
+    hasMoreChildren?: boolean | null,
+    hasMoreParents?: boolean | null,
+  ) => void,
   addEdge: (edge: Edge) => void,
   refreshOpinions: (updatedNodes: UpdatedNodes) => void,
   loadedNodes: ReturnType<typeof ref<Set<string>>>,
@@ -24,8 +28,6 @@ export function useGraphCRUD(
     parent_id?: string;
     son_ids?: string[];
     link_type?: LinkType;
-    positive_score?: number | null;
-    is_llm_score?: boolean;
     creator: string;
   }) => {
     loading.value = true;
@@ -46,8 +48,6 @@ export function useGraphCRUD(
       } else {
         response = await opinionService.createOr({
           content: data.content!,
-          positive_score: data.positive_score,
-          is_llm_score: data.is_llm_score,
           creator: data.creator,
           debate_id: debateId,
         });
@@ -57,6 +57,7 @@ export function useGraphCRUD(
         // 获取新创建的观点信息并添加到视图中
         try {
           const newOpinionId = response.data.node_id;
+          // 注意后端AI会生成分数
           const opinionInfoResponse = await opinionService.getInfo(newOpinionId, debateId);
 
           if (opinionInfoResponse.is_success && opinionInfoResponse.data) {
@@ -296,7 +297,7 @@ export function useGraphCRUD(
 
     try {
       // 提前获取 from_node、to_node
-      const old_link = (await linkService.getInfo(linkId)).data
+      const old_link = (await linkService.getInfo(linkId)).data;
       const from_node_id = old_link?.from_id;
       const to_node_id = old_link?.to_id;
       const response = await linkService.attack({
@@ -306,7 +307,7 @@ export function useGraphCRUD(
       if (!response.is_success || !response.data) {
         throw new Error(response.msg || '质疑连接失败');
       }
-      // 添加2个新点
+      // 添加2个新点，注意or_node会有后端AI生成的分数
       const or_node = (await opinionService.getInfo(response.data.or_id, debateId)).data;
       const and_node = (await opinionService.getInfo(response.data.and_id, debateId)).data;
       // 删除原链

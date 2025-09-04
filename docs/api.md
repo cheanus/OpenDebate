@@ -133,9 +133,7 @@
 ```json
 {
   "content": "AI不具备主观体验，因此不应有意识。",
-  "positive_score": 0.7,
   "logic_type": "or",
-  "is_llm_score": false,
   "creator": "user1",
   "debate_id": "xxx"
 }
@@ -143,7 +141,7 @@
 
 `debate_id`必选，代表新观点放在哪个辩论里。
 `logic_type`可选，默认为or。
-`is_llm_score`可选，默认为false，表示该观点不自动调用LLM生成分数。
+AI自动评分。
 
 返回示例：
 
@@ -182,6 +180,8 @@
   "updated_nodes": ["yyy": 0.5, "zzz": null]
 }
 ```
+
+AI会自动评价合理性，可能会拒绝添加，此时只返回`is_success: false`和`msg`。
 
 ### ❌ 删除辩论中的单个观点及其所有链
 
@@ -356,6 +356,7 @@
 }
 ```
 
+AI会自动评价合理性，可能会拒绝添加，此时只返回`is_success: false`和`msg`。
 如果存在相同属性的link，则返回已有的link_id。
 
 ### ❌ 删除链（两个已存在观点间）
@@ -419,9 +420,10 @@
 }
 ```
 
-### 🚀 质疑一条链
+### 🚀 质疑链
 
 考虑到有些链需要辩论，因而在链上插入一个与观点，用一个或观点支持它，该或观点表示链是正确的，可被辩论。
+或观点会被AI自动评分。
 
 `POST /link/attack`  
 **Body**
