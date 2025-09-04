@@ -92,7 +92,7 @@ const props = defineProps<Props>();
 
 const emit = defineEmits<{
   close: [];
-  submit: [data: LinkFormData];
+  submit: [data: LinkFormData, callback: () => void];
 }>();
 
 // 显示控制
@@ -123,12 +123,12 @@ const isSubmitting = ref(false);
 
 // 计算可用的起始节点（node_type = solid）
 const availabeFromNodes = computed(() => {
-  return props.availableNodes.filter((node) => node.node_type === 'solid');
+  return availableToNodes.value.filter((node) => node.id !== form.value.from_id);
 });
 
 // 计算可用的目标节点（排除已选择的起始节点）
 const availableToNodes = computed(() => {
-  return availabeFromNodes.value.filter((node) => node.id !== form.value.from_id);
+  return props.availableNodes.filter((node) => node.node_type === 'solid');
 });
 
 // 为 v-autocomplete 转换起始节点数据格式
@@ -207,16 +207,14 @@ const handleSubmit = async () => {
 
   isSubmitting.value = true;
 
-  try {
-    const submitData = { ...form.value };
-    if (props.isEdit && props.link) {
-      submitData.id = props.link.id;
-    }
-
-    emit('submit', submitData);
-  } finally {
-    isSubmitting.value = false;
+  const submitData = { ...form.value };
+  if (props.isEdit && props.link) {
+    submitData.id = props.link.id;
   }
+
+  emit('submit', submitData, () => {
+    isSubmitting.value = false;
+  });
 };
 
 // 处理关闭

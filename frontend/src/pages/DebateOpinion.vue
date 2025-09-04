@@ -43,7 +43,7 @@
       :is-edit="isEditingLink"
       :link="selectedEdge"
       :available-nodes="availableNodes"
-      @submit="(data) => handleLinkSubmit(data, isEditingLink)"
+      @submit="(data, callback) => handleLinkSubmit(data, isEditingLink, callback)"
       @close="closeLinkEditor"
     />
   </v-container>
@@ -148,7 +148,7 @@ const handleOpinionSubmit = async (
   closeOpinionEditor();
 };
 
-const handleLinkSubmit = async (data: LinkFormData, isEdit: boolean) => {
+const handleLinkSubmit = async (data: LinkFormData, isEdit: boolean, callback: CallableFunction) => {
   const operation = async () => {
     if (isEdit) {
       return await updateLink({
@@ -170,6 +170,7 @@ const handleLinkSubmit = async (data: LinkFormData, isEdit: boolean) => {
     isEdit ? '更新连接失败' : '创建连接失败',
   );
 
+  callback();
   closeLinkEditor();
 };
 
