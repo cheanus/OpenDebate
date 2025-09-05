@@ -1,6 +1,6 @@
 import re
 from openai import OpenAI
-from config_private import MODEL, BASE_URL, API_KEY
+from config_private import MODEL, BASE_URL, API_KEY, LINK_REASONABLENESS_THRESHOLD
 
 client = OpenAI(api_key=API_KEY, base_url=BASE_URL)
 
@@ -53,25 +53,30 @@ def llm_score(text: str) -> float | None:
         return None
 
 
-def is_OR_link_reasonable(from_content: str, to_content: str, link_type: str) -> bool:
-    """Check if a link between two opinions is reasonable using an LLM.
-
-    The prompt is designed to make the LLM return "是" or "否".
-    """
+def is_OR_link_reasonable(
+    from_content: str,
+    to_content: str,
+    link_type: str,
+) -> bool:
+    """Use an LLM to score the OR-link between two opinions from 0 to 1 and compare to a threshold."""
     prompt = (
-        "请用批判性思维判断观点1与观点2的关系是否合理。\n\n"
+        "请在0到1的范围内对下面两个观点之间的关系合理性进行评分，0表示完全不合理，1表示完全合理。"
+        "将答案放在<answer></answer>两个tag中。\n\n"
         f"观点1：{from_content}\n"
         f"观点2：{to_content}\n"
         f"关系类型：{link_type}\n\n"
-        "如果是支持关系，观点1必须完全蕴含观点2，反之亦然。"
-        "如果关系合理，请回答“是”；如果不合理，请回答“否”，将答案放在<answer></answer>两个tag中。\n\n"
     )
     response = llm_chat(prompt)
     match = re.search(r"<answer>(.*?)</answer>", response, re.DOTALL)
     if not match:
         return False
-    answer = match.group(1).strip()
-    return answer == "是"
+    try:
+        score = float(match.group(1).strip())
+    except ValueError:
+        return False
+    if score < 0 or score > 1:
+        return False
+    return score >= LINK_REASONABLENESS_THRESHOLD
 
 
 def is_AND_link_reasonable(from_contents: list[str], to_content: str, link_type: str) -> bool:

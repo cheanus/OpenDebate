@@ -26,6 +26,9 @@ MODEL = "deepseek-chat"
 BASE_URL = "https://api.deepseek.com"
 API_KEY = "sk-***"
 
+# 链有效性阈值
+LINK_REASONABLENESS_THRESHOLD = 0.6
+
 # CORS
 CORS_ALLOW_ORIGIN = [
     FRONTEND_BASEURL,
