@@ -12,6 +12,7 @@ export function useOpinionForm() {
     link_type: 'supports' as LinkType,
     positive_score: null,
     creator: '',
+    is_llm_score: false,
   });
 
   const formErrors = reactive<Record<string, string[]>>({
@@ -28,6 +29,7 @@ export function useOpinionForm() {
     form.positive_score = opinion.score?.positive || null;
     form.creator = opinion.creator;
     form.id = opinion.id;
+    form.is_llm_score = false;
 
     // 清空错误
     clearErrors();
@@ -43,6 +45,7 @@ export function useOpinionForm() {
     form.positive_score = null;
     form.creator = '';
     form.id = undefined;
+    form.is_llm_score = false;
 
     clearErrors();
   };

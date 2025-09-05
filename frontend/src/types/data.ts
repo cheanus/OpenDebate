@@ -83,6 +83,7 @@ export interface OpinionFormData {
   positive_score?: number | null;
   creator: string;
   id?: string;
+  is_llm_score?: boolean;
   debate_id?: string;
 }
 

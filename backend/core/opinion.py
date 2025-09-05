@@ -496,7 +496,7 @@ def patch_opinion(
         if is_llm_score:
             if not is_leaf:
                 raise RuntimeError(f"Opinion with ID {op_neo4j.uid} is not leaf node.")
-            pass
+            score = {"positive": llm_score(op_neo4j.content)}
 
         updated_nodes = dict()
         if score and "positive" in score:  # None也是信号

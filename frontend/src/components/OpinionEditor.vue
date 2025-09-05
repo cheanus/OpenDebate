@@ -82,6 +82,7 @@
               placeholder="可选，如0.7"
               variant="outlined"
             />
+            <v-checkbox v-if="isEdit" v-model="form.is_llm_score" label="使用AI自动评分" />
           </div>
 
           <!-- 创建者 -->

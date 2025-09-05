@@ -125,6 +125,7 @@ const handleOpinionSubmit = async (
         id: data.id!,
         content: data.content,
         positive_score: data.positive_score,
+        is_llm_score: data.is_llm_score,
       });
     } else {
       return await createOpinion({
