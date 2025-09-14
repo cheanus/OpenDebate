@@ -39,7 +39,7 @@ app.add_middleware(
 ## Authentication
 app.include_router(
     fastapi_users.get_auth_router(auth_backend),
-    prefix="/api/auth/jwt",
+    prefix="/api/auth/cookie",
     tags=["auth"],
 )
 app.include_router(
