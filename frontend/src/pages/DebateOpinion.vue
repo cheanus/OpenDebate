@@ -149,7 +149,11 @@ const handleOpinionSubmit = async (
   closeOpinionEditor();
 };
 
-const handleLinkSubmit = async (data: LinkFormData, isEdit: boolean, callback: CallableFunction) => {
+const handleLinkSubmit = async (
+  data: LinkFormData,
+  isEdit: boolean,
+  callback: CallableFunction,
+) => {
   const operation = async () => {
     if (isEdit) {
       return await updateLink({

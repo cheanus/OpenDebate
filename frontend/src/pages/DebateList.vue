@@ -5,7 +5,14 @@
       <v-col>
         <div class="d-flex justify-space-between align-center">
           <h1 class="text-h3">辩论总览</h1>
-          <v-btn color="primary" @click="showCreateModal" prepend-icon="mdi-plus"> 新建辩论 </v-btn>
+          <v-btn
+            v-if="roleLevel >= ROLELEVEL.user"
+            color="primary"
+            @click="showCreateModal"
+            prepend-icon="mdi-plus"
+          >
+            新建辩论
+          </v-btn>
         </div>
       </v-col>
     </v-row>
@@ -25,7 +32,9 @@
     <v-card v-else-if="debates.length === 0" class="text-center pa-8">
       <v-icon size="64" color="grey" class="mb-4">mdi-comment-question-outline</v-icon>
       <p class="text-h6 mb-4">暂无辩论数据</p>
-      <v-btn color="primary" @click="showCreateModal">创建第一个辩论</v-btn>
+      <v-btn v-if="roleLevel >= ROLELEVEL.user" color="primary" @click="showCreateModal"
+        >创建第一个辩论</v-btn
+      >
     </v-card>
 
     <!-- 辩论列表 -->
@@ -68,6 +77,7 @@
             title="查看"
           />
           <v-btn
+            v-if="roleLevel >= ROLELEVEL.admin"
             icon="mdi-pencil"
             variant="text"
             color="primary"
@@ -76,7 +86,7 @@
             title="编辑"
           />
           <v-btn
-            v-if="item.id !== globalDebateId"
+            v-if="item.id !== globalDebateId && roleLevel >= ROLELEVEL.admin"
             icon="mdi-delete"
             variant="text"
             color="error"
@@ -122,6 +132,7 @@ import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useDebates } from '@/composables';
 import { formatDate } from '@/utils';
+import { useAuth, ROLELEVEL } from '@/composables/core/useAuth';
 import type { Debate } from '@/types';
 
 const router = useRouter();
@@ -138,6 +149,8 @@ const {
   deleteDebate,
   clearError,
 } = useDebates();
+
+const { roleLevel } = useAuth();
 
 // 表单状态
 const showModal = ref(false);

@@ -25,15 +25,15 @@ export class AuthService {
 
   async register(form: RegisterRequestData): Promise<RegisterResponse> {
     const response = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(form),
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(form),
     });
 
     if (!response.ok) {
-        throw new Error(`Registration failed: ${response.statusText}`);
+      throw new Error(`Registration failed: ${response.statusText}`);
     }
 
     return response.json();

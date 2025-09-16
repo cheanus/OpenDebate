@@ -2,13 +2,12 @@ import { createApp } from 'vue';
 import './styles/style.css';
 import App from './App.vue';
 import router from './router';
+import { useAuth } from '@/composables/core/useAuth';
 // Vuetify
 import 'vuetify/styles';
 import { createVuetify } from 'vuetify';
 import * as components from 'vuetify/components';
 import * as directives from 'vuetify/directives';
-// 使用 CDN 加载 MDI 图标字体，避免构建问题
-// import '@mdi/font/css/materialdesignicons.css';
 
 const vuetify = createVuetify({
   components,
@@ -51,3 +50,7 @@ const app = createApp(App);
 app.use(router);
 app.use(vuetify);
 app.mount('#app');
+
+const { fetchUserInfo } = useAuth();
+// 首次加载时获取用户信息，保持登录状态
+fetchUserInfo(true);
