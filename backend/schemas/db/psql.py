@@ -104,4 +104,4 @@ class User(SQLAlchemyBaseUserTableUUID, DbBase):
         nullable=False,
         default="user"
     )
-    username = Column(Text, unique=True, nullable=False)  #TODO: 先得添加system和ai用户
+    username = Column(Text, unique=True, nullable=False)

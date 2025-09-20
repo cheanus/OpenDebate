@@ -29,13 +29,13 @@
                 </v-list-item>
                 <v-list-item prepend-icon="mdi-shield-account">
                   <v-list-item-title>角色</v-list-item-title>
-                  <v-list-item-subtitle>{{ userInfo.role }}</v-list-item-subtitle>
+                  <v-list-item-subtitle>{{ userInfo.is_superuser? "superuser": userInfo.role }}</v-list-item-subtitle>
                 </v-list-item>
                 <v-list-item prepend-icon="mdi-check-circle">
                   <v-list-item-title>账户状态</v-list-item-title>
                   <v-list-item-subtitle>
                     <!-- {{ userInfo.is_verified ? '已验证' : '未验证' }} -->
-                    {{ userInfo.is_active ? '・已激活' : '・未激活' }}
+                    {{ userInfo.is_active ? '已激活' : '未激活' }}
                   </v-list-item-subtitle>
                 </v-list-item>
               </v-list>
