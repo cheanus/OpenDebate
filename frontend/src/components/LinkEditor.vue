@@ -1,5 +1,6 @@
 <template>
-  <v-dialog v-model="isVisible" max-width="600px">
+  <!-- 主对话框 -->
+  <v-dialog v-model="shouldShowDialog" max-width="600px">
     <v-card>
       <v-card-title class="text-h5">
         <v-icon left>{{ isEdit ? 'mdi-pencil' : 'mdi-plus' }}</v-icon>
@@ -10,21 +11,6 @@
 
       <v-card-text class="pa-6">
         <v-form @submit.prevent="handleSubmit">
-          <!-- 目标节点 -->
-          <v-autocomplete
-            v-model="form.to_id"
-            :items="availableToNodesForSelect"
-            item-title="title"
-            item-value="value"
-            label="目标观点"
-            placeholder="搜索或选择目标观点"
-            variant="outlined"
-            required
-            :error-messages="formErrors.to_id"
-            class="mb-4"
-            clearable
-          />
-
           <!-- 起始节点 -->
           <v-autocomplete
             v-model="form.from_id"
@@ -38,7 +24,57 @@
             :error-messages="formErrors.from_id"
             class="mb-4"
             clearable
-          />
+          >
+            <template v-slot:append-inner>
+              <v-tooltip bottom>
+                <template v-slot:activator="{ props }">
+                  <v-btn
+                    v-bind="props"
+                    icon="mdi-cursor-pointer"
+                    size="small"
+                    variant="text"
+                    color="primary"
+                    @click="startNodeSelection('from')"
+                    :disabled="isEdit"
+                  />
+                </template>
+                <span>从图上选择节点</span>
+              </v-tooltip>
+            </template>
+          </v-autocomplete>
+
+          <!-- 目标节点 -->
+          <v-autocomplete
+            v-model="form.to_id"
+            :items="availableToNodesForSelect"
+            item-title="title"
+            item-value="value"
+            label="目标观点"
+            placeholder="搜索或选择目标观点"
+            variant="outlined"
+            required
+            :error-messages="formErrors.to_id"
+            class="mb-4"
+            clearable
+            :disabled="!form.from_id"
+          >
+            <template v-slot:append-inner>
+              <v-tooltip bottom>
+                <template v-slot:activator="{ props }">
+                  <v-btn
+                    v-bind="props"
+                    icon="mdi-cursor-pointer"
+                    size="small"
+                    variant="text"
+                    color="primary"
+                    @click="startNodeSelection('to')"
+                    :disabled="isEdit || !form.from_id"
+                  />
+                </template>
+                <span>从图上选择节点</span>
+              </v-tooltip>
+            </template>
+          </v-autocomplete>
 
           <!-- 连接类型 -->
           <div class="mb-6">
@@ -76,6 +112,27 @@
       </v-card-actions>
     </v-card>
   </v-dialog>
+
+  <!-- 节点选择模式提示 - 固定在右上角 -->
+  <v-card
+    v-if="isDialogHidden && isInSelectionMode"
+    class="selection-hint"
+    elevation="8"
+    color="primary"
+  >
+    <v-card-text class="pa-4 text-white">
+      <v-icon icon="mdi-information" class="mr-2" />
+      {{ selectionModeText }}
+      <v-btn
+        icon="mdi-close"
+        size="small"
+        variant="text"
+        color="white"
+        class="ml-2"
+        @click="exitSelectionMode"
+      />
+    </v-card-text>
+  </v-card>
 </template>
 
 <script setup lang="ts">
@@ -93,14 +150,27 @@ const props = defineProps<Props>();
 const emit = defineEmits<{
   close: [];
   submit: [data: LinkFormData, callback: () => void];
+  startNodeSelection: [mode: 'from' | 'to'];
+  exitNodeSelection: [];
 }>();
 
 // 显示控制
 const isVisible = ref(true);
+const isDialogHidden = ref(false); // 控制对话框临时隐藏
+
+// 计算对话框是否应该显示
+const shouldShowDialog = computed(() => {
+  return isVisible.value && !isDialogHidden.value;
+});
+
+// 节点选择模式状态
+const isInSelectionMode = ref(false);
+const selectionMode = ref<'from' | 'to' | null>(null);
 
 // 监听显示状态变化，处理点击外部关闭
-watch(isVisible, (newValue) => {
-  if (!newValue) {
+watch(shouldShowDialog, (newValue) => {
+  if (!newValue && !isDialogHidden.value) {
+    // 只有在对话框不是被临时隐藏时才触发关闭事件
     emit('close');
   }
 });
@@ -123,7 +193,7 @@ const isSubmitting = ref(false);
 
 // 计算可用的起始节点（node_type = solid）
 const availabeFromNodes = computed(() => {
-  return availableToNodes.value.filter((node) => node.id !== form.value.from_id);
+  return availableToNodes.value.filter((node) => node.id !== form.value.to_id);
 });
 
 // 计算可用的目标节点（排除已选择的起始节点）
@@ -145,6 +215,53 @@ const availableToNodesForSelect = computed(() => {
     title: node.content,
     value: node.id,
   }));
+});
+
+// 节点选择模式提示文本
+const selectionModeText = computed(() => {
+  if (selectionMode.value === 'from') {
+    return '请在观点图上点击一个节点作为起始观点';
+  } else if (selectionMode.value === 'to') {
+    return '请在观点图上点击一个节点作为目标观点';
+  }
+  return '';
+});
+
+// 开始节点选择模式
+const startNodeSelection = (mode: 'from' | 'to') => {
+  isInSelectionMode.value = true;
+  selectionMode.value = mode;
+  isDialogHidden.value = true; // 隐藏对话框
+  emit('startNodeSelection', mode);
+};
+
+// 退出节点选择模式
+const exitSelectionMode = () => {
+  isInSelectionMode.value = false;
+  selectionMode.value = null;
+  isDialogHidden.value = false; // 重新显示对话框
+  emit('exitNodeSelection');
+};
+
+// 处理从外部传入的节点选择
+const handleNodeSelected = (nodeId: string) => {
+  if (!isInSelectionMode.value || !selectionMode.value) return;
+
+  if (selectionMode.value === 'from') {
+    form.value.from_id = nodeId;
+  } else if (selectionMode.value === 'to') {
+    form.value.to_id = nodeId;
+  }
+
+  // 延迟退出选择模式，给用户一点时间看到选择结果
+  setTimeout(() => {
+    exitSelectionMode();
+  }, 200);
+};
+
+// 暴露给父组件的方法
+defineExpose({
+  handleNodeSelected,
 });
 
 // 清除表单错误
@@ -174,6 +291,8 @@ watch(
       };
     }
     clearFormErrors();
+    // 重置选择模式
+    exitSelectionMode();
   },
   { immediate: true },
 );
@@ -219,11 +338,39 @@ const handleSubmit = async () => {
 
 // 处理关闭
 const handleClose = () => {
+  exitSelectionMode();
   isVisible.value = false;
   emit('close');
 };
 </script>
 
 <style scoped>
-/* 已使用 Vuetify 组件，不需要自定义样式 */
+.selection-hint {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  z-index: 2000;
+  max-width: 350px;
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .selection-hint {
+    right: 10px;
+    left: 10px;
+    max-width: none;
+  }
+}
 </style>

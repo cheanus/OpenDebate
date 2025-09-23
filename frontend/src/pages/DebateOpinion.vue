@@ -18,6 +18,7 @@
       <OpinionGraph
         :elements="elements"
         :layout="graphLayout"
+        :is-in-node-selection-mode="isInLinkNodeSelectionMode"
         @node-arrow-click="handleNodeArrowClick"
         @node-selected="handleNodeSelected"
         @edge-selected="handleEdgeSelected"
@@ -45,6 +46,9 @@
       :available-nodes="availableNodes"
       @submit="(data, callback) => handleLinkSubmit(data, isEditingLink, callback)"
       @close="closeLinkEditor"
+      @start-node-selection="handleStartNodeSelection"
+      @exit-node-selection="handleExitNodeSelection"
+      ref="linkEditorRef"
     />
   </v-container>
 </template>
@@ -266,6 +270,11 @@ const handleContextMenuAction = async (action: string) => {
 
 // 组件引用
 const opinionGraphRef = ref<InstanceType<typeof OpinionGraph> | null>(null);
+const linkEditorRef = ref<InstanceType<typeof LinkEditor> | null>(null);
+
+// 节点选择模式状态
+const isInLinkNodeSelectionMode = ref(false);
+const linkNodeSelectionMode = ref<'from' | 'to' | null>(null);
 
 // 图形布局配置
 const graphLayout = {
@@ -298,6 +307,17 @@ const handleSearchSelection = async (opinionId: string | null) => {
 // 处理节点选择
 const handleNodeSelected = (nodeData: Node | null) => {
   console.log('[handleNodeSelected] 节点选择事件:', nodeData);
+  
+  // 如果处于连接编辑器的节点选择模式
+  if (isInLinkNodeSelectionMode.value && nodeData && linkEditorRef.value) {
+    // 只允许选择 solid 类型的节点
+    if (nodeData.node_type === 'solid') {
+      linkEditorRef.value.handleNodeSelected(nodeData.id);
+    }
+    return;
+  }
+  
+  // 普通的节点选择逻辑
   if (nodeData) {
     setSelectedNode(nodeData);
   }
@@ -309,6 +329,20 @@ const handleEdgeSelected = (edgeData: Edge | null) => {
   if (edgeData) {
     setSelectedEdge(edgeData);
   }
+};
+
+// 开始节点选择模式（从 LinkEditor 触发）
+const handleStartNodeSelection = (mode: 'from' | 'to') => {
+  isInLinkNodeSelectionMode.value = true;
+  linkNodeSelectionMode.value = mode;
+  console.log('[handleStartNodeSelection] 开始节点选择模式:', mode);
+};
+
+// 退出节点选择模式（从 LinkEditor 触发）
+const handleExitNodeSelection = () => {
+  isInLinkNodeSelectionMode.value = false;
+  linkNodeSelectionMode.value = null;
+  console.log('[handleExitNodeSelection] 退出节点选择模式');
 };
 
 // 初始化

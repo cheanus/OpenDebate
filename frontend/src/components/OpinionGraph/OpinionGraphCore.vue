@@ -85,6 +85,7 @@ interface Props {
   elements: Array<Element>;
   layout?: GraphLayout;
   styleOptions?: Record<string, unknown>;
+  isInNodeSelectionMode?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -99,6 +100,7 @@ const props = withDefaults(defineProps<Props>(), {
     padding: 50,
   }),
   styleOptions: () => ({}),
+  isInNodeSelectionMode: false,
 });
 
 const emit = defineEmits<{
@@ -202,8 +204,11 @@ const setupEventListeners = () => {
     setSelectedNode(node, renderedPos);
     setSelectedEdge(null);
 
-    isShowNodePanel.value = true;
-    isShowEdgePanel.value = false;
+    // 在节点选择模式下不显示元数据面板
+    if (!props.isInNodeSelectionMode) {
+      isShowNodePanel.value = true;
+      isShowEdgePanel.value = false;
+    }
     hideContextMenu();
 
     emit('nodeSelected', node.data());
@@ -217,8 +222,11 @@ const setupEventListeners = () => {
     setSelectedEdge(edge, renderedPos);
     setSelectedNode(null);
 
-    isShowEdgePanel.value = true;
-    isShowNodePanel.value = false;
+    // 在节点选择模式下不显示元数据面板
+    if (!props.isInNodeSelectionMode) {
+      isShowEdgePanel.value = true;
+      isShowNodePanel.value = false;
+    }
     hideContextMenu();
 
     emit('edgeSelected', edge.data());
@@ -229,8 +237,11 @@ const setupEventListeners = () => {
     if (evt.target === cy) {
       setSelectedNode(null);
       setSelectedEdge(null);
-      isShowNodePanel.value = false;
-      isShowEdgePanel.value = false;
+      // 在节点选择模式下不操作元数据面板
+      if (!props.isInNodeSelectionMode) {
+        isShowNodePanel.value = false;
+        isShowEdgePanel.value = false;
+      }
       hideContextMenu();
       emit('nodeSelected', null);
       emit('edgeSelected', null);
@@ -239,6 +250,11 @@ const setupEventListeners = () => {
 
   // 节点右键菜单
   cy.on('cxttap', 'node', (evt) => {
+    // 在节点选择模式下禁用右键菜单
+    if (props.isInNodeSelectionMode) {
+      return;
+    }
+
     evt.stopPropagation();
     const node = evt.target;
     const pos = evt.renderedPosition || evt.position;
@@ -260,6 +276,11 @@ const setupEventListeners = () => {
 
   // 边右键菜单
   cy.on('cxttap', 'edge', (evt) => {
+    // 在节点选择模式下禁用右键菜单
+    if (props.isInNodeSelectionMode) {
+      return;
+    }
+
     evt.stopPropagation();
     const edge = evt.target;
     const pos = evt.renderedPosition || evt.position;
@@ -281,6 +302,11 @@ const setupEventListeners = () => {
 
   // 空白区域右键菜单
   cy.on('cxttap', (evt) => {
+    // 在节点选择模式下禁用右键菜单
+    if (props.isInNodeSelectionMode) {
+      return;
+    }
+
     // 取消元数据面板
     isShowNodePanel.value = false;
     isShowEdgePanel.value = false;
@@ -363,6 +389,16 @@ watch(themeColors, () => {
   if (cy) {
     const styles = getCytoscapeStyles(themeColors.value);
     cy.style(styles as StylesheetStyle[]); // 使用正确的类型断言
+  }
+});
+
+// 监听节点选择模式变化
+watch(() => props.isInNodeSelectionMode, (isInSelectionMode) => {
+  if (!isInSelectionMode) {
+    // 退出节点选择模式时，隐藏所有面板和菜单
+    isShowNodePanel.value = false;
+    isShowEdgePanel.value = false;
+    hideContextMenu();
   }
 });
 

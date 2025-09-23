@@ -7,6 +7,7 @@
     @edgeSelected="(edgeData) => $emit('edgeSelected', edgeData)"
     @contextMenuAction="(action) => $emit('contextMenuAction', action)"
     @focusNode="(nodeId) => $emit('focusNode', nodeId)"
+    :is-in-node-selection-mode="isInNodeSelectionMode"
     ref="coreRef"
   />
 </template>
@@ -20,6 +21,7 @@ interface Props {
   elements: Array<Element>;
   layout?: GraphLayout;
   styleOptions?: Record<string, unknown>;
+  isInNodeSelectionMode?: boolean;
 }
 
 withDefaults(defineProps<Props>(), {
@@ -34,6 +36,7 @@ withDefaults(defineProps<Props>(), {
     padding: 50,
   }),
   styleOptions: () => ({}),
+  isInNodeSelectionMode: false,
 });
 
 defineEmits<{
