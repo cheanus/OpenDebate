@@ -21,7 +21,7 @@ def create_debate(title: str, creator: str, description: str | None = None) -> s
         raise RuntimeError(f"Failed to create debate: {str(e)}")
 
 
-def delete_debate(debate_id: str):
+def delete_debate(debate_id: str, is_delete_opinions: bool = True):
     """
     Delete a debate by its ID.
     """
@@ -33,15 +33,30 @@ def delete_debate(debate_id: str):
         debate_to_delete = (
             psql_session.query(Debate).filter(Debate.id == debate_id).first()
         )
-        if debate_to_delete:
-            try:
-                psql_session.delete(debate_to_delete)
-                psql_session.commit()
-            except Exception as e:
-                psql_session.rollback()
-                raise RuntimeError(f"Failed to delete debate: {str(e)}")
-        else:
+        if not debate_to_delete:
             raise ValueError(f"Debate with ID {debate_id} does not exist.")
+
+        try:
+            # If requested, delete opinions that are only referenced by this debate.
+            if is_delete_opinions:
+                # Make a shallow copy since we'll modify relationships.
+                opinions = list(debate_to_delete.opinions)
+                for opinion in opinions:
+                    # No explicit refresh required here: accessing `opinion.debates`
+                    # will lazy-load the relationship if needed. Calling
+                    # `psql_session.refresh(opinion)` is unnecessary and can be
+                    # removed to avoid an extra round-trip to the database.
+                    # If the opinion is only referenced by this debate (and
+                    # the global debate), delete it.
+                    if len(opinion.debates) <= 2:
+                        psql_session.delete(opinion)
+
+            # Finally remove the debate itself.
+            psql_session.delete(debate_to_delete)
+            psql_session.commit()
+        except Exception as e:
+            psql_session.rollback()
+            raise RuntimeError(f"Failed to delete debate: {str(e)}")
 
 
 def query_debate(

@@ -51,9 +51,12 @@
 
 ```json
 {
-  "id": "xxx"
+  "id": "xxx",
+  "is_delete_opinions": true
 }
 ```
+
+`is_delete_opinions`：是否顺带删除该辩论下的所有观点，仅针对只属于该辩论和全辩论的观点。
 
 **权限**：管理员
 

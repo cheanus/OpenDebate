@@ -14,6 +14,10 @@ class CreateDebateResponse(MsgResponse):
 
 class DeleteDebateRequest(BaseModel):
     id: str = Field(..., min_length=1)
+    is_delete_opinions: bool = Field(
+        True,
+        description="Whether to also delete all opinions under this debate",
+    )
 
 
 class QueryDebateRequest(BaseModel):

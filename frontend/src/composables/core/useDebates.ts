@@ -132,12 +132,12 @@ export function useDebates() {
     }
   };
 
-  const deleteDebate = async (id: string) => {
+  const deleteDebate = async (id: string, isDeleteOpinions: boolean = true) => {
     loading.value = true;
     error.value = null;
 
     try {
-      const response = await debateService.delete(id);
+      const response = await debateService.delete(id, isDeleteOpinions);
 
       if (response.is_success) {
         await fetchDebates(); // 重新获取列表

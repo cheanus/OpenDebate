@@ -94,6 +94,11 @@ export interface LinkFormData {
   id?: string;
 }
 
+export interface DebateDeleteOptions {
+  id: string;
+  is_delete_opinions?: boolean;
+}
+
 // 额外的类型定义
 export interface ContextMenuAction {
   action: string;

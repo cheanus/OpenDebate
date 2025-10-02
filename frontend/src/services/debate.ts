@@ -33,8 +33,8 @@ export class DebateService {
     return apiClient.post('/debate/create', data);
   }
 
-  async delete(id: string): Promise<ApiResponse<void>> {
-    return apiClient.post('/debate/delete', { id });
+  async delete(id: string, isDeleteOpinions: boolean = true): Promise<ApiResponse<void>> {
+    return apiClient.post('/debate/delete', { id, is_delete_opinions: isDeleteOpinions });
   }
 
   async query(params: DebateQueryParams = {}): Promise<ApiResponse<Debate[]>> {

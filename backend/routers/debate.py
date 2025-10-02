@@ -35,10 +35,11 @@ def create_debate_http(request: CreateDebateRequest, user=Depends(require_role("
 @router.post("/delete", response_model=MsgResponse)
 def delete_debate_http(request: DeleteDebateRequest, user=Depends(require_role("admin"))):
     debate_id = request.id
+    is_delete_opinions = request.is_delete_opinions
 
     # 调用核心函数实现逻辑
     try:
-        delete_debate(debate_id)
+        delete_debate(debate_id, is_delete_opinions)
         result = {"is_success": True}
     except Exception as e:
         result = {"is_success": False, "msg": str(e)}

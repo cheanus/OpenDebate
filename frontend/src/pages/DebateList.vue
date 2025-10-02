@@ -124,6 +124,36 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <!-- 删除确认对话框 -->
+    <v-dialog v-model="showDeleteDialog" max-width="500px" persistent>
+      <v-card>
+        <v-card-title class="text-h5"> 删除辩论 </v-card-title>
+        <v-card-text>
+          <p class="mb-4">
+            确定要删除辩论"<strong>{{ debateToDelete?.title }}</strong
+            >"吗？
+          </p>
+          <v-checkbox
+            v-model="isDeleteOpinions"
+            label="同时删除该辩论下的所有观点（仅删除只属于该辩论和全辩论的观点）"
+            color="error"
+            hide-details
+          />
+          <v-alert type="warning" variant="tonal" class="mt-4">
+            <template v-if="isDeleteOpinions">
+              警告：此操作将永久删除该辩论及其专属观点，且无法恢复！
+            </template>
+            <template v-else> 注意：辩论将被删除，但观点将保留在全辩论中。 </template>
+          </v-alert>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn variant="text" @click="showDeleteDialog = false"> 取消 </v-btn>
+          <v-btn color="error" @click="confirmDeleteDebate"> 确认删除 </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-container>
 </template>
 
@@ -210,15 +240,27 @@ const handleSubmit = async () => {
   }
 };
 
-// 删除辩论
-const handleDeleteDebate = async (debate: Debate) => {
-  if (!confirm(`确定要删除辩论"${debate.title}"吗？`)) {
-    return;
-  }
+// 删除辩论相关状态
+const showDeleteDialog = ref(false);
+const debateToDelete = ref<Debate | null>(null);
+const isDeleteOpinions = ref(true); // 默认删除观点
+
+// 显示删除确认对话框
+const handleDeleteDebate = (debate: Debate) => {
+  debateToDelete.value = debate;
+  isDeleteOpinions.value = true; // 重置为默认值
+  showDeleteDialog.value = true;
+};
+
+// 确认删除辩论
+const confirmDeleteDebate = async () => {
+  if (!debateToDelete.value) return;
 
   try {
-    await deleteDebate(debate.id);
+    await deleteDebate(debateToDelete.value.id, isDeleteOpinions.value);
     await fetchDebates();
+    showDeleteDialog.value = false;
+    debateToDelete.value = null;
   } catch (error) {
     console.error('删除失败:', error);
   }
